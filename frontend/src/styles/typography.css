@@ -1,0 +1,180 @@
+/* ==========================================================================
+   WASAC Smart Billing Platform — Typography Utility Classes
+   All sizes, weights, and leading values reference global.css custom props.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   DISPLAY HEADING — Hero / splash screen titles
+   -------------------------------------------------------------------------- */
+.heading-display {
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .heading-display {
+    font-size: var(--text-4xl);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   HEADING 1 — Page titles
+   -------------------------------------------------------------------------- */
+.heading-1 {
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .heading-1 {
+    font-size: var(--text-3xl);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   HEADING 2 — Section titles
+   -------------------------------------------------------------------------- */
+.heading-2 {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .heading-2 {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   HEADING 3 — Card titles / sub-section headings
+   -------------------------------------------------------------------------- */
+.heading-3 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .heading-3 {
+    font-size: var(--text-xl);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   HEADING 4 — Small section labels / component headings
+   -------------------------------------------------------------------------- */
+.heading-4 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   BODY LARGE — Introductory / feature text
+   -------------------------------------------------------------------------- */
+.body-lg {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-loose);
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   BODY BASE — Default body copy
+   -------------------------------------------------------------------------- */
+.body-base {
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-base);
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   BODY SMALL — Secondary / helper text
+   -------------------------------------------------------------------------- */
+.body-sm {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-base);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   LABEL LARGE — Form labels, prominent UI labels
+   -------------------------------------------------------------------------- */
+.label-lg {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   LABEL BASE — Standard UI labels, table headers
+   -------------------------------------------------------------------------- */
+.label-base {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: 0.01em;
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   LABEL SMALL — Micro labels, overlines, tags
+   -------------------------------------------------------------------------- */
+.label-sm {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   MONO — Meter readings, account numbers, transaction refs
+   Uses system monospace stack for clarity on numeric data.
+   -------------------------------------------------------------------------- */
+.mono {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-base);
+  letter-spacing: 0.02em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   NUMERIC DISPLAY — Large number displays (bill total, meter value)
+   -------------------------------------------------------------------------- */
+.numeric-display {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .numeric-display {
+    font-size: var(--text-2xl);
+  }
+}
