@@ -1,0 +1,152 @@
+/* ==========================================================================
+   StatusBadge Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Base Badge
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Sizes
+   -------------------------------------------------------------------------- */
+.size-sm {
+  padding: 3px var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.size-md {
+  padding: 5px var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Dot Indicator
+   -------------------------------------------------------------------------- */
+.dot {
+  display: block;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.size-sm .dot {
+  width: 5px;
+  height: 5px;
+}
+
+.size-md .dot {
+  width: 6px;
+  height: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Label
+   -------------------------------------------------------------------------- */
+.label {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Status: paid — teal
+   -------------------------------------------------------------------------- */
+.status-paid {
+  background-color: var(--color-success-bg);
+  color: var(--color-paid);
+}
+
+.status-paid .dot {
+  background-color: var(--color-paid);
+}
+
+/* --------------------------------------------------------------------------
+   Status: confirmed — teal (same as paid)
+   -------------------------------------------------------------------------- */
+.status-confirmed {
+  background-color: var(--color-success-bg);
+  color: var(--color-paid);
+}
+
+.status-confirmed .dot {
+  background-color: var(--color-paid);
+}
+
+/* --------------------------------------------------------------------------
+   Status: current — teal
+   -------------------------------------------------------------------------- */
+.status-current {
+  background-color: var(--color-success-bg);
+  color: var(--color-paid);
+}
+
+.status-current .dot {
+  background-color: var(--color-paid);
+}
+
+/* --------------------------------------------------------------------------
+   Status: unpaid — amber
+   -------------------------------------------------------------------------- */
+.status-unpaid {
+  background-color: var(--color-warning-bg);
+  color: var(--color-unpaid);
+}
+
+.status-unpaid .dot {
+  background-color: var(--color-unpaid);
+}
+
+/* --------------------------------------------------------------------------
+   Status: anomaly — amber
+   -------------------------------------------------------------------------- */
+.status-anomaly {
+  background-color: var(--color-warning-bg);
+  color: var(--color-unpaid);
+}
+
+.status-anomaly .dot {
+  background-color: var(--color-unpaid);
+}
+
+/* --------------------------------------------------------------------------
+   Status: outstanding — amber
+   -------------------------------------------------------------------------- */
+.status-outstanding {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.status-outstanding .dot {
+  background-color: var(--color-error);
+}
+
+/* --------------------------------------------------------------------------
+   Status: review — indigo
+   -------------------------------------------------------------------------- */
+.status-review {
+  background-color: rgba(99, 102, 241, 0.10);
+  color: var(--color-review);
+}
+
+.status-review .dot {
+  background-color: var(--color-review);
+}
+
+/* --------------------------------------------------------------------------
+   Status: pending — stone/neutral
+   -------------------------------------------------------------------------- */
+.status-pending {
+  background-color: rgba(168, 162, 158, 0.15);
+  color: var(--color-text-secondary);
+}
+
+.status-pending .dot {
+  background-color: var(--color-border-strong);
+}
