@@ -1,0 +1,294 @@
+/* Screen 3: Camera Capture Styles */
+.screenContainer {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-inverse);
+  overflow: hidden;
+}
+
+.topBar {
+  padding: var(--space-4) var(--space-5);
+  background-color: rgba(28, 25, 23, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 20;
+}
+
+.progressWrap {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.viewfinder {
+  position: relative;
+  height: 60vh;
+  min-height: 380px;
+  width: 100%;
+  background-color: var(--color-bg-deep-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cameraFeedOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(13, 148, 136, 0.08) 0%, transparent 75%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.boundingBox {
+  position: relative;
+  z-index: 5;
+  width: 82%;
+  max-width: 380px;
+  height: 220px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-slow) var(--ease-out);
+  box-sizing: border-box;
+}
+
+.boundingIdle {
+  border: 1.5px solid rgba(250, 248, 245, 0.35);
+  animation: idlePulse 2.4s ease-in-out infinite;
+}
+
+.boundingReady {
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 24px rgba(13, 148, 136, 0.35), inset 0 0 16px rgba(13, 148, 136, 0.15);
+}
+
+@keyframes idlePulse {
+  0%, 100% {
+    border-color: rgba(250, 248, 245, 0.4);
+    box-shadow: 0 0 0 rgba(250, 248, 245, 0);
+  }
+  50% {
+    border-color: rgba(250, 248, 245, 0.15);
+    box-shadow: 0 0 12px rgba(250, 248, 245, 0.05);
+  }
+}
+
+.corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--color-accent);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.cornerTL {
+  top: -2px;
+  left: -2px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: var(--radius-sm);
+}
+
+.cornerTR {
+  top: -2px;
+  right: -2px;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: var(--radius-sm);
+}
+
+.cornerBL {
+  bottom: -2px;
+  left: -2px;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.cornerBR {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.meterFace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-md);
+  background-color: rgba(15, 14, 13, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.meterFrozen {
+  filter: brightness(1.15) contrast(1.05);
+}
+
+.meterDisplayGlass {
+  background-color: #0b0908;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.meterDigits {
+  display: flex;
+  gap: 4px;
+}
+
+.digit {
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: #fbbf24;
+  letter-spacing: 2px;
+  background-color: #171412;
+  padding: 2px 6px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.subDigit {
+  color: #ef4444;
+}
+
+.meterUnit {
+  font-size: 9px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.meterSerial {
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.statusPill {
+  position: absolute;
+  bottom: var(--space-4);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background-color: rgba(28, 25, 23, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(250, 248, 245, 0.12);
+  max-width: 90%;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning);
+  flex-shrink: 0;
+  transition: background-color var(--duration-base) var(--ease-out);
+}
+
+.dotReady {
+  background-color: var(--color-accent);
+}
+
+.statusText {
+  font-size: var(--text-sm);
+  color: var(--color-text-inverse);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: slideUp var(--duration-fast) var(--ease-out) both;
+}
+
+.controlsZone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5);
+  gap: var(--space-6);
+  background-color: var(--color-bg-deep);
+  z-index: 10;
+}
+
+.shutterRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shutterBtn {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background-color: rgba(250, 248, 245, 0.15);
+  border: 3px solid rgba(250, 248, 245, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.shutterReady {
+  border-color: var(--color-accent);
+  background-color: rgba(13, 148, 136, 0.2);
+}
+
+.shutterBtn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.shutterInner {
+  width: 62px;
+  height: 62px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-bg-elevated);
+  transition: transform 0.18s var(--ease-out);
+}
+
+.shutterClicked .shutterInner {
+  transform: scale(0.6);
+}
+
+.analyzingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manualFallback {
+  margin-top: auto;
+}
+
+.manualLink {
+  font-size: var(--text-sm);
+  color: rgba(250, 248, 245, 0.6);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.manualLink:hover {
+  color: var(--color-accent-light);
+}
