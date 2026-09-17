@@ -1,0 +1,248 @@
+/* Screen 10: Anomaly Review Queue Styles */
+.container {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--color-bg-base);
+  padding-bottom: 96px;
+}
+
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-5) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.officerBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.officerPill {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-accent-dark);
+  background-color: var(--color-accent-light);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.queueCount {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.emptyCard {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn var(--duration-base) var(--ease-out) both;
+}
+
+.emptyIconCircle {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+}
+
+.emptyTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.emptyText {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  max-width: 360px;
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cardWrapper {
+  transition: all 0.4s var(--ease-out);
+  overflow: hidden;
+  max-height: 400px;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cardRemoving {
+  max-height: 0;
+  opacity: 0;
+  transform: translateX(48px);
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.reviewCard {
+  border-left: 4px solid var(--color-warning);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.custName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.custAddr {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.accountBadge {
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.deltaBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.deltaCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arrowCol {
+  display: flex;
+  align-items: center;
+}
+
+.colLabel {
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.readingVal {
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.valWarn {
+  color: var(--color-warning);
+}
+
+.valHighlight {
+  color: var(--color-accent);
+}
+
+.anomalyReasonPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning-bg);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  align-self: flex-start;
+}
+
+.reasonDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning);
+}
+
+.reasonLabel {
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.reasonScore {
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  color: var(--color-warning);
+}
+
+.cardFooter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.actionsRow {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.actionConfirmBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  animation: fadeIn var(--duration-fast) var(--ease-out) both;
+}
+
+.confirmApprove {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent-dark);
+}
+
+.confirmRecapture {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
