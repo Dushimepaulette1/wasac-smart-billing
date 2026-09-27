@@ -1,0 +1,49 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.box {
+  width: 72%;
+  aspect-ratio: 2.5 / 1;
+  position: relative;
+  border: 2.5px solid rgba(0, 255, 80, 0.85);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.42),
+    inset 0 0 20px rgba(0, 255, 80, 0.08);
+}
+
+/* Corner brackets */
+.corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: #00ff50;
+  border-style: solid;
+}
+.tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+/* Scan animation */
+@keyframes scan {
+  0%   { top: 4px; opacity: 1; }
+  90%  { top: calc(100% - 6px); opacity: 1; }
+  100% { top: calc(100% - 6px); opacity: 0; }
+}
+
+.scanLine {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff50 40%, #00ff50 60%, transparent);
+  animation: scan 2.5s ease-in-out infinite;
+  border-radius: 1px;
+}

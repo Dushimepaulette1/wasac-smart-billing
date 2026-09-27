@@ -1,0 +1,156 @@
+.container {
+  padding-bottom: 32px;
+}
+
+.loginCard {
+  margin: 24px 16px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.loginIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.loginTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.loginSub {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.field input {
+  padding: 11px 12px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus {
+  border-color: var(--blue);
+}
+
+.error {
+  color: var(--red);
+  font-size: 13px;
+  background: var(--red-light);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* Dashboard */
+.dashHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px;
+}
+
+.dashHeader h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.logoutBtn {
+  font-size: 13px;
+  color: var(--red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.accountList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.accountCard {
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.accountTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.accountName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.accountMeta {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 10px 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.statValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
