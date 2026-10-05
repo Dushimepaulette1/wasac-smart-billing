@@ -1,0 +1,50 @@
+/* ==========================================================================
+   SkeletonLoader Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Base Skeleton Block
+   -------------------------------------------------------------------------- */
+.skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: #E8E4DF;
+  background-image: linear-gradient(
+    90deg,
+    #E8E4DF 0px,
+    #F0ECE8 40%,
+    #E8E4DF 80%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Stack — multiple lines
+   -------------------------------------------------------------------------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* Last item in a stack is narrower to look more natural */
+.stack .skeleton:last-child:not(:first-child) {
+  width: 75% !important;
+}
+
+/* --------------------------------------------------------------------------
+   Shimmer keyframe
+   -------------------------------------------------------------------------- */
+@keyframes shimmer {
+  0% {
+    background-position: -800px 0;
+  }
+  100% {
+    background-position: 800px 0;
+  }
+}

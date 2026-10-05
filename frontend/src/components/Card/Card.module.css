@@ -1,0 +1,102 @@
+/* ==========================================================================
+   Card Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Base Card
+   -------------------------------------------------------------------------- */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text-primary);
+  /* Reset button styles when interactive */
+  border: none;
+  cursor: default;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Variants
+   -------------------------------------------------------------------------- */
+.variant-default {
+  background-color: var(--color-bg-elevated);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.variant-elevated {
+  background-color: var(--color-bg-elevated);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+
+.variant-accent {
+  background-color: var(--color-accent-light);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(13, 148, 136, 0.15);
+}
+
+.variant-ghost {
+  background-color: transparent;
+  box-shadow: none;
+  border: 1.5px solid var(--color-border);
+}
+
+/* --------------------------------------------------------------------------
+   Interactive State
+   -------------------------------------------------------------------------- */
+.interactive {
+  cursor: pointer;
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.interactive.variant-accent:hover {
+  background-color: #B2F5EA;
+  border-color: rgba(13, 148, 136, 0.25);
+}
+
+.interactive.variant-ghost:hover {
+  background-color: var(--color-bg-surface);
+  border-color: var(--color-border-strong);
+}
+
+.interactive:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Padding Presets
+   -------------------------------------------------------------------------- */
+.padding-sm {
+  padding: var(--space-4);
+}
+
+.padding-md {
+  padding: var(--space-6);
+}
+
+.padding-lg {
+  padding: var(--space-8);
+}

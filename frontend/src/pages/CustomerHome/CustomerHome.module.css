@@ -1,0 +1,320 @@
+/* Screen 2: Customer Home Styles */
+.container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  padding-bottom: 96px;
+  background-color: var(--color-bg-base);
+}
+
+.bgDecoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 280px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bgDecoration svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-5) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  animation: slideUp var(--duration-base) var(--ease-out) both;
+}
+
+.dateLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+.greeting {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.accountMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.accountNumber {
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.skeletonHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.summarySection {
+  animation: slideUp var(--duration-base) var(--ease-out) 0.1s both;
+}
+
+.summaryScroll {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.summaryScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.summaryCard {
+  flex: 0 0 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+@media (min-width: 769px) {
+  .summaryScroll {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: visible;
+  }
+  .summaryCard {
+    flex: initial;
+    min-width: 0;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.indicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+}
+
+.tagEstimate {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-accent-dark);
+  background-color: var(--color-accent-light);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.cardMainValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.accentValue {
+  color: var(--color-accent);
+}
+
+.unit {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+.statusCurrentText {
+  color: var(--color-accent);
+  font-size: var(--text-xl);
+}
+
+.statusDueText {
+  color: var(--color-error);
+  font-size: var(--text-xl);
+}
+
+.cardFootnote {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.actionsSection {
+  animation: slideUp var(--duration-base) var(--ease-out) 0.15s both;
+}
+
+.actionCard {
+  background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-surface) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.actionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.actionTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.actionDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-base);
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (min-width: 769px) {
+  .actionCard {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .actionInfo {
+    max-width: 480px;
+  }
+  .actionButtons {
+    flex-direction: row;
+    min-width: 320px;
+  }
+}
+
+.recentSection {
+  animation: slideUp var(--duration-base) var(--ease-out) 0.2s both;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.viewAllBtn {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.viewAllBtn:hover {
+  color: var(--color-accent-dark);
+}
+
+.recentList {
+  overflow: hidden;
+}
+
+.recentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.recentRow:hover {
+  background-color: var(--color-bg-surface);
+}
+
+.rowBorder {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rowLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.periodName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.periodMeta {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.rowRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.rowAmount {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

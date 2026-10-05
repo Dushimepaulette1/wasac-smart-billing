@@ -1,9 +1,16 @@
+/**
+ * @file index.js
+ * @description React 18 entry point for the WASAC Smart Billing Platform.
+ * Uses createRoot API for concurrent features.
+ */
+
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './App.css';
+import { createRoot } from 'react-dom/client';
 import App from './App';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root');
+const root = createRoot(container);
+
 root.render(
   <React.StrictMode>
     <App />
