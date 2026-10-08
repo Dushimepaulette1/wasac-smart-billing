@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -34,6 +34,45 @@ class TariffBreakdown(BaseModel):
     total: float
 
 
+class AnomalyResultSchema(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
+    household_id: str
+    reading_m3: Optional[float] = None
+    daily_consumption: Optional[float] = None
+    anomaly_score: Optional[float] = None
+    is_anomaly: bool
+    anomaly_type: str
+    needs_retake: bool
+    message_for_household: str
+    features: dict = {}
+    model_used: bool = False
+    flag_id: Optional[int] = None
+    actions: List[str] = []
+
+
+class AnomalyScoreRequest(BaseModel):
+    household_id: str
+    reading_digits: str
+    reading_date: Optional[datetime] = None
+
+
+class AnomalyFlagOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    household_id: str
+    reading_id: Optional[int] = None
+    anomaly_type: str
+    anomaly_score: Optional[float] = None
+    features: Optional[dict] = None
+    requires_staff_review: bool
+    message_for_household: Optional[str] = None
+    status: str
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+
+
 class ConfirmReadingResponse(BaseModel):
     success: bool
     bill_amount: Optional[float] = None
@@ -44,6 +83,7 @@ class ConfirmReadingResponse(BaseModel):
     anomaly_score: Optional[float] = None
     error_message: Optional[str] = None
     bill_id: Optional[int] = None
+    anomaly: Optional[AnomalyResultSchema] = None
 
 
 class BillCalculateRequest(BaseModel):

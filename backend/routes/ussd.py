@@ -3,11 +3,10 @@ from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 
 from database import get_db, Meter, Reading, Bill, _calculate_bill
-from models.anomaly_detector import AnomalyDetector
+from anomaly.service import notify_household, score_reading
 from schemas import USSDRequest
 
 router = APIRouter()
-_anomaly_detector = AnomalyDetector()
 
 
 @router.post("/submit-ussd")
@@ -43,31 +42,24 @@ async def submit_ussd(body: USSDRequest, db: Session = Depends(get_db)):
         }
 
     consumption = submitted - meter.last_reading
-
-    past_readings = (
-        db.query(Reading)
-        .filter(Reading.meter_id == meter.meter_id, Reading.validation_status == "valid")
-        .order_by(Reading.submission_time.desc())
-        .limit(12)
-        .all()
-    )
-    history = [r.implied_consumption for r in past_readings if r.implied_consumption is not None]
-    is_anomalous, anomaly_score = _anomaly_detector.check(consumption, history)
-
-    bill_data = _calculate_bill(consumption)
-    validation_status = "anomaly_flagged" if is_anomalous else "valid"
+    now = datetime.utcnow()
 
     new_reading = Reading(
         meter_id=meter.meter_id,
         submitted_value=submitted,
         implied_consumption=consumption,
         submission_method="ussd",
-        anomaly_score=anomaly_score,
-        validation_status=validation_status,
-        submission_time=datetime.utcnow(),
+        submission_time=now,
     )
     db.add(new_reading)
     db.flush()
+
+    anomaly = score_reading(db, meter.meter_id, submitted, now, reading_id=new_reading.reading_id)
+    is_anomalous = anomaly.is_anomaly
+    new_reading.anomaly_score = anomaly.anomaly_score
+    new_reading.validation_status = "anomaly_flagged" if is_anomalous else "valid"
+
+    bill_data = _calculate_bill(consumption)
 
     new_bill = Bill(
         customer_id=customer.customer_id,
@@ -89,14 +81,15 @@ async def submit_ussd(body: USSDRequest, db: Session = Depends(get_db)):
     db.add(new_bill)
 
     meter.last_reading = submitted
-    meter.last_reading_date = datetime.utcnow()
+    meter.last_reading_date = now
     db.commit()
+    actions = notify_household(db, anomaly)
 
-    flag_msg = "\n⚠ Unusual consumption detected. WASAC will verify." if is_anomalous else ""
+    flag_msg = f"\n{anomaly.message_for_household}" if is_anomalous else ""
     response = (
         f"END Reading received: {submitted:.0f} m3\n"
         f"Consumption: {consumption:.1f} m3\n"
         f"Bill: RWF {bill_data['total']:,.0f}{flag_msg}\n"
         f"Dial *225# to pay via Mobile Money."
     )
-    return {"response": response}
+    return {"response": response, "anomaly": {**anomaly.to_dict(), "actions": actions}}

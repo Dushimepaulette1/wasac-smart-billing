@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from database import get_db, Customer, Meter, Reading, Bill, _calculate_bill
 from models.quality_gate import QualityGate
 from models.crnn_model import CRNNReader
-from models.anomaly_detector import AnomalyDetector
+from anomaly.service import notify_household, score_reading
 from schemas import (
+    AnomalyResultSchema,
     PhotoSubmitResponse,
     ConfirmReadingRequest,
     ConfirmReadingResponse,
@@ -19,7 +20,6 @@ router = APIRouter()
 
 _quality_gate = QualityGate()
 _crnn_reader = CRNNReader()
-_anomaly_detector = AnomalyDetector()
 
 
 @router.post("/submit-photo", response_model=PhotoSubmitResponse)
@@ -69,18 +69,24 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
         )
 
     consumption = submitted - meter.last_reading
+    now = datetime.utcnow()
 
-    # Pull historical consumptions for anomaly check
-    past_readings = (
-        db.query(Reading)
-        .filter(Reading.meter_id == body.meter_id, Reading.validation_status == "valid")
-        .order_by(Reading.submission_time.desc())
-        .limit(12)
-        .all()
+    new_reading = Reading(
+        meter_id=body.meter_id,
+        submitted_value=submitted,
+        implied_consumption=consumption,
+        submission_method="camera",
+        submission_time=now,
     )
-    history = [r.implied_consumption for r in past_readings if r.implied_consumption is not None]
+    db.add(new_reading)
+    db.flush()
 
-    is_anomalous, anomaly_score = _anomaly_detector.check(consumption, history)
+    anomaly = score_reading(db, body.meter_id, submitted, now, reading_id=new_reading.reading_id)
+    is_anomalous = anomaly.is_anomaly
+    anomaly_score = anomaly.anomaly_score
+    validation_status = "anomaly_flagged" if is_anomalous else "valid"
+    new_reading.anomaly_score = anomaly_score
+    new_reading.validation_status = validation_status
 
     bill_data = _calculate_bill(consumption)
     breakdown = TariffBreakdown(
@@ -95,20 +101,6 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
         service_charge=bill_data["service_charge"],
         total=bill_data["total"],
     )
-
-    validation_status = "anomaly_flagged" if is_anomalous else "valid"
-
-    new_reading = Reading(
-        meter_id=body.meter_id,
-        submitted_value=submitted,
-        implied_consumption=consumption,
-        submission_method="camera",
-        anomaly_score=anomaly_score,
-        validation_status=validation_status,
-        submission_time=datetime.utcnow(),
-    )
-    db.add(new_reading)
-    db.flush()
 
     new_bill = Bill(
         customer_id=body.customer_id,
@@ -130,10 +122,11 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
     db.add(new_bill)
 
     meter.last_reading = submitted
-    meter.last_reading_date = datetime.utcnow()
+    meter.last_reading_date = now
 
     db.commit()
     db.refresh(new_bill)
+    actions = notify_household(db, anomaly)
 
     return ConfirmReadingResponse(
         success=True,
@@ -144,6 +137,7 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
         anomaly_flagged=is_anomalous,
         anomaly_score=anomaly_score,
         bill_id=new_bill.bill_id,
+        anomaly=AnomalyResultSchema(**anomaly.to_dict(), actions=actions),
     )
 
 

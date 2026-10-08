@@ -9,6 +9,9 @@ from database import init_db, SessionLocal
 from routes.reading import router as reading_router
 from routes.billing import router as billing_router
 from routes.ussd import router as ussd_router
+from routes.anomaly import router as anomaly_router
+from anomaly.config import AnomalyConfig
+from anomaly.model import load_model_if_available
 from schemas import HealthResponse
 
 
@@ -40,6 +43,7 @@ app.add_middleware(
 app.include_router(reading_router, tags=["Meter Reading"])
 app.include_router(billing_router, tags=["Billing"])
 app.include_router(ussd_router, tags=["USSD"])
+app.include_router(anomaly_router, tags=["Anomaly Detection"])
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
@@ -57,7 +61,11 @@ async def health_check():
         database=db_status,
         quality_gate_model="stub_active",
         crnn_model="stub_active",
-        anomaly_detector="active",
+        anomaly_detector=(
+            "isolation_forest_loaded"
+            if load_model_if_available(AnomalyConfig.from_env())
+            else "rules_only_model_not_trained"
+        ),
         timestamp=datetime.utcnow(),
     )
 
