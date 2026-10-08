@@ -21,6 +21,11 @@ build/
 *.pkl
 *.h5
 *.onnx
+*.joblib
+backend/anomaly/artifacts/
+
+# Generated DEMO data (anomaly pipeline testing only)
+backend/scripts/demo/output/
 
 # Node
 node_modules/
