@@ -28,7 +28,7 @@ class Customer(Base):
     gps_lng = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    meter = relationship("Meter", back_populates="customer", foreign_keys=[meter_id])
+    meter = relationship("Meter", foreign_keys=[meter_id])
     bills = relationship("Bill", back_populates="customer")
 
 
@@ -44,7 +44,7 @@ class Meter(Base):
     gps_lat = Column(Float)
     gps_lng = Column(Float)
 
-    customer = relationship("Customer", back_populates="meter", foreign_keys=[customer_id])
+    customer = relationship("Customer", foreign_keys=[customer_id])
     readings = relationship("Reading", back_populates="meter")
 
 
