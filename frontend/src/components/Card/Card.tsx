@@ -1,22 +1,23 @@
 /**
- * @file Card.jsx
+ * @file Card.tsx
  * @description Versatile surface container with multiple visual variants.
  * Used throughout the platform for content grouping, bill summaries,
  * reading panels, and interactive list items.
  */
 
-import React from 'react';
+import type { CSSProperties, HTMLAttributes, MouseEventHandler, ReactNode } from 'react';
 import styles from './Card.module.css';
 
-/**
- * @typedef {Object} CardProps
- * @property {React.ReactNode} children - Card content
- * @property {'default'|'elevated'|'accent'|'ghost'} [variant='default'] - Visual style
- * @property {'sm'|'md'|'lg'} [padding='md'] - Internal padding preset
- * @property {Function} [onClick] - If provided, card becomes interactive
- * @property {string} [className] - Additional class names
- * @property {React.CSSProperties} [style] - Inline style override (dynamic values only)
- */
+interface CardProps extends Omit<HTMLAttributes<HTMLElement>, 'onClick' | 'style'> {
+  children: ReactNode;
+  variant?: 'default' | 'elevated' | 'accent' | 'ghost';
+  padding?: 'sm' | 'md' | 'lg';
+  /** If provided, the card becomes a button. */
+  onClick?: MouseEventHandler<HTMLElement>;
+  className?: string;
+  /** Inline style override (dynamic values only). */
+  style?: CSSProperties;
+}
 
 /**
  * Card component — a styled content surface container.
@@ -29,7 +30,7 @@ function Card({
   className = '',
   style,
   ...rest
-}) {
+}: CardProps) {
   const isInteractive = typeof onClick === 'function';
 
   const classNames = [

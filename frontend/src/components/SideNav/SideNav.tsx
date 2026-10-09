@@ -1,19 +1,30 @@
 /**
- * @file SideNav.jsx
+ * @file SideNav.tsx
  * @description Left sidebar navigation for desktop screens (≥ 769px).
  * Shows WASAC branding at top and nav items with active route highlighting.
  * Reuses same SVG icon set as BottomNav.
  */
 
-import React from 'react';
+import type { ReactElement } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './SideNav.module.css';
+
+interface NavIconProps {
+  active: boolean;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  matchPaths: string[];
+  Icon: (props: NavIconProps) => ReactElement;
+}
 
 /* --------------------------------------------------------------------------
    SVG Icon Components — identical paths to BottomNav for consistency
    -------------------------------------------------------------------------- */
 
-function IconHome({ active }) {
+function IconHome({ active }: NavIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <path
@@ -29,7 +40,7 @@ function IconHome({ active }) {
   );
 }
 
-function IconCamera({ active }) {
+function IconCamera({ active }: NavIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <rect
@@ -45,7 +56,7 @@ function IconCamera({ active }) {
   );
 }
 
-function IconHistory({ active }) {
+function IconHistory({ active }: NavIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <circle
@@ -60,7 +71,7 @@ function IconHistory({ active }) {
   );
 }
 
-function IconAccount({ active }) {
+function IconAccount({ active }: NavIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <circle
@@ -75,7 +86,7 @@ function IconAccount({ active }) {
   );
 }
 
-function IconOfficer({ active }) {
+function IconOfficer({ active }: NavIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <rect
@@ -95,7 +106,7 @@ function IconOfficer({ active }) {
 /* --------------------------------------------------------------------------
    Nav items configuration
    -------------------------------------------------------------------------- */
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/home', matchPaths: ['/home'], Icon: IconHome },
   { label: 'Submit Reading', href: '/submit/camera', matchPaths: ['/submit'], Icon: IconCamera },
   { label: 'Bill History', href: '/history', matchPaths: ['/history'], Icon: IconHistory },
@@ -110,7 +121,7 @@ function SideNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isActive = (item) =>
+  const isActive = (item: NavItem) =>
     item.matchPaths.some((path) => location.pathname.startsWith(path));
 
   return (

@@ -1,20 +1,31 @@
 /**
- * @file BottomNav.jsx
+ * @file BottomNav.tsx
  * @description Fixed bottom navigation bar for mobile screens (≤ 768px).
  * Uses react-router-dom's useLocation to highlight the active route.
  * Features frosted glass styling and hand-crafted inline SVG icons.
  */
 
-import React from 'react';
+import type { ReactElement } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './BottomNav.module.css';
+
+interface NavIconProps {
+  active: boolean;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  matchPaths: string[];
+  Icon: (props: NavIconProps) => ReactElement;
+}
 
 /* --------------------------------------------------------------------------
    SVG Icon Components — hand-crafted paths, no icon library
    -------------------------------------------------------------------------- */
 
 /** Home icon */
-function IconHome({ active }) {
+function IconHome({ active }: NavIconProps) {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <path
@@ -31,7 +42,7 @@ function IconHome({ active }) {
 }
 
 /** Camera / submit icon */
-function IconCamera({ active }) {
+function IconCamera({ active }: NavIconProps) {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <rect
@@ -64,7 +75,7 @@ function IconCamera({ active }) {
 }
 
 /** History / clock icon */
-function IconHistory({ active }) {
+function IconHistory({ active }: NavIconProps) {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <circle
@@ -88,7 +99,7 @@ function IconHistory({ active }) {
 }
 
 /** Account / person icon */
-function IconAccount({ active }) {
+function IconAccount({ active }: NavIconProps) {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <circle
@@ -113,7 +124,7 @@ function IconAccount({ active }) {
 /* --------------------------------------------------------------------------
    Nav items configuration
    -------------------------------------------------------------------------- */
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
   {
     label: 'Home',
     href: '/home',
@@ -147,7 +158,7 @@ function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isActive = (item) =>
+  const isActive = (item: NavItem) =>
     item.matchPaths.some((path) => location.pathname.startsWith(path));
 
   return (
