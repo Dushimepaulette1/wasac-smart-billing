@@ -1,11 +1,11 @@
 /**
- * @file BillDisplay.jsx
+ * @file BillDisplay.tsx
  * @description One bill: how much water, what it costs and why, and the
  * last months for comparison. Money is plain bold text, never the counter;
  * the counter appears once, for this bill's meter reading.
  */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
@@ -17,10 +17,11 @@ import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadBill from '../../household/loadBill';
+import type { BillSummary } from '../../api/types';
 import { CUSTOMER_ID } from '../../config';
 import styles from './BillDisplay.module.css';
 
-function UsageBars({ history, currentId }) {
+function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: number }) {
   const { t, month, volume } = useI18n();
   const max = Math.max(...history.map((b) => b.consumption_m3), 1);
   return (
@@ -69,7 +70,7 @@ function BillDisplay() {
     );
   }
 
-  const { bill, tiers, serviceCharge, periodStart, reading, previousReading, history } = request.data;
+  const { bill, tiers, serviceCharge, periodStart, reading, history } = request.data;
   const paid = bill.payment_status === 'paid';
   const water = bill.amount_due - serviceCharge;
 
@@ -100,11 +101,11 @@ function BillDisplay() {
           <h2 id="reading-title" className="text-body">
             {t('bill.thisReading')}
           </h2>
-          <MeterCounter cells={reading} labels={labels} locale={locale} />
+          <MeterCounter cells={reading.cells} labels={labels} locale={locale} />
           <p className={styles.previous}>
             <span className="text-secondary">{t('bill.lastReading')}</span>
             <span className="num">
-              {formatReading(cellsFromCubicMetres(previousReading), locale)} {labels.cubicMetres}
+              {formatReading(cellsFromCubicMetres(reading.previous), locale)} {labels.cubicMetres}
             </span>
           </p>
         </section>

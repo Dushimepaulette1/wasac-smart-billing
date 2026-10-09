@@ -1,5 +1,5 @@
 /**
- * @file ConfirmReading.jsx
+ * @file ConfirmReading.tsx
  * @description Submit flow, step 2: the household checks the numbers.
  *
  * The reading is shown on the editable meter counter. If the digit reader
@@ -8,7 +8,7 @@
  * a soft retake prompt; "Confirm reading" always stays enabled.
  */
 
-import React, { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
@@ -18,6 +18,7 @@ import { errorMessage } from '../../components/RequestState/RequestState';
 import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { localDateIso } from '../../i18n/format';
+import type { HeldState } from '../ReadingHeld/ReadingHeld';
 import { useSubmission } from '../../household/submission';
 import { isComplete } from '../../utils/reading';
 import { api } from '../../api/client';
@@ -31,7 +32,7 @@ export const LOW_CONFIDENCE = 0.8;
  * A translated sentence with one {name} placeholder, with the value in bold.
  * The whole sentence is one string, so translators control word order.
  */
-function withBold(template, name, value) {
+function withBold(template: string, name: string, value: string): ReactNode {
   const [before, after = ''] = template.split(`{${name}}`);
   return (
     <>
@@ -48,8 +49,8 @@ function ConfirmReading() {
   const submission = useSubmission();
   const labels = useCounterLabels();
   const helpId = useId();
-  const [state, setState] = useState('idle'); // idle | incomplete | sending | failed | retake
-  const [error, setError] = useState(null);
+  const [state, setState] = useState<'idle' | 'incomplete' | 'sending' | 'failed' | 'retake'>('idle');
+  const [error, setError] = useState<unknown>(null);
   // Set just before the submission is cleared on success, so clearing it
   // does not trigger the "no reading yet" redirect below.
   const leaving = useRef(false);
@@ -85,7 +86,7 @@ function ConfirmReading() {
         setState('retake');
       } else {
         leaving.current = true;
-        navigate('/submit/held', { state: { cells, at: localDateIso() } });
+        navigate('/submit/held', { state: { cells, at: localDateIso() } satisfies HeldState });
         submission.reset();
       }
     } catch (err) {

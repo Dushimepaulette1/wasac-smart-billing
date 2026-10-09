@@ -1,10 +1,9 @@
 /**
- * @file BillHistory.jsx
+ * @file BillHistory.tsx
  * @description All the household's bills, newest first. Each row opens
  * the bill; paying happens there, so the list stays a plain list.
  */
 
-import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
@@ -13,6 +12,7 @@ import useRequest from '../../api/useRequest';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
 import { CUSTOMER_ID } from '../../config';
+import type { BillSummary } from '../../api/types';
 import styles from './BillHistory.module.css';
 
 function BillHistory() {
@@ -20,12 +20,13 @@ function BillHistory() {
   const navigate = useNavigate();
   const bills = useRequest(api.getBills, { immediate: true, args: [CUSTOMER_ID] });
 
-  const empty = bills.status === 'success' && bills.data.length === 0;
+  const list: BillSummary[] = bills.status === 'success' ? bills.data : [];
+  const empty = bills.status === 'success' && list.length === 0;
 
   // Normally one bill a month; if two share a month, name them by date.
-  const label = (bill) => {
+  const label = (bill: BillSummary) => {
     const month = bill.created_at.slice(0, 7);
-    const shared = bills.data.filter((b) => b.created_at.slice(0, 7) === month).length > 1;
+    const shared = list.filter((b) => b.created_at.slice(0, 7) === month).length > 1;
     return shared ? date(bill.created_at) : monthYear(bill.created_at);
   };
 
@@ -47,9 +48,9 @@ function BillHistory() {
 
       {empty && <p className="measure">{t('history.empty')}</p>}
 
-      {bills.status === 'success' && bills.data.length > 0 && (
+      {list.length > 0 && (
         <ul className={styles.list}>
-          {bills.data.map((bill) => {
+          {list.map((bill) => {
             const paid = bill.payment_status === 'paid';
             return (
               <li key={bill.bill_id}>

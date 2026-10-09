@@ -1,11 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ReadingHeld from './ReadingHeld';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { normalizeReading } from '../../utils/reading';
 
-const renderAt = (state) =>
+const renderAt = (state: unknown) =>
   render(
     <I18nProvider locale="en">
       <MemoryRouter

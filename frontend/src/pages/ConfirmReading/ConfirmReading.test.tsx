@@ -1,14 +1,14 @@
-import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ConfirmReading from './ConfirmReading';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { SubmissionProvider } from '../../household/submission';
+import { SubmissionProvider, type Submission } from '../../household/submission';
+import { jsonResponse, makeAnomalyResult, makeConfirmResponse } from '../../test/fixtures';
 import { normalizeReading } from '../../utils/reading';
 
-function renderWith(fromReader, extra = {}) {
+function renderWith(fromReader: string, extra: Partial<Submission> = {}) {
   const { cells, needsCheck, raw } = normalizeReading(fromReader);
-  const initial = { photo: null, raw, confidence: 0.9, cells, needsCheck, manual: false, ...extra };
+  const initial: Submission = { photo: null, raw, confidence: 0.9, cells, needsCheck, manual: false, ...extra };
   return render(
     <I18nProvider locale="en">
       <SubmissionProvider initial={initial}>
@@ -27,12 +27,8 @@ function renderWith(fromReader, extra = {}) {
   );
 }
 
-const counterCells = (container) =>
+const counterCells = (container: HTMLElement) =>
   [...container.querySelectorAll('[class*="cell"]')].map((c) => c.textContent).join('|');
-
-beforeAll(() => {
-  if (!globalThis.fetch) globalThis.fetch = () => Promise.reject(new Error('fetch not mocked'));
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -42,8 +38,9 @@ afterEach(() => {
 describe('ConfirmReading', () => {
   it('shows the raw wrong-length reading above an empty editable counter', () => {
     const { container } = renderWith('005162454');
-    const message = screen.getByText((_, el) =>
-      el.tagName === 'P' &&
+    const message = screen.getByText(
+      (_, el) =>
+        el?.tagName === 'P' &&
       el.textContent === 'We read 005162454. Check the numbers on your meter and type them here.',
     );
     expect(message).toBeInTheDocument();
@@ -75,11 +72,7 @@ describe('ConfirmReading', () => {
   });
 
   it('goes to the bill when the reading creates one', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ success: true, bill_id: 7 }),
-    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(200, makeConfirmResponse({ bill_id: 7 })));
     renderWith('00484500');
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
@@ -88,11 +81,18 @@ describe('ConfirmReading', () => {
   });
 
   it('goes to the held screen when the reading is held for checking', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ success: true, bill_id: null, anomaly: { pending_review: true } }),
-    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse(
+        200,
+        makeConfirmResponse({
+          bill_id: null,
+          bill_amount: null,
+          validation_status: 'pending_review',
+          anomaly_flagged: true,
+          anomaly: makeAnomalyResult({ pending_review: true }),
+        }),
+      ),
+    );
     renderWith('00000444');
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));

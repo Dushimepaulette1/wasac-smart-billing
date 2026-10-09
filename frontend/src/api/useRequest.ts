@@ -8,18 +8,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type RequestStatus = 'idle' | 'loading' | 'success' | 'failed';
 
-interface RequestState<R> {
-  status: RequestStatus;
-  data: R | null;
-  error: unknown;
-}
+/**
+ * Checking `status === 'success'` narrows `data` to R, so screens never
+ * need a non-null assertion. Data from an earlier run stays while
+ * reloading or after a failure.
+ */
+type RequestState<R> =
+  | { status: 'success'; data: R; error: null }
+  | { status: 'idle' | 'loading'; data: R | null; error: null }
+  | { status: 'failed'; data: R | null; error: unknown };
 
-export interface RequestHandle<A extends unknown[], R> extends RequestState<R> {
+interface RequestActions<A extends unknown[], R> {
   /** Run the call; resolves to the data, or undefined if it failed. */
   run: (...args: A) => Promise<R | undefined>;
   /** Run again with the last arguments; does nothing before the first run. */
   retry: () => Promise<R | undefined>;
 }
+
+export type RequestHandle<A extends unknown[], R> = RequestState<R> & RequestActions<A, R>;
 
 /** Load on mount (immediate, with these args), or wait for run(). */
 export type RequestOptions<A> = { immediate: true; args: A } | { immediate?: false };
@@ -47,13 +53,13 @@ export default function useRequest<A extends unknown[], R>(
 
   const run = useCallback(async (...args: A): Promise<R | undefined> => {
     lastArgs.current = args;
-    setState((s) => ({ ...s, status: 'loading', error: null }));
+    setState((s) => ({ status: 'loading', data: s.data, error: null }));
     try {
       const data = await fnRef.current(...args);
       if (mounted.current) setState({ status: 'success', data, error: null });
       return data;
     } catch (error) {
-      if (mounted.current) setState((s) => ({ ...s, status: 'failed', error }));
+      if (mounted.current) setState((s) => ({ status: 'failed', data: s.data, error }));
       return undefined;
     }
   }, []);
