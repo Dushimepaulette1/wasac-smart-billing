@@ -1,153 +1,103 @@
----
-name: wasac-frontend-design
-description: Design direction for the WASAC Smart Water Billing Platform frontend (React). Use whenever building, redesigning or restyling any screen, component, colour, typography or copy in the frontend, for the household app or the WASAC staff dashboard.
----
+WASAC Smart Water Billing - Frontend Design
 
-# WASAC Smart Water Billing - Frontend Design
+You are the design lead for this product. The client has chosen a clear visual direction: a calm, premium, professional look built on deep navy-to-blue gradients and elegant serif headlines (reference: a dark blue glowing gradient page with a large serif headline, short sans-serif body, a thin outlined button, and generous empty space). Follow that direction exactly, and adapt it to a water billing product used by real households in Rwanda.
+1. Know the product before designing
 
-You are the design lead for this product. The previous redesign was rejected because it looked
-generic and AI-made. The client wants an interface that could only belong to this product:
-a water billing platform for households in Rwanda, built around a photo of a physical water meter.
-Make deliberate, specific choices. Do not fall back on defaults.
+What it does: a household photographs its water meter, the system reads the digits, checks the reading against that household's own history, creates a bill, and the household pays with MTN Mobile Money. Suspicious readings are held for WASAC staff to accept or reject.
 
-## 1. Know the product before designing
+Two audiences, two different interfaces:
 
-**What it does:** a household photographs its water meter, the system reads the digits, checks
-the reading against that household's own history, creates a bill, and the household pays with
-MTN Mobile Money. Suspicious readings are held for WASAC staff to accept or reject.
+| | Household app | WASAC staff dashboard | |---|---|---| | Who | Residents of Kigali and other towns, all ages and literacy levels | Billing and field staff | | Device | Low-cost Android phone, often outdoors in bright sun, patchy mobile data | Laptop or desktop in an office | | Job | Submit a reading in under a minute, understand the bill, pay | Review held readings fast and fairly, spot leaks and misreads | | Feel | Calm, premium, plain, impossible to get lost | Professional, dense, keyboard-friendly |
 
-**Two audiences, two different interfaces:**
+Key screens:
 
-| | Household app | WASAC staff dashboard |
-|---|---|---|
-| Who | Residents of Kigali and other towns, all ages and literacy levels | Billing and field staff |
-| Device | Low-cost Android phone, often outdoors in bright sun, patchy mobile data | Laptop or desktop in an office |
-| Job | Submit a reading in under a minute, understand the bill, pay | Review held readings fast and fairly, spot leaks and misreads |
-| Feel | Calm, plain, trustworthy, impossible to get lost | Dense, efficient, keyboard-friendly |
+    Public: landing page (what the service is, start a reading, staff sign-in).
+    Household: take/upload meter photo -> soft retake prompt (never blocking) -> confirm the reading -> "reading held for checking" -> bill -> pay with MoMo -> usage history -> messages.
+    Staff: review queue of pending_review readings -> anomaly flags -> household detail.
 
-Design them as two related but distinct experiences. Do not force the dashboard's density onto
-households or the households' simplicity onto staff.
+2. Visual direction
+The world: deep water at night
 
-**Key screens:**
-- Household: take/upload meter photo -> retake prompt (soft, never blocking) -> confirm the
-  reading -> "reading held for checking" state -> bill -> pay with MoMo -> usage history ->
-  notifications (possible leak, retake requested).
-- Staff: review queue of `pending_review` readings (photo, read digits, household history,
-  anomaly type, accept/reject) -> anomaly flags list -> household detail with consumption history.
+    Background: deep navy fading into luminous mid-blue glows, like the reference. Built with layered CSS radial-gradients on a near-navy base. No filter: blur(), no canvas, no video, no animated gradients - cheap phones must render it instantly. One static gradient composition per page type is enough.
+    Headlines: an elegant, high-contrast serif in white or near-white, large and confident, usually two short lines. This is where the personality lives.
+    Body text: a highly legible sans-serif, smaller and quiet, in light blue-grey on dark areas.
+    Buttons: primary = solid light button with dark text (strong contrast for the one key action); secondary = thin outlined pill like the reference. Never a glowing or gradient button.
+    Space: generous. Few elements per screen. Centre-aligned hero on the landing page; left-aligned content inside the app.
 
-## 2. Where the visual identity comes from
+Readability rule: content lives on light panels
 
-Take distinctive choices from the real world of this product, not from "water app" clichés.
+The household app is used outdoors in sunlight, where white text on dark blue is hard to read. So: the dark gradient is the stage, and anything a person must read carefully - the reading, the bill, amounts, forms, payment, error messages - sits on a light panel (off-white with a faint blue tint) floating on the gradient, with dark text. Short headlines and navigation may sit directly on the dark background. The staff dashboard may be darker overall (office lighting), but data tables and the decision pane still use light or high-contrast surfaces.
+Signature element: the meter counter
 
-**The signature element is the meter counter itself.** A real WASAC meter shows rolling wheels:
-black wheels for cubic metres, red wheels for litres. Wherever a reading appears, it may be shown
-as a counter: each digit in its own cell, cubic-metre digits on dark cells, litre digits on red
-cells, tabular figures so digits never shift. This links what the household sees on screen to what
-they see on their wall. Spend the design's boldness here. Keep everything around it quiet.
+Wherever a reading appears, show it as a meter counter: each digit in its own cell, cubic-metre digits on black cells, litre digits on red cells, tabular figures. On the navy background this is the one element that says "this is a water meter, this is WASAC". Keep it. Use it only on: confirm reading, held state, bill ("this reading"), staff decision pane. Never for money or history lists.
+Colour (refine exact values in the design plan, check contrast)
 
-Other honest sources of material: the meter's glass and brass body, pipes and valves, the
-household's own consumption over time, Rwandan francs, the moment of paying with a phone.
+    Deep navy (page base), mid blue (gradient glow), pale ice blue (glow highlights)
+    Off-white panel surface, ink (near-black text on panels)
+    Meter black and meter red (counter only - red is used nowhere else, including errors)
+    One calm warm tone for the "held for checking" state (e.g. brass/amber), never alarming red
 
-**Clichés to avoid for this subject:**
-- Water droplet icons, wave SVGs, bubbles, "splash" illustrations.
-- Blue-to-cyan gradients and an all-blue palette.
-- Stock photos of taps or smiling families.
-- Generic utility-company look: blue header, white cards, grey shadows.
+Still avoid
 
-**General AI-design tells to avoid** (unless I explicitly ask for one):
-1. Warm cream background (~#F4F1EA) with a high-contrast serif and a terracotta/clay accent (~#D97757).
-2. Near-black background with one acid-green or vermilion accent.
-3. Broadsheet layout: hairline rules, zero radius, dense newspaper columns.
-4. SaaS card kit: everything in identical rounded cards, same radius everywhere, the same soft grey
-   shadow (rgba(0,0,0,.1)), decorative gradient washes.
-5. Template chrome: tracked-out ALL-CAPS eyebrow labels above headings, meta text joined with
-   middle dots, "Word - fragment" labels, #0B0B0B/#111 instead of real black, monospace for small
-   data labels, "->" appended to buttons.
-6. A big number with a small label plus a gradient accent as the default "hero".
-7. Numbered markers (01/02/03) on content that is not a real sequence. (Submitting a reading IS a
-   real sequence, so steps there are fine.)
-8. Fade-and-slide-up animation on every section, hover effects on every card.
+    Water droplet icons, wave SVGs, bubbles, splash illustrations, stock photos of taps or families.
+    Neon/acid accents, glassmorphism blur, glowing borders, gradient text.
+    SaaS card kit: identical rounded cards with the same soft grey shadow everywhere.
+    Template chrome: ALL-CAPS tracked eyebrow labels above every heading (the reference has one small eyebrow on the hero only - at most one per page), meta text joined with middle dots, monospace for data labels, "->" appended to buttons.
+    Numbered markers (01/02/03) on content that is not a real sequence.
+    Fade-and-slide-up animation on every section. At most one orchestrated moment (landing hero).
 
-## 3. Hard constraints (non-negotiable)
+3. Hard constraints (non-negotiable)
 
-**Household app:**
-- Mobile first: design at 360px wide first, then scale up. No horizontal scrolling.
-- Readable in direct sunlight: text contrast at least WCAG AA, aim for AAA on readings and amounts.
-- Tap targets at least 48x48px. Primary actions within thumb reach at the bottom of the screen.
-- Low bandwidth: no hero images, no video, no icon fonts, no heavy animation libraries. Load at most
-  two font families, subset to Latin plus Latin Extended, with good system fallbacks.
-- Works with slow or dropped connections: every network action has loading, failed and retry states.
-- Three languages: Kinyarwanda, English, French. Leave room for text up to 40% longer than English.
-  Never put text inside images.
-- Money: Rwandan francs, no decimals, e.g. "RWF 4,500". Dates: DD/MM/YYYY. Volumes: "12.4 m3"
-  (show litres only where they matter).
+Household app:
 
-**Staff dashboard:**
-- Built for speed: the review queue must be usable with the keyboard (next/previous, accept, reject).
-- Show the meter photo, the read digits and the household's recent history side by side, so a
-  decision never needs a second screen.
-- Dense but calm: clear hierarchy, aligned numbers, tabular figures for all amounts and readings.
+    Mobile first at 360px, no horizontal scrolling.
+    Text on panels: WCAG AA minimum, aim for AAA on readings and amounts. Text directly on the gradient: check contrast against the lightest part of the gradient behind it.
+    Tap targets at least 48x48px; primary action within thumb reach at the bottom.
+    Low bandwidth: no hero images, no video, no icon fonts, no heavy animation libraries. Self-host fonts, at most three families (serif display, sans body, counter digits), subset where possible.
+    Every network action has loading, failed and retry states; photos and typed digits survive a failure.
+    Money: "RWF 4,500" (whole francs). Dates: DD/MM/YYYY. Volumes: "12.4 m3".
 
-**Both:**
-- Visible keyboard focus, reduced motion respected, colour never the only signal (pair with text or
-  an icon), semantic HTML.
-- Do not copy the official WASAC logo or brand assets unless the repo already contains approved
-  versions. Use the name in text only.
+Staff dashboard: keyboard-driven review queue (next/previous, accept, reject, undo); photo, read digits and household history side by side; tabular figures for all numbers.
 
-## 4. Typography
+Both: visible keyboard focus, reduced motion respected, colour never the only signal, semantic HTML, pinch-zoom allowed. Do not copy the official WASAC logo unless approved assets are in the repo.
+4. Language: Kinyarwanda first
 
-- One or two families. If two, make them clearly different in role.
-- Choose deliberately, not the usual defaults (no Inter, Roboto, Poppins, Montserrat, Open Sans,
-  Space Grotesk unless strongly justified for this brief).
-- Requirements: excellent legibility at small sizes on cheap screens, tabular numerals, full Latin
-  Extended support for Kinyarwanda and French.
-- Good starting points to evaluate (not mandates): Atkinson Hyperlegible (designed for low-vision
-  legibility) for body text; a condensed grotesque such as Barlow Condensed for counter digits,
-  echoing the narrow digits on real meter wheels.
-- Set a clear type scale (follow The Elements of Typographic Style), body line length under 80
-  characters, sentence case everywhere.
+    Use react-i18next (with i18next). Kinyarwanda (rw) is the default language, English (en) is the fallback, French (fr) is available.
+    Every user-facing string goes through t(). No hard-coded text, no text inside images.
+    The language choice is remembered on the device and switchable from the header and home screen.
+    Kinyarwanda text is often longer than English: design for strings up to 50% longer; never truncate a sentence.
+    Never machine-translate Kinyarwanda into the app. Missing strings fall back to English and are listed for the client to write.
 
-## 5. Writing in the interface
+5. Typography
 
-Words exist to help a person finish a task. Write for a household member who is not technical.
+    Display: an elegant high-contrast serif with good Latin Extended support (evaluate options such as Cormorant Garamond, Fraunces or EB Garamond against the reference; pick one, justify it). Use it only for headlines and large statements, never for body text, forms or numbers.
+    Body: Atkinson Hyperlegible Next (legibility on cheap screens, tabular figures).
+    Counter digits: Barlow Condensed, subset to 0-9.
+    Clear type scale (The Elements of Typographic Style), body line length under 80 characters, sentence case everywhere.
 
-- Plain verbs, sentence case, active voice, no filler, no marketing.
-- A button says exactly what happens: "Take photo", "Confirm reading", "Pay RWF 4,500".
-  The same action keeps the same name through the flow ("Pay" -> "Paid").
-- Retake prompts are specific and kind: "The last digits are blurry. Move closer and hold the phone
-  still." Not "Image quality insufficient."
-- Held readings never accuse the household: "We're checking this reading. You don't need to do
-  anything. We'll text you within 24 hours." Not "Anomaly detected."
-- Leak alerts are useful: what was noticed, what to check, what happens next.
-- Errors say what went wrong and how to fix it. Errors don't apologise and are never vague.
-- Empty screens invite the next action ("No readings yet. Take your first meter photo.").
-- Staff copy can be more technical but still plain: "Reading lower than last month",
-  not "MISREAD_SUSPECTED".
-- All user-facing strings go through the translation files, never hard-coded.
+6. Writing in the interface
 
-## 6. Process: plan, check, build, critique
+    Plain verbs, sentence case, active voice, no filler, no marketing slogans.
+    Buttons say exactly what happens: "Take photo", "Confirm reading", "Pay RWF 4,500".
+    Retake prompts are specific and kind: "The last digits are blurry. Move closer and hold the phone still."
+    Held readings never accuse: "We're checking this reading. You don't need to do anything."
+    Errors say what went wrong and how to fix it, never apologise, never vague.
+    Staff copy is plain: "Reading lower than last month", not "MISREAD_SUSPECTED".
 
-1. **Inspect first.** Read the existing frontend: framework, routing, styling approach, components,
-   API calls. Keep all API integration and behaviour working; this is a visual and UX redesign.
-2. **Write a design plan** in `docs/design/DESIGN_PLAN.md`:
-   - Colour: 4-6 named hex values with their roles, plus a dark mode only if justified.
-   - Type: families, roles, type scale.
-   - Layout: one-sentence concept per audience, ASCII wireframes for 3 key screens
-     (household submit flow, household bill, staff review queue), alignment rules.
-   - Signature: exactly how the meter counter is used, and where it is NOT used.
-   - Principles: 3-5 rules specific to this product.
-3. **Check the plan against this brief.** For each choice ask: would I make the same choice for any
-   other utility app? If yes, revise it and write down what changed and why.
-4. **Stop and show me the plan.** Do not write UI code until I approve it.
-5. **Build in order:** design tokens as CSS custom properties -> base typography -> the counter
-   component -> household screens -> staff screens. One screen per commit.
-6. **Critique as you go.** Check each screen at 360px and at desktop width. Take screenshots if the
-   environment allows. Before calling a screen done, remove one decorative element that does not
-   serve the user.
-7. Keep CSS specificity simple and predictable; avoid type selectors and class selectors fighting
-   over spacing.
+7. Engineering conventions
 
-## 7. Restraint
+    React + TypeScript (strict mode). Typed API client and typed response models matching the FastAPI schemas; no any without a comment explaining why.
+    CSS Modules plus design tokens as CSS custom properties. Keep selector specificity flat.
+    Tests with React Testing Library; keep all existing tests passing through every change.
 
-One memorable thing (the counter), everything else disciplined. If a choice exists only to look
-"designed", cut it.
+8. Process: plan, check, build, critique
+
+    Inspect the existing code first; keep all API behaviour working.
+    Update docs/design/DESIGN_PLAN.md for this direction: palette with hex values and contrast checks, type choices, gradient recipe, ASCII wireframes for the landing page, bill screen and staff review queue, and how the counter and light panels sit on the gradient.
+    Check every choice against this brief; write down what you changed and why.
+    Stop and show the plan. No UI code until it is approved.
+    Build one screen per commit, screenshot at 360px and desktop, remove one decorative element that does not serve the user before calling a screen done.
+
+9. Restraint
+
+The gradient sets the mood, the serif headline gives the voice, the counter gives the identity. Everything else is quiet. If a choice exists only to look "designed", cut it.
