@@ -1,0 +1,97 @@
+/**
+ * @file tokens.css
+ * @description Design tokens for the WASAC Smart Billing Platform (redesign v2).
+ * Values come from docs/design/DESIGN_PLAN.md. Colours are taken from the
+ * water meter itself: black and red number wheels, brass body, glass window.
+ * Contrast ratios are noted where text sits on a colour.
+ */
+
+:root {
+  /* ------------------------------------------------------------------------
+     Palette: six values, no gradients, no dark mode.
+     ------------------------------------------------------------------------ */
+  --wheel-black: #000000; /* m³ counter cells, primary buttons, body text */
+  --litre-red:   #A3111F; /* litre counter cells ONLY. Paper on it 7.9:1 */
+  --brass:       #6E5414; /* counter bezel, "held" state. On Paper 7.1:1; text on Paper only */
+  --slate:       #454E4B; /* secondary text. On Paper 8.6:1, on Glass 7.1:1 */
+  --glass:       #E4EAE7; /* page background, counter window */
+  --paper:       #FFFFFF; /* surfaces, digits on counter cells */
+
+  /* Roles. Components use these, not the palette names, unless the
+     colour IS the meaning (the counter). */
+  --color-bg:             var(--glass);
+  --color-surface:        var(--paper);
+  --color-text:           var(--wheel-black);
+  --color-text-secondary: var(--slate);
+  --color-action:         var(--wheel-black);
+  --color-on-action:      var(--paper);
+  --color-held:           var(--brass);
+  --color-rule:           var(--slate);
+
+  /* ------------------------------------------------------------------------
+     Type: Atkinson Hyperlegible Next for everything, Barlow Condensed for
+     counter digits only. Sizes follow Bringhurst's classical scale.
+     ------------------------------------------------------------------------ */
+  --font-text: 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
+
+  --size-small: 14px;        --leading-small: 20px;
+  --size-body-staff: 16px;   --leading-body-staff: 24px;
+  --size-body: 18px;         --leading-body: 28px;
+  --size-lead: 21px;         --leading-lead: 28px;
+  --size-title: 24px;        --leading-title: 32px;
+
+  --weight-regular: 400;
+  --weight-bold: 700;
+
+  --measure-household: 60ch;
+  --measure-staff: 75ch;
+
+  /* ------------------------------------------------------------------------
+     Space: 4px grid.
+     ------------------------------------------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --gutter-household: 16px;
+  --gutter-staff: 24px;
+  --width-household: 480px;
+
+  /* ------------------------------------------------------------------------
+     Size of things people touch.
+     ------------------------------------------------------------------------ */
+  --tap-min: 48px;
+  --button-height: 56px;
+
+  /* ------------------------------------------------------------------------
+     Radii by object, not one radius everywhere.
+     ------------------------------------------------------------------------ */
+  --radius-cell: 3px;    /* counter wheel windows */
+  --radius-bezel: 10px;  /* counter body */
+  --radius-button: 8px;
+  --radius-panel: 8px;   /* desktop; panels run edge to edge on mobile */
+
+  /* ------------------------------------------------------------------------
+     Focus: black ring with a Paper gap, visible on black buttons and on
+     white or Glass surfaces. Not brass (2.9:1 on black).
+     ------------------------------------------------------------------------ */
+  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 5px var(--wheel-black);
+
+  /* ------------------------------------------------------------------------
+     Motion: one movement in the whole app, a counter digit settling.
+     ------------------------------------------------------------------------ */
+  --motion-digit: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-digit: 0ms;
+  }
+}
