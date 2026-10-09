@@ -1,23 +1,25 @@
 /**
- * @file PageHeader.jsx
+ * @file PageHeader.tsx
  * @description Top-of-page header component with optional back navigation,
  * title/subtitle display, and a right-side actions slot.
  * Supports a transparent variant for screens with image or dark backgrounds.
  */
 
-import React from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './PageHeader.module.css';
 
-/**
- * @typedef {Object} PageHeaderProps
- * @property {string} title - Page title
- * @property {string} [subtitle] - Secondary description line
- * @property {string} [backHref] - Route to navigate back to (uses react-router navigate)
- * @property {string} [backLabel='Back'] - Screen-reader label for back button
- * @property {React.ReactNode} [actions] - Right-side action elements (e.g. buttons)
- * @property {'default'|'transparent'} [variant='default'] - Header style variant
- */
+interface PageHeaderProps {
+  title: string;
+  subtitle?: string;
+  /** Route to navigate back to; without it, back goes through history. */
+  backHref?: string;
+  /** Screen-reader label for the back button. */
+  backLabel?: string;
+  /** Right-side action elements (e.g. buttons). */
+  actions?: ReactNode;
+  variant?: 'default' | 'transparent';
+}
 
 /**
  * Left-arrow chevron SVG icon for the back button.
@@ -52,7 +54,7 @@ function PageHeader({
   backLabel = 'Back',
   actions,
   variant = 'default',
-}) {
+}: PageHeaderProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {

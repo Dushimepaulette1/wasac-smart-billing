@@ -1,11 +1,11 @@
 /**
- * @file Icon.jsx
+ * @file Icon.tsx
  * @description The few icons the app needs, as inline SVG (no icon font,
  * nothing to download). Icons always sit next to text that says the same
  * thing, so they are hidden from screen readers.
  */
 
-import React from 'react';
+import type { ReactNode } from 'react';
 
 const PATHS = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -38,12 +38,17 @@ const PATHS = {
   home: <path d="M4 11l8-6.5 8 6.5M6.5 9.5V19h11V9.5" />,
   bills: <path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2zM9 8.5h6M9 12h6" />,
   messages: <path d="M4 5.5h16v11H9l-5 4z" />,
-};
+} satisfies Record<string, ReactNode>;
 
-/**
- * @param {{ name: keyof typeof PATHS, size?: number, className?: string }} props
- */
-function Icon({ name, size = 24, className }) {
+export type IconName = keyof typeof PATHS;
+
+interface IconProps {
+  name: IconName;
+  size?: number;
+  className?: string;
+}
+
+function Icon({ name, size = 24, className }: IconProps) {
   return (
     <svg
       className={className}

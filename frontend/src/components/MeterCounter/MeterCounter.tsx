@@ -1,5 +1,5 @@
 /**
- * @file MeterCounter.jsx
+ * @file MeterCounter.tsx
  * @description The meter counter: a reading shown the way the wall meter
  * shows it. 5 black cells for cubic metres, 3 red cells for litres, inside
  * a brass bezel. See docs/design/DESIGN_PLAN.md, section 4.
@@ -9,40 +9,54 @@
  * moves the cursor there and typing overwrites that digit.
  */
 
-import React, { useEffect, useId, useRef, useState } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import {
   READING_LENGTH,
   CUBIC_METRE_DIGITS,
   normalizeReading,
   formatReading,
+  type Cells,
 } from '../../utils/reading';
 import styles from './MeterCounter.module.css';
 
-/**
- * @typedef {Object} MeterCounterLabels
- * @property {string} reading - Accessible name, e.g. "Meter reading"
- * @property {string} cubicMetres - Short unit under the black cells, e.g. "m³"
- * @property {string} litres - Unit under the red cells, e.g. "litres"
- * @property {string} cubicMetresLong - Spoken unit, e.g. "cubic metres"
- */
+export interface MeterCounterLabels {
+  /** Accessible name, e.g. "Meter reading". */
+  reading: string;
+  /** Short unit under the black cells, e.g. "m³". */
+  cubicMetres: string;
+  /** Unit under the red cells, e.g. "litres". */
+  litres: string;
+  /** Spoken unit, e.g. "cubic metres". */
+  cubicMetresLong: string;
+}
 
-/**
- * @typedef {Object} MeterCounterProps
- * @property {string[]} cells - 8 cells, each '0'-'9' or '' (see utils/reading)
- * @property {MeterCounterLabels} labels - Translated strings
- * @property {'display'|'edit'} [mode]
- * @property {'large'|'small'} [size] - large for households, small for staff
- * @property {(cells: string[]) => void} [onChange] - Required in edit mode
- * @property {boolean} [autoFocus] - Edit mode: focus the first blank cell on mount
- * @property {boolean} [showValue] - Show the reading as text under the counter
- * @property {string} [locale]
- * @property {string} [describedBy] - Id of help text for the input
- */
+export interface MeterCounterProps {
+  /** 8 cells, each "0"-"9" or "" (see utils/reading). */
+  cells: Cells;
+  labels: MeterCounterLabels;
+  mode?: 'display' | 'edit';
+  /** large for households, small for staff. */
+  size?: 'large' | 'small';
+  /** Required in edit mode. */
+  onChange?: (cells: Cells) => void;
+  /** Edit mode: focus the first blank cell on mount. */
+  autoFocus?: boolean;
+  /** Show the reading as text under the counter. */
+  showValue?: boolean;
+  locale?: string;
+  /** Id of help text for the input. */
+  describedBy?: string;
+}
 
-/**
- * MeterCounter component.
- * @param {MeterCounterProps} props
- */
 function MeterCounter({
   cells,
   labels,
@@ -53,11 +67,11 @@ function MeterCounter({
   showValue = false,
   locale = 'en',
   describedBy,
-}) {
+}: MeterCounterProps) {
   const isEdit = mode === 'edit';
   const inputId = useId();
   const valueId = useId();
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   // Caret position 0..8, like a text cursor: typing writes the cell after it,
   // Backspace clears the cell before it. The highlighted cell is the one
   // that typing will write next.
@@ -79,16 +93,16 @@ function MeterCounter({
     if (el && focused) el.setSelectionRange(el.value.length, el.value.length);
   });
 
-  const moveCaret = (to) => setCaret(Math.max(0, Math.min(to, READING_LENGTH)));
+  const moveCaret = (to: number) => setCaret(Math.max(0, Math.min(to, READING_LENGTH)));
 
-  const commit = (next, nextCaret) => {
+  const commit = (next: Cells, nextCaret: number) => {
     setEdited(true);
     moveCaret(nextCaret);
     onChange?.(next);
   };
 
   // At the end of a full reading, typing replaces the last digit.
-  const typeDigits = (digits) => {
+  const typeDigits = (digits: string) => {
     const next = [...cells];
     let i = active;
     for (const d of digits) {
@@ -110,8 +124,10 @@ function MeterCounter({
 
   // The input's value is derived from cells, so React puts it back after
   // every change; we only read what the user did from the native event.
-  const handleChange = (e) => {
-    const { inputType, data } = e.nativeEvent;
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    // Typing produces an InputEvent; read its fields without assuming one,
+    // since other sources (and tests) fire plain events.
+    const { inputType, data } = e.nativeEvent as Partial<InputEvent>;
     if (inputType && inputType.startsWith('delete')) {
       if (inputType === 'deleteContentForward') {
         const next = [...cells];
@@ -127,7 +143,7 @@ function MeterCounter({
   };
 
   // A pasted reading follows the same padding rule as the digit reader.
-  const handlePaste = (e) => {
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const text = e.clipboardData.getData('text');
     const digits = text.replace(/\D/g, '');
@@ -139,20 +155,21 @@ function MeterCounter({
     }
   };
 
-  const handleKeyDown = (e) => {
-    const moves = {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const moves: Record<string, number> = {
       ArrowLeft: active - 1,
       ArrowRight: active + 1,
       Home: 0,
       End: READING_LENGTH,
     };
-    if (e.key in moves) {
+    const target = moves[e.key];
+    if (target !== undefined) {
       e.preventDefault();
-      moveCaret(moves[e.key]);
+      moveCaret(target);
     }
   };
 
-  const handleCellPointer = (index) => (e) => {
+  const handleCellPointer = (index: number) => (e: PointerEvent<HTMLSpanElement>) => {
     if (!isEdit) return;
     e.preventDefault(); // keep focus on the input, don't let the cell take it
     moveCaret(index);
@@ -163,7 +180,7 @@ function MeterCounter({
     .filter(Boolean)
     .join(' ');
 
-  const renderCell = (digit, index) => {
+  const renderCell = (digit: string, index: number) => {
     const isLitre = index >= CUBIC_METRE_DIGITS;
     const cellClass = [
       styles.cell,
@@ -238,7 +255,7 @@ function MeterCounter({
 }
 
 // Start at the first blank; on a complete reading, start at the end.
-function firstBlank(cells) {
+function firstBlank(cells: Cells): number {
   const i = cells.indexOf('');
   return i === -1 ? cells.length : i;
 }
