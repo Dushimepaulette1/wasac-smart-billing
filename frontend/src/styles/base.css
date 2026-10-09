@@ -22,7 +22,8 @@ body {
   min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-text);
+  /* Plain zero for every number in text; IDs opt back in with .code. */
+  font-family: var(--font-numbers);
   font-size: var(--size-body);
   line-height: var(--leading-body);
   font-weight: var(--weight-regular);
@@ -98,9 +99,9 @@ a {
   color: var(--color-text-secondary);
 }
 
-/* Amounts, volumes, readings, dates: plain zero, digits never shift. */
+/* Amounts, volumes, readings, dates in lists and tables: digits never shift.
+   (The plain zero comes from the body font.) */
 .num {
-  font-family: var(--font-numbers);
   font-variant-numeric: tabular-nums;
 }
 

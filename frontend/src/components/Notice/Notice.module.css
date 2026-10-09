@@ -27,8 +27,15 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
   gap: var(--space-2) var(--space-4);
   margin-top: var(--space-2);
+}
+
+/* A text button's label lines up with the text above it. */
+.actions > [data-variant='text']:first-child {
+  margin-left: calc(-1 * var(--space-2));
 }
 
 /* Held: brass, calm. Brass text is only used on Paper (7.1:1). */
@@ -41,11 +48,11 @@
   color: var(--brass);
 }
 
-/* Advice: lighter edge so it reads as a suggestion, not a stop. */
+/* Advice reads as a suggestion, not a stop: no frame, just icon and words. */
 .info {
-  border-color: var(--slate);
-  border-width: 1px;
-  padding: calc(var(--space-4) + 1px);
+  border: 0;
+  padding: 0;
+  background: none;
 }
 
 .done {

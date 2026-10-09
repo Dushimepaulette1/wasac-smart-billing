@@ -32,10 +32,13 @@ function Screen({ title, step, back, action, nav = false, children }) {
   const { t } = useI18n();
   const headingRef = useRef(null);
 
-  // Move focus to the new screen's title so screen readers announce it.
+  // Move focus to the new screen's title so screen readers announce it,
+  // unless something on the screen already took focus (such as the meter
+  // counter opening for typing). Child effects run first, so check.
   useEffect(() => {
     document.title = `${title} | ${t('app.name')}`;
-    headingRef.current?.focus({ preventScroll: true });
+    const active = document.activeElement;
+    if (!active || active === document.body) headingRef.current?.focus({ preventScroll: true });
   }, [title, t]);
 
   const goBack = () => (typeof back === 'string' ? navigate(back) : navigate(-1));

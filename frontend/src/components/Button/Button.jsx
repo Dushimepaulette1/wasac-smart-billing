@@ -43,9 +43,10 @@ function Button({
   disabled,
   ...rest
 }) {
+  const kind = VARIANTS[variant] || 'primary';
   const classes = [
     styles.button,
-    styles[VARIANTS[variant] || 'primary'],
+    styles[kind],
     fullWidth ? styles.fullWidth : '',
     className || '',
   ]
@@ -61,7 +62,7 @@ function Button({
 
   if (href) {
     return (
-      <a className={classes} href={href} {...rest}>
+      <a className={classes} href={href} data-variant={kind} {...rest}>
         {content}
       </a>
     );
@@ -71,6 +72,7 @@ function Button({
     <button
       type={type}
       className={classes}
+      data-variant={kind}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}
