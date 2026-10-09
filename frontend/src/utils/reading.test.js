@@ -11,6 +11,7 @@ describe('normalizeReading', () => {
     expect(normalizeReading('02813450')).toEqual({
       cells: ['0', '2', '8', '1', '3', '4', '5', '0'],
       needsCheck: false,
+      raw: '02813450',
     });
   });
 
@@ -39,6 +40,18 @@ describe('normalizeReading', () => {
     const { cells, needsCheck } = normalizeReading(raw);
     expect(needsCheck).toBe(true);
     expect(cells).toEqual(['', '', '', '', '', '', '', '']);
+  });
+
+  it('keeps the raw reading of a wrong-length result so it can be shown', () => {
+    expect(normalizeReading(' 005162454 ')).toEqual({
+      cells: ['', '', '', '', '', '', '', ''],
+      needsCheck: true,
+      raw: '005162454',
+    });
+  });
+
+  it('gives an empty raw reading when the reader returned nothing', () => {
+    expect(normalizeReading(null).raw).toBe('');
   });
 });
 
