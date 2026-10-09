@@ -47,3 +47,9 @@ export function makeFormatters(locale, t) {
     },
   };
 }
+
+/** Today in the device's own time zone as YYYY-MM-DD, for dates we create. */
+export function localDateIso(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}

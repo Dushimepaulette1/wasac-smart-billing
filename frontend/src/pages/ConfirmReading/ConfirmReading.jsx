@@ -17,6 +17,7 @@ import MeterCounter from '../../components/MeterCounter/MeterCounter';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
+import { localDateIso } from '../../i18n/format';
 import { useSubmission } from '../../household/submission';
 import { isComplete } from '../../utils/reading';
 import { api } from '../../api/client';
@@ -84,7 +85,7 @@ function ConfirmReading() {
         setState('retake');
       } else {
         leaving.current = true;
-        navigate('/submit/held', { state: { cells, at: new Date().toISOString() } });
+        navigate('/submit/held', { state: { cells, at: localDateIso() } });
         submission.reset();
       }
     } catch (err) {

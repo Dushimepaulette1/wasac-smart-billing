@@ -14,6 +14,7 @@ import Welcome from '../pages/Welcome/Welcome';
 import CustomerHome from '../pages/CustomerHome/CustomerHome';
 import CameraCapture from '../pages/CameraCapture/CameraCapture';
 import ConfirmReading from '../pages/ConfirmReading/ConfirmReading';
+import ReadingHeld from '../pages/ReadingHeld/ReadingHeld';
 import BillDisplay from '../pages/BillDisplay/BillDisplay';
 import Payment from '../pages/Payment/Payment';
 import BillHistory from '../pages/BillHistory/BillHistory';
@@ -76,6 +77,7 @@ function AppRouter() {
         />
         <Route path="/submit/camera" element={<CameraCapture />} />
         <Route path="/submit/confirm" element={<ConfirmReading />} />
+        <Route path="/submit/held" element={<ReadingHeld />} />
         <Route path="/submit/manual" element={<Navigate to="/submit/camera" replace />} />
         <Route
           path="/bill"

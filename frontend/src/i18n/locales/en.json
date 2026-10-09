@@ -63,5 +63,10 @@
   "confirm.sending": "Sending your reading…",
   "confirm.kept": "Your numbers are saved.",
   "confirm.retakeTitle": "We need a clearer photo",
-  "confirm.retakeBody": "We could not use this reading. Take the photo again, close to the numbers and with good light."
+  "confirm.retakeBody": "We could not use this reading. Take the photo again, close to the numbers and with good light.",
+  "held.title": "Reading sent",
+  "held.checkingTitle": "We're checking this reading",
+  "held.checkingBody": "You don't need to do anything. We'll text you within 24 hours.",
+  "held.yourReading": "Your reading",
+  "held.sentOn": "Sent on {date}"
 }
