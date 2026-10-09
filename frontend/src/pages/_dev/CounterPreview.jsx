@@ -1,7 +1,7 @@
 /**
  * @file CounterPreview.jsx
  * @description Development-only page for reviewing MeterCounter states.
- * Registered at /dev/counter when NODE_ENV is not "production"; it is not
+ * Registered at /dev/counter in development builds only; it is not
  * part of the product, so its strings are not translated.
  */
 

@@ -1,9 +1,9 @@
 import loadHome from './loadHome';
 import { api } from '../api/client';
 
-jest.mock('../api/client', () => {
-  const actual = jest.requireActual('../api/client');
-  return { ...actual, api: { getCustomer: jest.fn(), getBills: jest.fn(), getHouseholdFlags: jest.fn() } };
+vi.mock('../api/client', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, api: { getCustomer: vi.fn(), getBills: vi.fn(), getHouseholdFlags: vi.fn() } };
 });
 
 const flag = (anomaly_type, status = 'open', requires_staff_review = true) => ({ anomaly_type, status, requires_staff_review });

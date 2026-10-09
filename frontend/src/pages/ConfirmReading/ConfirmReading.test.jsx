@@ -31,11 +31,11 @@ const counterCells = (container) =>
   [...container.querySelectorAll('[class*="cell"]')].map((c) => c.textContent).join('|');
 
 beforeAll(() => {
-  if (!global.fetch) global.fetch = () => Promise.reject(new Error('fetch not mocked'));
+  if (!globalThis.fetch) globalThis.fetch = () => Promise.reject(new Error('fetch not mocked'));
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
   window.sessionStorage.clear();
 });
 
@@ -67,7 +67,7 @@ describe('ConfirmReading', () => {
   });
 
   it('asks for all 8 numbers instead of sending an incomplete reading', () => {
-    const fetchMock = jest.spyOn(global, 'fetch');
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     renderWith('005162454');
     fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Fill in all 8 numbers');
@@ -75,7 +75,7 @@ describe('ConfirmReading', () => {
   });
 
   it('goes to the bill when the reading creates one', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({ success: true, bill_id: 7 }),
@@ -88,7 +88,7 @@ describe('ConfirmReading', () => {
   });
 
   it('goes to the held screen when the reading is held for checking', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({ success: true, bill_id: null, anomaly: { pending_review: true } }),
@@ -101,7 +101,7 @@ describe('ConfirmReading', () => {
   });
 
   it('keeps the typed numbers when sending fails', async () => {
-    jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
     const { container } = renderWith('00484500');
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));

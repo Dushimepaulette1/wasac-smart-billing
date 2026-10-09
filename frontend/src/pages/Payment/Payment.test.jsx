@@ -5,9 +5,9 @@ import Payment from './Payment';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { api } from '../../api/client';
 
-jest.mock('../../api/client', () => {
-  const actual = jest.requireActual('../../api/client');
-  return { ...actual, api: { getBills: jest.fn(), getCustomer: jest.fn(), payBill: jest.fn() } };
+vi.mock('../../api/client', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, api: { getBills: vi.fn(), getCustomer: vi.fn(), payBill: vi.fn() } };
 });
 
 const BILL = { bill_id: 19, consumption_m3: 20.5, amount_due: 12400.5, payment_status: 'unpaid', created_at: '2026-10-09T10:26:25' };

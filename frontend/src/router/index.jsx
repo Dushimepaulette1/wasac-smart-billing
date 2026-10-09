@@ -103,7 +103,7 @@ function AppRouter() {
           }
         />
 
-        {process.env.NODE_ENV !== 'production' && (
+        {import.meta.env.DEV && (
           <Route path="/dev/counter" element={<CounterPreview />} />
         )}
 
