@@ -97,5 +97,8 @@
   "pay.bill": "TODO: translate",
   "pay.amount": "TODO: translate",
   "pay.date": "TODO: translate",
-  "pay.transaction": "TODO: translate"
+  "pay.transaction": "TODO: translate",
+  "history.title": "TODO: translate",
+  "history.empty": "TODO: translate",
+  "home.read": "TODO: translate"
 }
