@@ -143,7 +143,7 @@ export default function BillDisplay() {
                 <div className={styles.stackedBarTrack}>
                   {bill.tiers.map((t, idx) => {
                     const pct = (t.units / bill.consumption) * 100;
-                    const tierColors = ['#0D9488', '#14B8A6', '#2DD4BF', '#F59E0B'];
+                    const tierColors = ['#3B82F6', '#60A5FA', '#93C5FD', '#FBBF24'];
                     return (
                       <div
                         key={idx}
@@ -160,7 +160,7 @@ export default function BillDisplay() {
 
                 <div className={styles.tierLegendRow}>
                   {bill.tiers.map((t, idx) => {
-                    const dotColors = ['#0D9488', '#14B8A6', '#2DD4BF', '#F59E0B'];
+                    const dotColors = ['#3B82F6', '#60A5FA', '#93C5FD', '#FBBF24'];
                     return (
                       <div key={idx} className={styles.legendItem}>
                         <span

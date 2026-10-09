@@ -106,7 +106,7 @@ export default function BillHistory() {
                         <div className={styles.tierBarTrack}>
                           {bill.tiers.map((t, idx) => {
                             const pct = (t.units / bill.consumption) * 100;
-                            const colors = ['#0D9488', '#14B8A6', '#2DD4BF', '#F59E0B'];
+                            const colors = ['#3B82F6', '#60A5FA', '#93C5FD', '#FBBF24'];
                             return (
                               <div
                                 key={idx}

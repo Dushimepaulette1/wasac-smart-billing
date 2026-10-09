@@ -1,47 +1,46 @@
 /* ==========================================================================
-   WASAC Smart Billing Platform — Global Styles
-   Design System foundation: custom properties, resets, base styles,
-   grain texture, and keyframe animations.
+   WASAC Smart Billing Platform — Global Design System
+   Dark navy + electric blue. Minimal, precise, professional.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   COLOR PALETTE
+   COLOR TOKENS
    -------------------------------------------------------------------------- */
 :root {
-  /* Backgrounds */
-  --color-bg-base: #F5F2EE;
-  --color-bg-surface: #FAF8F5;
-  --color-bg-elevated: #FFFFFF;
-  --color-bg-deep: #1C1917;
-  --color-bg-deep-2: #292524;
+  /* ── Backgrounds — deep navy hierarchy ── */
+  --color-bg-base:    #07090F;
+  --color-bg-surface: #0C1120;
+  --color-bg-elevated:#111827;
+  --color-bg-deep:    #040609;
+  --color-bg-deep-2:  #090D19;
 
-  /* Brand Accent — Teal */
-  --color-accent: #0D9488;
-  --color-accent-light: #CCFBF1;
-  --color-accent-dark: #0F766E;
+  /* ── Accent — electric blue ── */
+  --color-accent:       #3B82F6;
+  --color-accent-light: rgba(59, 130, 246, 0.12);
+  --color-accent-dark:  #2563EB;
 
-  /* Text */
-  --color-text-primary: #1C1917;
-  --color-text-secondary: #57534E;
-  --color-text-muted: #A8A29E;
-  --color-text-inverse: #FAF8F5;
+  /* ── Text ── */
+  --color-text-primary:   #E8EEFF;
+  --color-text-secondary: #7A93B4;
+  --color-text-muted:     #445A78;
+  --color-text-inverse:   #07090F;
 
-  /* Borders */
-  --color-border: #E7E5E4;
-  --color-border-strong: #A8A29E;
+  /* ── Borders ── */
+  --color-border:        #1A2540;
+  --color-border-strong: #283A58;
 
-  /* Semantic — Error / Warning / Success */
-  --color-error: #B45309;
-  --color-error-bg: #FEF3C7;
-  --color-success: #0D9488;
-  --color-success-bg: #CCFBF1;
-  --color-warning: #D97706;
-  --color-warning-bg: #FEF9C3;
+  /* ── Semantic ── */
+  --color-error:      #F87171;
+  --color-error-bg:   rgba(248, 113, 113, 0.10);
+  --color-success:    #34D399;
+  --color-success-bg: rgba(52, 211, 153, 0.10);
+  --color-warning:    #FBBF24;
+  --color-warning-bg: rgba(251, 191, 36, 0.10);
 
-  /* Status */
-  --color-paid: #0D9488;
-  --color-unpaid: #D97706;
-  --color-review: #6366F1;
+  /* ── Status ── */
+  --color-paid:   #34D399;
+  --color-unpaid: #FBBF24;
+  --color-review: #A78BFA;
 
   /* --------------------------------------------------------------------------
      SPACING SCALE — 4px base unit
@@ -66,27 +65,27 @@
   /* --------------------------------------------------------------------------
      BORDER RADIUS
      -------------------------------------------------------------------------- */
-  --radius-sm:   6px;
-  --radius-md:   12px;
-  --radius-lg:   20px;
-  --radius-xl:   32px;
+  --radius-sm:   4px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
   --radius-full: 9999px;
 
   /* --------------------------------------------------------------------------
-     SHADOWS — warm-toned using rgba(28,25,23,x)
+     SHADOWS — deeper for dark backgrounds
      -------------------------------------------------------------------------- */
-  --shadow-sm:  0 1px 2px rgba(28,25,23,0.05), 0 1px 3px rgba(28,25,23,0.08);
-  --shadow-md:  0 4px 6px rgba(28,25,23,0.06), 0 2px 12px rgba(28,25,23,0.10);
-  --shadow-lg:  0 10px 24px rgba(28,25,23,0.10), 0 4px 8px rgba(28,25,23,0.06);
-  --shadow-xl:  0 20px 48px rgba(28,25,23,0.14), 0 8px 16px rgba(28,25,23,0.08);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.50), 0 2px 6px rgba(0,0,0,0.30);
+  --shadow-lg:  0 10px 32px rgba(0,0,0,0.60), 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-xl:  0 24px 56px rgba(0,0,0,0.70), 0 8px 20px rgba(0,0,0,0.40);
 
   /* --------------------------------------------------------------------------
      ANIMATION
      -------------------------------------------------------------------------- */
-  --duration-fast:   150ms;
-  --duration-base:   250ms;
-  --duration-slow:   400ms;
-  --duration-slower: 600ms;
+  --duration-fast:   120ms;
+  --duration-base:   220ms;
+  --duration-slow:   380ms;
+  --duration-slower: 560ms;
 
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -111,17 +110,17 @@
   --weight-semibold: 600;
   --weight-bold:     700;
 
-  --leading-tight:  1.2;
-  --leading-snug:   1.35;
-  --leading-base:   1.55;
-  --leading-loose:  1.7;
+  --leading-tight: 1.15;
+  --leading-snug:  1.3;
+  --leading-base:  1.55;
+  --leading-loose: 1.7;
 
   /* --------------------------------------------------------------------------
      LAYOUT
      -------------------------------------------------------------------------- */
-  --sidebar-width:   240px;
-  --nav-height-mob:  64px;
-  --content-max-w:   1200px;
+  --sidebar-width:  240px;
+  --nav-height-mob: 64px;
+  --content-max-w:  1200px;
 }
 
 /* --------------------------------------------------------------------------
@@ -150,11 +149,12 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-bg-base);
 
-  /* Subtle grain texture using SVG noise pattern */
+  /* Subtle radial blue ambient + grain texture */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    radial-gradient(ellipse 120% 40% at 50% -10%, rgba(59, 130, 246, 0.07) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 200px 200px;
+  background-size: auto, 180px 180px;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -165,8 +165,7 @@ body {
 /* --------------------------------------------------------------------------
    ELEMENT RESETS
    -------------------------------------------------------------------------- */
-img,
-svg {
+img, svg {
   display: block;
   max-width: 100%;
 }
@@ -188,15 +187,12 @@ button {
   font-size: inherit;
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   font-family: inherit;
   font-size: inherit;
 }
 
-ul,
-ol {
+ul, ol {
   list-style: none;
 }
 
@@ -214,20 +210,20 @@ p {
    SELECTION
    -------------------------------------------------------------------------- */
 ::selection {
-  background-color: var(--color-accent-light);
-  color: var(--color-accent-dark);
+  background-color: rgba(59, 130, 246, 0.25);
+  color: var(--color-text-primary);
 }
 
 /* --------------------------------------------------------------------------
-   SCROLLBAR STYLING
+   SCROLLBAR
    -------------------------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-base);
+  background: var(--color-bg-surface);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -240,7 +236,7 @@ p {
 }
 
 /* --------------------------------------------------------------------------
-   FOCUS VISIBLE — accessible but clean
+   FOCUS
    -------------------------------------------------------------------------- */
 :focus {
   outline: none;
@@ -253,132 +249,67 @@ p {
 }
 
 /* --------------------------------------------------------------------------
-   KEYFRAME ANIMATIONS
+   KEYFRAMES
    -------------------------------------------------------------------------- */
-
-/* Shimmer — skeleton loading left-to-right sweep */
 @keyframes shimmer {
-  0% {
-    background-position: -800px 0;
-  }
-  100% {
-    background-position: 800px 0;
-  }
+  0%   { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
 }
 
-/* Fade In */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Slide Up — content entering from below */
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Slide Down — content entering from above */
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Scale In — subtle pop-in */
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-/* Slide In Right — sheet/panel entering from right */
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(32px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Slide Out Right — sheet/panel exiting to right */
 @keyframes slideOutRight {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(32px);
-  }
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(28px); }
 }
 
-/* Wave — used for background decorative elements */
 @keyframes wave {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  33% {
-    transform: translateY(-6px) scale(1.02);
-  }
-  66% {
-    transform: translateY(4px) scale(0.98);
-  }
+  0%, 100% { transform: translateY(0) scale(1); }
+  33%       { transform: translateY(-5px) scale(1.02); }
+  66%       { transform: translateY(3px) scale(0.98); }
 }
 
-/* Dot wave — for loading dots sequencing */
 @keyframes dotWave {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  30% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+  30%           { transform: translateY(-8px); opacity: 1; }
 }
 
-/* Spin — for loading arcs */
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* Progress bar — for auto-dismiss timer */
 @keyframes progressDrain {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.15); }
+  50%       { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
 }
 
 /* --------------------------------------------------------------------------
@@ -396,17 +327,9 @@ p {
   border: 0;
 }
 
-.animate-fade-in {
-  animation: fadeIn var(--duration-base) var(--ease-out) both;
-}
-
-.animate-slide-up {
-  animation: slideUp var(--duration-slow) var(--ease-out) both;
-}
-
-.animate-scale-in {
-  animation: scaleIn var(--duration-base) var(--ease-out) both;
-}
+.animate-fade-in  { animation: fadeIn  var(--duration-base) var(--ease-out) both; }
+.animate-slide-up { animation: slideUp var(--duration-slow) var(--ease-out) both; }
+.animate-scale-in { animation: scaleIn var(--duration-base) var(--ease-out) both; }
 
 /* --------------------------------------------------------------------------
    APP LAYOUT ROOT

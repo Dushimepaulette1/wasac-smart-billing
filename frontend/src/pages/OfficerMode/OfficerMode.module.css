@@ -31,7 +31,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background-color: rgba(13, 148, 136, 0.2);
+  background-color: rgba(59, 130, 246, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,7 +137,7 @@
 }
 
 .reviewQueueBtn:hover {
-  background-color: #b2f5ea;
+  background-color: rgba(59, 130, 246, 0.12);
 }
 
 .customerListSection {

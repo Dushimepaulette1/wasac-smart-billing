@@ -1,24 +1,21 @@
 /* ==========================================================================
-   Card Component Styles
+   Card Component — dark surfaces, clean borders
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   Base Card
-   -------------------------------------------------------------------------- */
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-lg);
   transition:
-    box-shadow var(--duration-base) var(--ease-out),
-    transform var(--duration-base) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+    box-shadow      var(--duration-base) var(--ease-out),
+    transform       var(--duration-base) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    border-color    var(--duration-fast) var(--ease-out);
   text-align: left;
   font-family: inherit;
   font-size: inherit;
   color: var(--color-text-primary);
-  /* Reset button styles when interactive */
   border: none;
   cursor: default;
   width: 100%;
@@ -27,36 +24,32 @@
   text-decoration: none;
 }
 
-/* --------------------------------------------------------------------------
-   Variants
-   -------------------------------------------------------------------------- */
+/* ── Variants ── */
 .variant-default {
   background-color: var(--color-bg-elevated);
-  box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .variant-elevated {
   background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-strong);
   box-shadow: var(--shadow-md);
-  border: 1px solid var(--color-border);
 }
 
 .variant-accent {
-  background-color: var(--color-accent-light);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(13, 148, 136, 0.15);
+  background-color: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  box-shadow: none;
 }
 
 .variant-ghost {
   background-color: transparent;
+  border: 1px solid var(--color-border);
   box-shadow: none;
-  border: 1.5px solid var(--color-border);
 }
 
-/* --------------------------------------------------------------------------
-   Interactive State
-   -------------------------------------------------------------------------- */
+/* ── Interactive ── */
 .interactive {
   cursor: pointer;
 }
@@ -71,9 +64,13 @@
   box-shadow: var(--shadow-sm);
 }
 
+.interactive.variant-default:hover {
+  border-color: var(--color-border-strong);
+}
+
 .interactive.variant-accent:hover {
-  background-color: #B2F5EA;
-  border-color: rgba(13, 148, 136, 0.25);
+  background-color: rgba(59, 130, 246, 0.10);
+  border-color: rgba(59, 130, 246, 0.28);
 }
 
 .interactive.variant-ghost:hover {
@@ -86,17 +83,7 @@
   outline-offset: 3px;
 }
 
-/* --------------------------------------------------------------------------
-   Padding Presets
-   -------------------------------------------------------------------------- */
-.padding-sm {
-  padding: var(--space-4);
-}
-
-.padding-md {
-  padding: var(--space-6);
-}
-
-.padding-lg {
-  padding: var(--space-8);
-}
+/* ── Padding presets ── */
+.padding-sm { padding: var(--space-4); }
+.padding-md { padding: var(--space-6); }
+.padding-lg { padding: var(--space-8); }

@@ -50,7 +50,7 @@
 .segmentActive {
   background-color: var(--color-accent);
   height: 8px;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.20);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.20);
 }
 
 /* --------------------------------------------------------------------------
@@ -77,19 +77,19 @@
   height: 14px;
   border-radius: var(--radius-full);
   background-color: var(--color-accent);
-  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.40);
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.40);
   animation: pulseRing 1.8s var(--ease-out) infinite;
 }
 
 @keyframes pulseRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.40);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.40);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(13, 148, 136, 0);
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 }
 

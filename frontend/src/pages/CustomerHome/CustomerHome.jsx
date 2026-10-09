@@ -42,7 +42,7 @@ export default function CustomerHome() {
         <svg viewBox="0 0 1000 300" fill="none" preserveAspectRatio="none">
           <path
             d="M0,160 C320,300 420,0 1000,160 L1000,0 L0,0 Z"
-            fill="rgba(13, 148, 136, 0.035)"
+            fill="rgba(59, 130, 246, 0.04)"
           />
         </svg>
       </div>

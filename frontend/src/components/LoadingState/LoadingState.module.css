@@ -23,9 +23,9 @@
   position: fixed;
   inset: 0;
   z-index: 900;
-  background-color: rgba(245, 242, 238, 0.80);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(7, 9, 15, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   flex-direction: column;
   animation: fadeIn var(--duration-base) var(--ease-out) both;
 }
