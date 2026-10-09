@@ -4,7 +4,7 @@
  * Connects all 11 production screens with responsive shell navigation (SideNav + BottomNav).
  */
 
-import React from 'react';
+import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav/BottomNav';
 import SideNav from '../components/SideNav/SideNav';
@@ -30,7 +30,7 @@ import CounterPreview from '../pages/_dev/CounterPreview';
  * Conditionally suppresses BottomNav on immersive camera capture and payment screens
  * to prevent touch target overlap on mobile devices.
  */
-function AppShell({ children }) {
+function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   const hideMobileNavPaths = ['/submit/camera', '/payment'];

@@ -1,10 +1,9 @@
 /**
- * @file App.jsx
+ * @file App.tsx
  * @description Root application component for the WASAC Smart Billing Platform.
  * Imports global design-system styles and renders the application router.
  */
 
-import React from 'react';
 import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';

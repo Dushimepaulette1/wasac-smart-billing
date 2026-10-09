@@ -1,11 +1,11 @@
 /**
- * @file CounterPreview.jsx
+ * @file CounterPreview.tsx
  * @description Development-only page for reviewing MeterCounter states.
  * Registered at /dev/counter in development builds only; it is not
  * part of the product, so its strings are not translated.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import MeterCounter from '../../components/MeterCounter/MeterCounter';
 import { normalizeReading, cellsToDigits } from '../../utils/reading';
 import styles from './CounterPreview.module.css';
@@ -17,7 +17,7 @@ const LABELS = {
   cubicMetresLong: 'cubic metres',
 };
 
-function EditableExample({ raw, autoFocus }) {
+function EditableExample({ raw, autoFocus = false }: { raw: string; autoFocus?: boolean }) {
   const initial = normalizeReading(raw);
   const [cells, setCells] = useState(initial.cells);
   return (

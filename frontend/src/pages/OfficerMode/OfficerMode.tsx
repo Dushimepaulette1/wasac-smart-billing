@@ -1,14 +1,14 @@
 /**
- * @file OfficerMode.jsx
+ * @file OfficerMode.tsx
  * @description Screen 9: Field Officer Operations interface for WASAC.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Button from '../../components/Button/Button';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
-import { mockCustomers } from '../../data/customers';
+import { mockCustomers, type MockCustomer } from '../../data/customers';
 import { mockReadings, mockAnomalyReadings } from '../../data/readings';
 import { formatDate, formatConsumption } from '../../utils/format';
 import styles from './OfficerMode.module.css';
@@ -17,14 +17,14 @@ export default function OfficerMode() {
   const navigate = useNavigate();
 
   const [sessionCount, setSessionCount] = useState(3);
-  const [expandedCustomerId, setExpandedCustomerId] = useState(null);
+  const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  const toggleExpand = (id) => {
+  const toggleExpand = (id: string) => {
     setExpandedCustomerId((curr) => (curr === id ? null : id));
   };
 
-  const handleStartOfficerReading = (customer) => {
+  const handleStartOfficerReading = (customer: MockCustomer) => {
     setSessionCount((prev) => prev + 1);
     navigate('/submit/camera', { state: { officerMode: true, customerId: customer.id } });
   };
@@ -147,14 +147,12 @@ export default function OfficerMode() {
                     <div className={styles.cardActions}>
                       <Button
                         variant="primary"
-                        size="sm"
                         onClick={() => handleStartOfficerReading(cust)}
                       >
                         Start Reading
                       </Button>
                       <Button
                         variant="secondary"
-                        size="sm"
                         onClick={() => toggleExpand(cust.id)}
                       >
                         {isExpanded ? 'Hide History' : 'View History'}
@@ -200,7 +198,6 @@ export default function OfficerMode() {
             <div className={styles.modalButtons}>
               <Button
                 variant="primary"
-                size="md"
                 fullWidth
                 onClick={() => navigate('/')}
               >
@@ -208,7 +205,6 @@ export default function OfficerMode() {
               </Button>
               <Button
                 variant="ghost"
-                size="md"
                 fullWidth
                 onClick={() => setShowExitModal(false)}
               >

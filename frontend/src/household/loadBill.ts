@@ -48,6 +48,7 @@ export default async function loadBill(customerId: string, billId: number | null
   return {
     bill,
     // /calculate-bill nests tiers: { breakdown: { tier1: { units, rate_rwf, amount } } }
+    // Object.keys is typed string[]; these are the breakdown's own keys.
     tiers: (Object.keys(tariff.breakdown).sort() as Array<keyof typeof tariff.breakdown>)
       .map((key): CalculatedTier => tariff.breakdown[key])
       .filter((tier) => tier.units > 0)

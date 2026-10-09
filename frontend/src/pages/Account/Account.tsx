@@ -1,9 +1,8 @@
 /**
- * @file Account.jsx
+ * @file Account.tsx
  * @description Customer Profile overview for the currently logged-in WASAC customer.
  */
 
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Card from '../../components/Card/Card';
@@ -96,7 +95,6 @@ export default function Account() {
         <div className={styles.logoutArea}>
           <Button
             variant="ghost"
-            size="md"
             fullWidth
             onClick={() => navigate('/')}
           >

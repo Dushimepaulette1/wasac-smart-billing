@@ -1,9 +1,9 @@
 /**
- * @file Welcome.jsx
+ * @file Welcome.tsx
  * @description Screen 1: Welcome and Entry Point for WASAC Smart Water Billing Platform.
  */
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import styles from './Welcome.module.css';
@@ -13,9 +13,14 @@ export default function Welcome() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pin, setPin] = useState(['', '', '', '']);
   const [pinError, setPinError] = useState(false);
-  const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const inputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
 
-  const handlePinChange = (index, value) => {
+  const handlePinChange = (index: number, value: string) => {
     if (value && !/^\d$/.test(value)) return;
     const newPin = [...pin];
     newPin[index] = value;
@@ -23,17 +28,17 @@ export default function Welcome() {
     setPinError(false);
 
     if (value && index < 3) {
-      inputRefs[index + 1].current?.focus();
+      inputRefs[index + 1]?.current?.focus();
     }
   };
 
-  const handleKeyDown = (index, e) => {
+  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
+      inputRefs[index - 1]?.current?.focus();
     }
   };
 
-  const handlePinSubmit = (e) => {
+  const handlePinSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const enteredPin = pin.join('');
     if (enteredPin === '1234') {
@@ -42,7 +47,7 @@ export default function Welcome() {
     } else {
       setPinError(true);
       setPin(['', '', '', '']);
-      inputRefs[0].current?.focus();
+      inputRefs[0]?.current?.focus();
     }
   };
 
@@ -72,7 +77,6 @@ export default function Welcome() {
         <div className={styles.actions}>
           <Button
             variant="primary"
-            size="lg"
             fullWidth
             onClick={() => navigate('/home')}
           >
@@ -86,7 +90,7 @@ export default function Welcome() {
               setShowPinModal(true);
               setPinError(false);
               setPin(['', '', '', '']);
-              setTimeout(() => inputRefs[0].current?.focus(), 150);
+              setTimeout(() => inputRefs[0]?.current?.focus(), 150);
             }}
           >
             Officer Mode
@@ -162,7 +166,6 @@ export default function Welcome() {
               <div className={styles.modalActions}>
                 <Button
                   variant="primary"
-                  size="md"
                   fullWidth
                   type="submit"
                   disabled={pin.some((d) => d === '')}
@@ -171,7 +174,6 @@ export default function Welcome() {
                 </Button>
                 <Button
                   variant="ghost"
-                  size="md"
                   fullWidth
                   type="button"
                   onClick={() => setShowPinModal(false)}
