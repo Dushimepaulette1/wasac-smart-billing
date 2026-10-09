@@ -100,5 +100,15 @@
   "pay.transaction": "TODO: translate",
   "history.title": "TODO: translate",
   "history.empty": "TODO: translate",
-  "home.read": "TODO: translate"
+  "home.read": "TODO: translate",
+  "home.billDue": "TODO: translate",
+  "home.seeBill": "TODO: translate",
+  "home.readPrompt": "TODO: translate",
+  "home.lastRead": "TODO: translate",
+  "home.checkingTitle": "TODO: translate",
+  "home.checkingBody": "TODO: translate",
+  "home.highUse": "TODO: translate",
+  "home.readMessage": "TODO: translate",
+  "home.meter": "TODO: translate",
+  "home.lastReading": "TODO: translate"
 }

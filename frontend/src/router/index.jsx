@@ -67,14 +67,7 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Welcome />} />
 
-        <Route
-          path="/home"
-          element={
-            <AppShell>
-              <CustomerHome />
-            </AppShell>
-          }
-        />
+        <Route path="/home" element={<CustomerHome />} />
         <Route path="/submit/camera" element={<CameraCapture />} />
         <Route path="/submit/confirm" element={<ConfirmReading />} />
         <Route path="/submit/held" element={<ReadingHeld />} />
