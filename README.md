@@ -81,13 +81,26 @@ Swagger docs at **http://localhost:8000/docs**
 
 ### Frontend
 
+React + TypeScript (strict), built with Vite.
+
 ```bash
 cd wasac-platform/frontend
 npm install
-npm start
+npm start          # dev server; backend routes are proxied to :8000
+npm test           # Vitest + React Testing Library
+npm run typecheck  # tsc --noEmit
+npm run build      # type-check, then production build into build/
 ```
 
 The app will be available at **http://localhost:3000**
+
+Optional environment variables (in `frontend/.env`):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `VITE_API_URL` | empty (use the dev proxy) | Backend base URL for a deployed build |
+| `VITE_CUSTOMER_ID` | `CUST001` | Household shown until sign-in exists |
+| `VITE_METER_ID` | `MTR001` | That household's meter |
 
 ---
 
@@ -165,20 +178,16 @@ wasac-platform/
 │   │   └── ussd.py          # /submit-ussd
 │   └── requirements.txt
 ├── frontend/
-│   ├── public/index.html
+│   ├── index.html
+│   ├── vite.config.ts
 │   └── src/
-│       ├── App.jsx          # Router
-│       ├── App.css          # Design tokens & shared styles
-│       ├── pages/
-│       │   ├── CameraScreen.jsx
-│       │   ├── ConfirmReading.jsx
-│       │   ├── BillDisplay.jsx
-│       │   ├── PaymentScreen.jsx
-│       │   └── OfficerMode.jsx
-│       └── components/
-│           ├── BoundingBox.jsx
-│           ├── QualityFeedback.jsx
-│           └── TariffBreakdown.jsx
+│       ├── api/             # Typed API client and FastAPI response models
+│       ├── components/      # MeterCounter, Screen, Button, Notice, ...
+│       ├── household/       # Household data loaders and submission state
+│       ├── i18n/            # Kinyarwanda / English / French strings
+│       ├── pages/           # One folder per screen
+│       ├── router/          # Routes
+│       └── styles/          # Design tokens, fonts, base typography
 ├── notebooks/
 │   └── model_training.ipynb
 └── README.md
