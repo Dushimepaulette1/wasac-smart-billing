@@ -5,8 +5,9 @@
  */
 
 import React from 'react';
-import './styles/global.css';
-import './styles/typography.css';
+import './styles/fonts.css';
+import './styles/tokens.css';
+import './styles/base.css';
 import AppRouter from './router/index';
 
 
