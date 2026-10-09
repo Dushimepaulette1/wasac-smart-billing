@@ -68,5 +68,22 @@
   "held.checkingTitle": "We're checking this reading",
   "held.checkingBody": "You don't need to do anything. We'll text you within 24 hours.",
   "held.yourReading": "Your reading",
-  "held.sentOn": "Sent on {date}"
+  "held.sentOn": "Sent on {date}",
+  "bill.titleLoading": "Your bill",
+  "bill.title": "{month} bill",
+  "bill.used": "You used {volume}",
+  "bill.period": "{from} to {to}",
+  "bill.issued": "Issued {date}",
+  "bill.thisReading": "This reading",
+  "bill.lastReading": "Last reading",
+  "bill.costTitle": "What you pay",
+  "bill.water": "Water",
+  "bill.service": "Service charge",
+  "bill.total": "Total",
+  "bill.paid": "Paid",
+  "bill.unpaid": "Not paid yet",
+  "bill.howTitle": "How this is worked out",
+  "bill.tierLine": "{volume} at {rate} per m³",
+  "bill.howNote": "The more water you use in a month, the higher the price for each extra cubic metre. The service charge is the same every month.",
+  "bill.usageTitle": "Your last months"
 }

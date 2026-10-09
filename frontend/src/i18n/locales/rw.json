@@ -68,5 +68,22 @@
   "held.checkingTitle": "TODO: translate",
   "held.checkingBody": "TODO: translate",
   "held.yourReading": "TODO: translate",
-  "held.sentOn": "TODO: translate"
+  "held.sentOn": "TODO: translate",
+  "bill.titleLoading": "TODO: translate",
+  "bill.title": "TODO: translate",
+  "bill.used": "TODO: translate",
+  "bill.period": "TODO: translate",
+  "bill.issued": "TODO: translate",
+  "bill.thisReading": "TODO: translate",
+  "bill.lastReading": "TODO: translate",
+  "bill.costTitle": "TODO: translate",
+  "bill.water": "TODO: translate",
+  "bill.service": "TODO: translate",
+  "bill.total": "TODO: translate",
+  "bill.paid": "TODO: translate",
+  "bill.unpaid": "TODO: translate",
+  "bill.howTitle": "TODO: translate",
+  "bill.tierLine": "TODO: translate",
+  "bill.howNote": "TODO: translate",
+  "bill.usageTitle": "TODO: translate"
 }
