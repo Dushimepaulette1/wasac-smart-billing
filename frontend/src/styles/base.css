@@ -98,9 +98,16 @@ a {
   color: var(--color-text-secondary);
 }
 
-/* Amounts, readings, dates: digits never shift. */
+/* Amounts, volumes, readings, dates: plain zero, digits never shift. */
 .num {
+  font-family: var(--font-numbers);
   font-variant-numeric: tabular-nums;
+}
+
+/* Letter-and-number codes (account and meter IDs) keep the slashed zero,
+   so 0 and O stay distinct. */
+.code {
+  font-family: var(--font-text);
 }
 
 .measure {

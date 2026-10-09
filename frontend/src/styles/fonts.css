@@ -51,3 +51,25 @@
   src: url('../assets/fonts/barlow-condensed-600-digits.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
+
+/* Unslashed zero for numbers (amounts, volumes, readings, dates).
+   Derived from Atkinson Hyperlegible Next by scripts/fonts/plain_zero.py;
+   holds only the zero. Used through --font-numbers, layered over the main
+   font, so IDs set in --font-text keep the slashed zero. */
+@font-face {
+  font-family: 'Atkinson Next Plain Zero';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/atkinson-next-plain-zero-400.woff2') format('woff2');
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: 'Atkinson Next Plain Zero';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/atkinson-next-plain-zero-700.woff2') format('woff2');
+  unicode-range: U+0030;
+}

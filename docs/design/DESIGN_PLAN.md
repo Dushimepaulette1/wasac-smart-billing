@@ -111,8 +111,15 @@ Two families with clearly separate jobs. Self-hosted WOFF2, no Google Fonts CDN 
 
 Fallbacks: `system-ui, "Segoe UI", Roboto, sans-serif` for the text face;
 `"Arial Narrow", sans-serif-condensed, sans-serif` for the counter.
-Before building: confirm `tnum` in the Atkinson Next files we ship. If missing, amounts get
-`font-variant-numeric: tabular-nums` via the fallback stack and we note it.
+Checked: the Atkinson Next files ship with `tnum` (tabular figures).
+
+**Zero (decided 09/10/2026).** Atkinson Next only has a slashed zero, and the full upstream
+font has no alternate. Numbers (amounts, volumes, readings, dates) use a plain zero; codes that
+mix letters and numbers (account and meter IDs) keep the slashed zero so 0 and O stay distinct.
+The plain zero comes from "Atkinson Next Plain Zero", a derived font of under 800 bytes per
+weight that holds only the zero (built by `frontend/scripts/fonts/plain_zero.py`, OFL 1.1),
+layered over the main font with `unicode-range`. In CSS: `.num` for numbers, `.code` for IDs.
+Comparison: `docs/design/screenshots/00-zero-options.png`.
 
 **Scale** (Bringhurst's classical scale, px):
 
