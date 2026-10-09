@@ -5,9 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from anomaly.db_models import FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, AnomalyFlag
+from anomaly.review import ReviewError, resolve_flag
 from anomaly.service import notify_household, score_submission
 from database import get_db
-from schemas import AnomalyFlagOut, AnomalyResultSchema, AnomalyScoreRequest
+from schemas import (
+    AnomalyFlagOut,
+    AnomalyResultSchema,
+    AnomalyScoreRequest,
+    ResolveFlagRequest,
+    ResolveFlagResponse,
+)
 
 router = APIRouter(prefix="/api/anomaly")
 
@@ -41,14 +48,23 @@ async def list_flags(
     return query.order_by(AnomalyFlag.created_at.desc()).all()
 
 
-@router.patch("/flags/{flag_id}/resolve", response_model=AnomalyFlagOut)
-async def resolve_flag(flag_id: int, db: Session = Depends(get_db)):
+@router.patch("/flags/{flag_id}/resolve", response_model=ResolveFlagResponse)
+async def resolve(flag_id: int, body: Optional[ResolveFlagRequest] = None, db: Session = Depends(get_db)):
+    """Close a flag. For a pending reading send {"outcome": "accept"} or {"outcome": "reject"}."""
     flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == flag_id).first()
     if not flag:
         raise HTTPException(status_code=404, detail="Anomaly flag not found")
-    if flag.status != FLAG_STATUS_RESOLVED:
-        flag.status = FLAG_STATUS_RESOLVED
-        flag.resolved_at = datetime.utcnow()
-        db.commit()
-        db.refresh(flag)
-    return flag
+    try:
+        result = resolve_flag(db, flag, body.outcome if body else None)
+    except ReviewError as e:
+        db.rollback()
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    db.refresh(flag)
+    return ResolveFlagResponse(
+        **AnomalyFlagOut.model_validate(flag).model_dump(),
+        outcome=result.outcome,
+        reading_status=result.reading_status,
+        bill_id=result.bill.bill_id if result.bill else None,
+        amount_due=result.bill.amount_due if result.bill else None,
+        actions=result.actions,
+    )
