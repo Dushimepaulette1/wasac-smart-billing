@@ -22,6 +22,7 @@ import OfficerMode from '../pages/OfficerMode/OfficerMode';
 import AnomalyReview from '../pages/AnomalyReview/AnomalyReview';
 import Account from '../pages/Account/Account';
 import NotFound from '../pages/NotFound/NotFound';
+import Messages from '../pages/Messages/Messages';
 import CounterPreview from '../pages/_dev/CounterPreview';
 
 /**
@@ -75,6 +76,7 @@ function AppRouter() {
         <Route path="/bill" element={<BillDisplay />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/history" element={<BillHistory />} />
+        <Route path="/messages" element={<Messages />} />
         <Route
           path="/account"
           element={
