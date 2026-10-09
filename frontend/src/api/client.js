@@ -113,8 +113,8 @@ export const api = {
     return request(`/bills/${encodeURIComponent(billId)}/pay`, { method: 'POST' });
   },
 
-  /** GET /flags?household_id= (the household id is the meter id). */
+  /** GET /api/anomaly/flags?household_id= (the household id is the meter id). */
   getHouseholdFlags(meterId) {
-    return request(`/flags?household_id=${encodeURIComponent(meterId)}`);
+    return request(`/api/anomaly/flags?household_id=${encodeURIComponent(meterId)}`);
   },
 };
