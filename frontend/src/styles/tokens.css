@@ -33,6 +33,8 @@
      counter digits only. Sizes follow Bringhurst's classical scale.
      ------------------------------------------------------------------------ */
   --font-text: 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Same face with an unslashed zero, for numbers only. */
+  --font-numbers: 'Atkinson Next Plain Zero', 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
 
   --size-small: 14px;        --leading-small: 20px;
