@@ -100,5 +100,15 @@
   "pay.transaction": "Transaction ID",
   "history.title": "Your bills",
   "history.empty": "No bills yet. Take your first meter photo.",
-  "home.read": "Read your meter"
+  "home.read": "Read your meter",
+  "home.billDue": "Your {month} bill is {amount}.",
+  "home.seeBill": "See the bill",
+  "home.readPrompt": "Read your meter to get your next bill.",
+  "home.lastRead": "Last reading accepted on {date}.",
+  "home.checkingTitle": "We're checking a reading you sent",
+  "home.checkingBody": "You don't need to do anything. We'll text you when it's done.",
+  "home.highUse": "We noticed higher water use than usual. Read the message to see what to check.",
+  "home.readMessage": "Read the message",
+  "home.meter": "Meter",
+  "home.lastReading": "Last accepted reading"
 }
