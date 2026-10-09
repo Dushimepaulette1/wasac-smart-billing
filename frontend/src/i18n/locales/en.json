@@ -49,5 +49,19 @@
   "camera.unreadable.body": "Wipe the meter glass, make sure there is light, and take the photo closer to the numbers.",
   "camera.retake": "Take a new photo",
   "camera.sendAgain": "Send this photo",
-  "camera.photoAlt": "Your photo of the meter"
+  "camera.photoAlt": "Your photo of the meter",
+  "confirm.title": "Check the numbers",
+  "confirm.titleManual": "Type your meter reading",
+  "confirm.question": "Do these numbers match your meter?",
+  "confirm.tapHint": "Tap a number to change it.",
+  "confirm.manual": "Type all 8 numbers on your meter: the 5 on black, then the 3 on red.",
+  "confirm.needsCheck": "We read {raw}. Check the numbers on your meter and type them here.",
+  "confirm.needsCheckEmpty": "Check the numbers on your meter and type them here.",
+  "confirm.lowConfidence": "Some numbers in the photo may be blurry. Check each one against your meter, or take the photo again closer and holding the phone still.",
+  "confirm.incomplete": "Fill in all 8 numbers. If a wheel shows nothing, type 0.",
+  "confirm.action": "Confirm reading",
+  "confirm.sending": "Sending your reading…",
+  "confirm.kept": "Your numbers are saved.",
+  "confirm.retakeTitle": "We need a clearer photo",
+  "confirm.retakeBody": "We could not use this reading. Take the photo again, close to the numbers and with good light."
 }

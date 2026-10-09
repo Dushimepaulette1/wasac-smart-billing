@@ -1,183 +1,174 @@
 /**
  * @file ConfirmReading.jsx
- * @description Screen 4: Confirm Reading with tactile meter-styled display.
+ * @description Submit flow, step 2: the household checks the numbers.
+ *
+ * The reading is shown on the editable meter counter. If the digit reader
+ * returned something unusable (wrong length), its raw output is shown
+ * above an empty counter so nothing is hidden. A low-confidence read shows
+ * a soft retake prompt; "Confirm reading" always stays enabled.
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageHeader from '../../components/PageHeader/PageHeader';
-import ProgressStep from '../../components/ProgressStep/ProgressStep';
-import Card from '../../components/Card/Card';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
-import LoadingState from '../../components/LoadingState/LoadingState';
-import { mockPredictedReading } from '../../data/readings';
-import { mockCurrentCustomer } from '../../data/customers';
-import { formatConsumption } from '../../utils/format';
+import Notice from '../../components/Notice/Notice';
+import MeterCounter from '../../components/MeterCounter/MeterCounter';
+import { errorMessage } from '../../components/RequestState/RequestState';
+import { useI18n } from '../../i18n/I18nProvider';
+import useCounterLabels from '../../i18n/useCounterLabels';
+import { useSubmission } from '../../household/submission';
+import { isComplete } from '../../utils/reading';
+import { api } from '../../api/client';
+import { CUSTOMER_ID, METER_ID } from '../../config';
 import styles from './ConfirmReading.module.css';
 
-export default function ConfirmReading() {
-  const navigate = useNavigate();
-  const customer = mockCurrentCustomer;
+/** Below this digit-reader confidence, suggest checking or retaking. */
+export const LOW_CONFIDENCE = 0.8;
 
-  const [readingValue, setReadingValue] = useState(mockPredictedReading.value.toString());
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [certaintyWidth, setCertaintyWidth] = useState(0);
-
-  const prev = customer.previousReading || mockPredictedReading.previousReading;
-  const currentVal = parseInt(readingValue, 10) || 0;
-  const consumption = currentVal - prev;
-  const isLower = currentVal < prev;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCertaintyWidth(mockPredictedReading.confidence);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleConfirm = () => {
-    if (isLower) return;
-    setIsSubmitting(true);
-    setTimeout(() => {
-      navigate('/bill');
-    }, 2000);
-  };
-
+/**
+ * A translated sentence with one {name} placeholder, with the value in bold.
+ * The whole sentence is one string, so translators control word order.
+ */
+function withBold(template, name, value) {
+  const [before, after = ''] = template.split(`{${name}}`);
   return (
-    <div className={styles.container}>
-      {isSubmitting && (
-        <LoadingState
-          variant="overlay"
-          message="Validating consumption"
-          submessage="Checking against historical seasonal patterns..."
-        />
-      )}
-
-      <PageHeader
-        title="Confirm Reading"
-        backHref="/submit/camera"
-        backLabel="Retake"
-      />
-
-      <div className={styles.inner}>
-        <div className={styles.progressWrap}>
-          <ProgressStep currentStep={2} totalSteps={4} label="Confirm Reading" />
-        </div>
-
-        <div className={styles.contentStack}>
-          <div className={styles.meterDisplayCard}>
-            <div className={styles.displayHeader}>
-              <span className={styles.displayLabel}>Detected Reading</span>
-              <button
-                type="button"
-                className={styles.toggleEditBtn}
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? 'Done' : 'Edit reading'}
-              </button>
-            </div>
-
-            {isEditing ? (
-              <div className={styles.editModeWrap}>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={readingValue}
-                  onChange={(e) => setReadingValue(e.target.value)}
-                  className={styles.editableInput}
-                  autoFocus
-                />
-                <span className={styles.m3Suffix}>m³</span>
-              </div>
-            ) : (
-              <div className={styles.meterGlassDisplay}>
-                <div className={styles.digitsRow}>
-                  {readingValue.split('').map((char, i) => (
-                    <span key={i} className={styles.meterChar}>
-                      {char}
-                    </span>
-                  ))}
-                </div>
-                <span className={styles.meterUnitText}>CUBIC METRES (m³)</span>
-              </div>
-            )}
-
-            <div className={styles.meterAccountFooter}>
-              <span>Meter ID: {customer.meterID}</span>
-              <span>Account: {customer.accountNumber}</span>
-            </div>
-          </div>
-
-          <div className={styles.certaintyBox}>
-            <div className={styles.certaintyHeader}>
-              <span className={styles.certaintyLabel}>Reading certainty</span>
-              <span className={styles.certaintyValue}>
-                {mockPredictedReading.confidence}% · High
-              </span>
-            </div>
-            <div className={styles.certaintyTrack}>
-              <div
-                className={styles.certaintyBar}
-                style={{ width: `${certaintyWidth}%` }}
-              />
-            </div>
-          </div>
-
-          <Card variant="accent" padding="md" className={styles.deltaCard}>
-            <div className={styles.deltaGrid}>
-              <div className={styles.deltaItem}>
-                <span className={styles.deltaLabel}>Previous Reading</span>
-                <span className={styles.deltaNumber}>{prev.toLocaleString()} m³</span>
-              </div>
-
-              <div className={styles.deltaDivider} />
-
-              <div className={styles.deltaItem}>
-                <span className={styles.deltaLabel}>Current Reading</span>
-                <span className={`${styles.deltaNumber} ${styles.currentNumber}`}>
-                  {currentVal.toLocaleString()} m³
-                </span>
-              </div>
-
-              <div className={styles.deltaDivider} />
-
-              <div className={styles.deltaItem}>
-                <span className={styles.deltaLabel}>New Consumption</span>
-                <span className={`${styles.deltaNumber} ${styles.highlightDelta}`}>
-                  {isLower ? '—' : formatConsumption(consumption)}
-                </span>
-              </div>
-            </div>
-
-            {isLower && (
-              <div className={styles.errorNotice}>
-                This reading is lower than your previous reading ({prev.toLocaleString()} m³). Please edit the number to match your physical meter.
-              </div>
-            )}
-          </Card>
-
-          <div className={styles.actionButtons}>
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={handleConfirm}
-              disabled={isLower || !readingValue}
-            >
-              Confirm and Submit
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              {isEditing ? 'Save Edits' : 'Edit Reading'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <>
+      {before}
+      <strong className="num">{value}</strong>
+      {after}
+    </>
   );
 }
+
+function ConfirmReading() {
+  const { t, locale } = useI18n();
+  const navigate = useNavigate();
+  const submission = useSubmission();
+  const labels = useCounterLabels();
+  const helpId = useId();
+  const [state, setState] = useState('idle'); // idle | incomplete | sending | failed | retake
+  const [error, setError] = useState(null);
+  // Set just before the submission is cleared on success, so clearing it
+  // does not trigger the "no reading yet" redirect below.
+  const leaving = useRef(false);
+
+  const { cells, photo, raw, needsCheck, manual, confidence } = submission;
+  const lowConfidence = !manual && !needsCheck && confidence != null && confidence < LOW_CONFIDENCE;
+
+  useEffect(() => {
+    if (state === 'incomplete' && cells && isComplete(cells)) setState('idle');
+  }, [cells, state]);
+
+  if (!cells) return leaving.current ? null : <Navigate to="/submit/camera" replace />;
+
+  const retake = () => {
+    submission.reset();
+    navigate('/submit/camera');
+  };
+
+  const confirm = async () => {
+    if (!isComplete(cells)) {
+      setState('incomplete');
+      return;
+    }
+    setState('sending');
+    setError(null);
+    try {
+      const result = await api.confirmReading({ customerId: CUSTOMER_ID, meterId: METER_ID, cells });
+      if (result.bill_id) {
+        leaving.current = true;
+        navigate(`/bill?id=${result.bill_id}`);
+        submission.reset();
+      } else if (result.anomaly?.needs_retake) {
+        setState('retake');
+      } else {
+        leaving.current = true;
+        navigate('/submit/held', { state: { cells, at: new Date().toISOString() } });
+        submission.reset();
+      }
+    } catch (err) {
+      setError(err);
+      setState('failed');
+    }
+  };
+
+  let lead;
+  if (manual) lead = t('confirm.manual');
+  else if (needsCheck) lead = raw ? withBold(t('confirm.needsCheck'), 'raw', raw) : t('confirm.needsCheckEmpty');
+  else lead = t('confirm.question');
+
+  const action =
+    state === 'retake' ? (
+      <Button fullWidth icon="camera" onClick={retake}>
+        {t('camera.retake')}
+      </Button>
+    ) : (
+      <Button fullWidth onClick={confirm} loading={state === 'sending'}>
+        {state === 'sending' ? t('confirm.sending') : t('confirm.action')}
+      </Button>
+    );
+
+  return (
+    <Screen
+      title={manual ? t('confirm.titleManual') : t('confirm.title')}
+      step={t('flow.step', { current: 2, total: 3 })}
+      back="/submit/camera"
+      action={action}
+    >
+      {state === 'failed' && (
+        <Notice tone="error" live>
+          {errorMessage(t, error)} {t('confirm.kept')}
+        </Notice>
+      )}
+
+      {state === 'retake' && (
+        <Notice tone="info" live title={t('confirm.retakeTitle')}>
+          {t('confirm.retakeBody')}
+        </Notice>
+      )}
+
+      {photo && <img className={styles.photo} src={photo} alt={t('camera.photoAlt')} />}
+
+      <section className={styles.reading} aria-labelledby={helpId}>
+        <p id={helpId} className="measure">
+          {lead}
+        </p>
+
+        <MeterCounter
+          cells={cells}
+          labels={labels}
+          mode="edit"
+          showValue
+          locale={locale}
+          autoFocus={manual || needsCheck}
+          onChange={submission.setCells}
+          describedBy={helpId}
+        />
+
+        {!manual && !needsCheck && <p className="text-small text-secondary">{t('confirm.tapHint')}</p>}
+
+        {state === 'incomplete' && (
+          <Notice tone="error" live>
+            {t('confirm.incomplete')}
+          </Notice>
+        )}
+      </section>
+
+      {lowConfidence && state !== 'retake' && (
+        <Notice
+          tone="info"
+          actions={
+            <Button variant="text" icon="camera" onClick={retake}>
+              {t('camera.retake')}
+            </Button>
+          }
+        >
+          {t('confirm.lowConfidence')}
+        </Notice>
+      )}
+    </Screen>
+  );
+}
+
+export default ConfirmReading;

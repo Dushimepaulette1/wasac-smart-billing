@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav/BottomNav';
 import SideNav from '../components/SideNav/SideNav';
 
@@ -14,7 +14,6 @@ import Welcome from '../pages/Welcome/Welcome';
 import CustomerHome from '../pages/CustomerHome/CustomerHome';
 import CameraCapture from '../pages/CameraCapture/CameraCapture';
 import ConfirmReading from '../pages/ConfirmReading/ConfirmReading';
-import ManualEntry from '../pages/ManualEntry/ManualEntry';
 import BillDisplay from '../pages/BillDisplay/BillDisplay';
 import Payment from '../pages/Payment/Payment';
 import BillHistory from '../pages/BillHistory/BillHistory';
@@ -63,7 +62,7 @@ function AppShell({ children }) {
  */
 function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<Welcome />} />
 
@@ -76,22 +75,8 @@ function AppRouter() {
           }
         />
         <Route path="/submit/camera" element={<CameraCapture />} />
-        <Route
-          path="/submit/confirm"
-          element={
-            <AppShell>
-              <ConfirmReading />
-            </AppShell>
-          }
-        />
-        <Route
-          path="/submit/manual"
-          element={
-            <AppShell>
-              <ManualEntry />
-            </AppShell>
-          }
-        />
+        <Route path="/submit/confirm" element={<ConfirmReading />} />
+        <Route path="/submit/manual" element={<Navigate to="/submit/camera" replace />} />
         <Route
           path="/bill"
           element={

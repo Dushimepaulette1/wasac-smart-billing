@@ -49,5 +49,19 @@
   "camera.unreadable.body": "TODO: translate",
   "camera.retake": "TODO: translate",
   "camera.sendAgain": "TODO: translate",
-  "camera.photoAlt": "TODO: translate"
+  "camera.photoAlt": "TODO: translate",
+  "confirm.title": "TODO: translate",
+  "confirm.titleManual": "TODO: translate",
+  "confirm.question": "TODO: translate",
+  "confirm.tapHint": "TODO: translate",
+  "confirm.manual": "TODO: translate",
+  "confirm.needsCheck": "TODO: translate",
+  "confirm.needsCheckEmpty": "TODO: translate",
+  "confirm.lowConfidence": "TODO: translate",
+  "confirm.incomplete": "TODO: translate",
+  "confirm.action": "TODO: translate",
+  "confirm.sending": "TODO: translate",
+  "confirm.kept": "TODO: translate",
+  "confirm.retakeTitle": "TODO: translate",
+  "confirm.retakeBody": "TODO: translate"
 }
