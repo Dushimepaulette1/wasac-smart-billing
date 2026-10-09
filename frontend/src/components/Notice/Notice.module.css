@@ -48,13 +48,11 @@
   color: var(--brass);
 }
 
-/* Advice reads as a suggestion, not a stop: no frame, just icon and words. */
-.info {
+/* Advice and confirmations need no frame, just icon and words. Frames are
+   kept for what needs attention: errors and held readings. */
+.info,
+.done {
   border: 0;
   padding: 0;
   background: none;
-}
-
-.done {
-  border-color: var(--color-text);
 }

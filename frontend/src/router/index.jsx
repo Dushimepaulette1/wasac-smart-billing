@@ -80,14 +80,7 @@ function AppRouter() {
         <Route path="/submit/held" element={<ReadingHeld />} />
         <Route path="/submit/manual" element={<Navigate to="/submit/camera" replace />} />
         <Route path="/bill" element={<BillDisplay />} />
-        <Route
-          path="/payment"
-          element={
-            <AppShell>
-              <Payment />
-            </AppShell>
-          }
-        />
+        <Route path="/payment" element={<Payment />} />
         <Route
           path="/history"
           element={
