@@ -77,22 +77,57 @@ When the model flags a period and no rule fired, it is named in this order:
 4. Otherwise → `UNUSUAL`
 
 The digit-shift check comes first because 10× also exceeds the spike ratio. As a result, a real
-leak of about 10× is reported as a likely misread, and the household is asked to retake the photo.
-A retake confirms the reading either way.
+leak of about 10× is reported as a likely misread. Both types are held for staff review (see below),
+so a person decides either way.
 
 ## Anomaly types and notifications
 
-| Type | Household | WASAC staff (`requires_staff_review`) |
-|---|---|---|
-| `MISREAD_SUSPECTED` | SMS: please retake your meter photo | no |
-| `SPIKE` | SMS: unusually high use, check for leaks | yes |
-| `SUSTAINED_HIGH` | SMS: higher than normal for several periods | yes (follow-up) |
-| `METER_STUCK` | — | yes |
-| `UNUSUAL` | — | yes |
+| Type | Reading | Household | WASAC staff (`requires_staff_review`) |
+|---|---|---|---|
+| `MISREAD_SUSPECTED` | **held** (`pending_review`) | SMS: your reading is being checked | yes: accept or reject |
+| `SPIKE` | **held** (`pending_review`) | SMS: unusually high use, check for leaks | yes: accept or reject |
+| `SUSTAINED_HIGH` | confirmed and billed (`anomaly_flagged`) | SMS: higher than normal for several periods | yes (follow-up) |
+| `METER_STUCK` | confirmed and billed (`anomaly_flagged`) | — | yes |
+| `UNUSUAL` | confirmed and billed (`anomaly_flagged`) | — | yes |
 
-Every flagged result is stored in `anomaly_flags` (`status` = `open` / `resolved`). Readings with an
-**open** `MISREAD_SUSPECTED` flag are left out of later history, so one bad read cannot distort the
-household's baseline.
+Wrong-length or non-digit CRNN output (`POST /api/anomaly/score` only) returns `needs_retake: true`
+and an SMS asking for a new photo. It is logged as a flag with no staff action, because there is no
+reading to decide on.
+
+Every flagged result is stored in `anomaly_flags` (`status` = `open` / `resolved`).
+
+## Pending review
+
+`readings.validation_status` takes one of four values:
+
+| Value | Billed | Moves `meters.last_reading` | Used as history |
+|---|---|---|---|
+| `valid` | yes | yes | yes |
+| `anomaly_flagged` | yes | yes | yes |
+| `pending_review` | no | no | **no** |
+| `rejected` | no | no | **no** |
+
+- A `MISREAD_SUSPECTED` or `SPIKE` reading is saved as `pending_review`. It is not billed, and the
+  meter's last confirmed reading (`meters.last_reading`) stays where it was. The next submission is
+  therefore judged against the last *confirmed* reading, so a 10× misread cannot block the next
+  correct reading.
+- A reading **lower than the last confirmed reading is not rejected any more**. It is saved as
+  `pending_review` with type `MISREAD_SUSPECTED`, and the household is told it is being checked.
+  This also applies to meters that have a `last_reading` on file but no reading rows, for example
+  imported meters.
+- Staff close the flag with `PATCH /api/anomaly/flags/{id}/resolve`:
+  - `{"outcome": "accept"}`: the reading becomes `valid` and the new last confirmed reading. A bill
+    is created against the previous confirmed reading, and the household gets an SMS with the
+    amount. Accepting a reading *lower* than the last confirmed one (for example a replaced meter)
+    resets the baseline and bills 0 m³ for that period. Accept is refused (409) if a newer reading
+    for the meter is already confirmed; reject the old one instead.
+  - `{"outcome": "reject"}`: the reading becomes `rejected`. It is kept for audit but never billed
+    or used, and the household gets an SMS asking them to resubmit.
+  - A pending flag must have an outcome (422 without one). Flags on other readings close without an
+    outcome, and sending one returns 409.
+
+No table changed for this. `validation_status` was already a free-text column, and the outcome can
+be read from the reading's status.
 
 SMS is **log-only for now**. `notifications.send_sms` has a TODO for Africa's Talking, using the
 `AT_USERNAME` and `AT_API_KEY` environment variables. No keys are stored in code.
@@ -103,12 +138,12 @@ SMS is **log-only for now**. `notifications.send_sms` has a TODO for Africa's Ta
 |---|---|---|
 | `POST` | `/api/anomaly/score` | `{household_id, reading_digits, reading_date?}`. Scores raw CRNN digits and stores a flag if anomalous. Does not store a reading or a bill. |
 | `GET` | `/api/anomaly/flags?household_id=&status=open\|resolved&requires_staff_review=` | List flags, newest first |
-| `PATCH` | `/api/anomaly/flags/{id}/resolve` | Mark a flag resolved |
+| `PATCH` | `/api/anomaly/flags/{id}/resolve` | Close a flag; body `{"outcome": "accept" \| "reject"}` for a pending reading |
 
-`/confirm-reading` and `/submit-ussd` now use this module instead of the old Z-score stub. They
-store the reading, score it, set `validation_status` (`anomaly_flagged` / `valid`) and
-`anomaly_score` from the result, and add an `anomaly` object to their response. Their existing
-behaviour is otherwise unchanged, including rejecting readings lower than the meter's last reading.
+`/confirm-reading` and `/submit-ussd` store the reading, score it, and then either confirm and bill it
+or hold it as `pending_review`. A held reading returns `success: true`,
+`validation_status: "pending_review"` and no bill. USSD replies "being checked by WASAC before
+billing". Both responses include an `anomaly` object with `pending_review`.
 
 ## Configuration (environment variables)
 
