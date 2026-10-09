@@ -1,122 +1,83 @@
 /**
  * @file Button.jsx
- * @description Premium button component for the WASAC Smart Billing Platform.
- * Supports multiple variants (primary, secondary, ghost, danger), sizes,
- * loading state with CSS spinner, ripple effect on click, and full
- * accessibility support via React.forwardRef.
+ * @description Buttons for redesign v2. The label says exactly what happens
+ * ("Take photo", "Pay RWF 4,500"); nothing is appended to it.
+ *
+ * primary   - black, the one main action on a screen (56px tall)
+ * secondary - black outline, a real alternative (48px)
+ * text      - underlined text, a minor action (48px tap area)
+ *
+ * The old variants "ghost" and "danger" map to text and secondary so the
+ * staff screens keep working until they are rebuilt.
  */
 
-import React, { useRef, useCallback } from 'react';
+import React from 'react';
+import Icon from '../Icon/Icon';
 import styles from './Button.module.css';
+
+const VARIANTS = { primary: 'primary', secondary: 'secondary', text: 'text', ghost: 'text', danger: 'secondary' };
 
 /**
  * @typedef {Object} ButtonProps
- * @property {React.ReactNode} children - Button label content
- * @property {'primary'|'secondary'|'ghost'|'danger'} [variant='primary'] - Visual style
- * @property {'sm'|'md'|'lg'} [size='md'] - Size preset
- * @property {Function} [onClick] - Click handler
- * @property {boolean} [disabled] - Disabled state
- * @property {boolean} [loading] - Loading state — shows spinner, disables interaction
- * @property {boolean} [fullWidth] - Whether to fill container width
- * @property {'button'|'submit'|'reset'} [type='button'] - HTML button type
- * @property {string} [className] - Additional class names
+ * @property {React.ReactNode} children
+ * @property {'primary'|'secondary'|'text'} [variant='primary']
+ * @property {string} [icon] - Icon name, shown before the label
+ * @property {boolean} [fullWidth]
+ * @property {boolean} [loading] - Busy: the label should say what is happening
+ * @property {'button'|'submit'} [type='button']
+ * @property {string} [href] - Render as a link that looks like a button
  */
 
 /**
- * Creates a CSS ripple effect at the click position.
- * @param {MouseEvent} event
- * @param {HTMLButtonElement} button
+ * @param {ButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>} props
  */
-function createRipple(event, button) {
-  const existingRipple = button.querySelector(`.${styles.ripple}`);
-  if (existingRipple) existingRipple.remove();
-
-  const rect = button.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height) * 2;
-  const x = event.clientX - rect.left - size / 2;
-  const y = event.clientY - rect.top - size / 2;
-
-  const ripple = document.createElement('span');
-  ripple.className = styles.ripple;
-  ripple.style.width = `${size}px`;
-  ripple.style.height = `${size}px`;
-  ripple.style.left = `${x}px`;
-  ripple.style.top = `${y}px`;
-
-  button.appendChild(ripple);
-
-  ripple.addEventListener('animationend', () => {
-    ripple.remove();
-  });
-}
-
-const Button = React.forwardRef(function Button(
-  {
-    children,
-    variant = 'primary',
-    size = 'md',
-    onClick,
-    disabled = false,
-    loading = false,
-    fullWidth = false,
-    type = 'button',
-    className = '',
-    ...rest
-  },
-  ref
-) {
-  const buttonRef = useRef(null);
-  const resolvedRef = ref || buttonRef;
-
-  const handleClick = useCallback(
-    (event) => {
-      if (disabled || loading) return;
-
-      const btn = resolvedRef.current;
-      if (btn && variant === 'primary') {
-        createRipple(event, btn);
-      }
-
-      if (onClick) onClick(event);
-    },
-    [disabled, loading, onClick, resolvedRef, variant]
-  );
-
-  const classNames = [
+function Button({
+  children,
+  variant = 'primary',
+  icon,
+  fullWidth = false,
+  loading = false,
+  type = 'button',
+  href,
+  className,
+  disabled,
+  ...rest
+}) {
+  const classes = [
     styles.button,
-    styles[`variant-${variant}`],
-    styles[`size-${size}`],
+    styles[VARIANTS[variant] || 'primary'],
     fullWidth ? styles.fullWidth : '',
-    loading ? styles.loading : '',
-    disabled ? styles.disabled : '',
-    className,
+    className || '',
   ]
     .filter(Boolean)
     .join(' ');
 
+  const content = (
+    <>
+      {icon && <Icon name={icon} size={22} />}
+      <span>{children}</span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a className={classes} href={href} {...rest}>
+        {content}
+      </a>
+    );
+  }
+
   return (
     <button
-      ref={resolvedRef}
       type={type}
-      className={classNames}
-      onClick={handleClick}
+      className={classes}
       disabled={disabled || loading}
-      aria-disabled={disabled || loading}
-      aria-busy={loading}
+      aria-busy={loading || undefined}
       {...rest}
     >
-      {loading && (
-        <span className={styles.spinnerWrap} aria-hidden="true">
-          <span className={styles.spinner} />
-        </span>
-      )}
-      <span className={loading ? styles.labelHidden : styles.label}>
-        {children}
-      </span>
+      {content}
     </button>
   );
-});
-
-Button.displayName = 'Button';
+}
 
 export default Button;

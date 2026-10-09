@@ -1,0 +1,53 @@
+.notice {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.icon {
+  margin-top: 2px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  font-weight: var(--weight-bold);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+}
+
+/* Held: brass, calm. Brass text is only used on Paper (7.1:1). */
+.held {
+  border-color: var(--brass);
+}
+
+.held .icon,
+.held .title {
+  color: var(--brass);
+}
+
+/* Advice: lighter edge so it reads as a suggestion, not a stop. */
+.info {
+  border-color: var(--slate);
+  border-width: 1px;
+  padding: calc(var(--space-4) + 1px);
+}
+
+.done {
+  border-color: var(--color-text);
+}

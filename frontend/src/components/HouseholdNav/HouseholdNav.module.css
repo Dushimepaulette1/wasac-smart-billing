@@ -1,0 +1,45 @@
+.nav {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--space-1);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  text-align: center;
+}
+
+.active {
+  color: var(--color-text);
+  font-weight: var(--weight-bold);
+}
+
+/* The bar marks the current page alongside the bold label. */
+.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 4px;
+  border-radius: 0 0 2px 2px;
+  background: var(--color-text);
+}
