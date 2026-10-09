@@ -1,5 +1,5 @@
 /**
- * @file config.js
+ * @file config.ts
  * @description Runtime configuration from VITE_* environment variables.
  *
  * API_URL is empty by default: in development, requests go to the Vite dev
