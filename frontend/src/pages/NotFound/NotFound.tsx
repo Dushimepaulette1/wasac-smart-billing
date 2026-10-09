@@ -1,9 +1,8 @@
 /**
- * @file NotFound.jsx
+ * @file NotFound.tsx
  * @description Screen 11: Clean, on-brand 404 page for the WASAC platform.
  */
 
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import styles from './NotFound.module.css';
@@ -37,7 +36,6 @@ export default function NotFound() {
         <div className={styles.actions}>
           <Button
             variant="primary"
-            size="md"
             onClick={() => navigate('/home')}
           >
             Return to Dashboard
@@ -45,7 +43,6 @@ export default function NotFound() {
 
           <Button
             variant="ghost"
-            size="md"
             onClick={() => navigate(-1)}
           >
             Go Back

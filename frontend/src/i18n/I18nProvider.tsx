@@ -51,6 +51,7 @@ function initialLocale(): Locale {
  */
 export function translate(locale: Locale, key: string, vars?: TranslateVars): string {
   const own = MESSAGES[locale][key];
+  // en.json's inferred type lists its keys; look up any key and allow a miss.
   const text = own && !own.startsWith(TODO_MARK) ? own : (en as Record<string, string>)[key] ?? key;
   if (!vars) return text;
   return text.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));

@@ -1,9 +1,8 @@
 import { api, ApiError, cellsToCubicMetreString } from './client';
 import { normalizeReading } from '../utils/reading';
+import { jsonResponse as response } from '../test/fixtures';
 
-/** Only what the client reads from a Response: ok, status, json(). */
-const jsonResponse = (status: number, body: unknown): Promise<Response> =>
-  Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) } as unknown as Response);
+const jsonResponse = (status: number, body: unknown) => Promise.resolve(response(status, body));
 
 afterEach(() => {
   vi.restoreAllMocks();

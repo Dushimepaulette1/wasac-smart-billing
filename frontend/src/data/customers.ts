@@ -1,12 +1,29 @@
 /**
- * @file customers.js
+ * @file customers.ts
  * @description Mock customer data for WASAC Smart Billing Platform.
  * Contains 3 realistic Rwandan customer accounts and a reference to the
- * currently logged-in customer.
+ * currently logged-in customer. Used by the staff screens that predate the
+ * redesign.
  */
 
-/** @typedef {Object} Customer */
-export const mockCustomers = [
+import type { BadgeStatus } from '../components/StatusBadge/StatusBadge';
+
+export interface MockCustomer {
+  id: string;
+  accountNumber: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  district: string;
+  meterID: string;
+  previousReading: number;
+  lastReadingDate: string;
+  accountStatus: BadgeStatus;
+  outstandingBalance: number;
+}
+
+export const mockCustomers: MockCustomer[] = [
   {
     id: 'cust-001',
     accountNumber: 'WAS-KIG-2019-04821',
@@ -55,4 +72,7 @@ export const mockCustomers = [
  * The currently authenticated customer (first in the array).
  * Used throughout the app to simulate a logged-in session.
  */
-export const mockCurrentCustomer = mockCustomers[0];
+// The list above is non-empty; the check keeps the type MockCustomer.
+const first = mockCustomers[0];
+if (!first) throw new Error('mockCustomers is empty');
+export const mockCurrentCustomer: MockCustomer = first;

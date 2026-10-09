@@ -74,6 +74,7 @@ async function request<T>(
   }
 
   if (!response.ok) {
+    // Error responses from FastAPI carry { detail }; anything else has none.
     const detail = (data as ApiErrorBody | null)?.detail;
     const text = typeof detail === 'string' ? detail : undefined;
     if (response.status === 404) throw new ApiError('notFound', 404, text);

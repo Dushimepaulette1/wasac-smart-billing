@@ -1,9 +1,9 @@
 /**
- * @file AnomalyReview.jsx
+ * @file AnomalyReview.tsx
  * @description Screen 10: Field Officer Anomaly Review Queue.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Card from '../../components/Card/Card';
 import Button from '../../components/Button/Button';
@@ -11,12 +11,14 @@ import { mockAnomalyReadings } from '../../data/readings';
 import { formatDate, formatConsumption } from '../../utils/format';
 import styles from './AnomalyReview.module.css';
 
+type ReviewAction = 'approve' | 'recapture';
+
 export default function AnomalyReview() {
   const [items, setItems] = useState(mockAnomalyReadings);
-  const [actionStates, setActionStates] = useState({});
-  const [removingIds, setRemovingIds] = useState([]);
+  const [actionStates, setActionStates] = useState<Record<string, ReviewAction>>({});
+  const [removingIds, setRemovingIds] = useState<string[]>([]);
 
-  const handleAction = (id, type) => {
+  const handleAction = (id: string, type: ReviewAction) => {
     setActionStates((prev) => ({ ...prev, [id]: type }));
 
     setTimeout(() => {
@@ -155,14 +157,12 @@ export default function AnomalyReview() {
                         <div className={styles.actionsRow}>
                           <Button
                             variant="primary"
-                            size="sm"
                             onClick={() => handleAction(item.id, 'approve')}
                           >
                             Approve Reading
                           </Button>
                           <Button
                             variant="secondary"
-                            size="sm"
                             onClick={() => handleAction(item.id, 'recapture')}
                           >
                             Request Recapture

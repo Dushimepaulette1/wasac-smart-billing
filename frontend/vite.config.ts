@@ -35,7 +35,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/setupTests.js'],
+    setupFiles: ['./src/setupTests.ts'],
     // Plain class names in tests ("cell", "active"), as CRA's Jest setup gave.
     css: { include: [/\.module\.css$/], modules: { classNameStrategy: 'non-scoped' } },
   },
