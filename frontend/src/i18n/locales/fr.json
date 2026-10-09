@@ -63,5 +63,10 @@
   "confirm.sending": "TODO: translate",
   "confirm.kept": "TODO: translate",
   "confirm.retakeTitle": "TODO: translate",
-  "confirm.retakeBody": "TODO: translate"
+  "confirm.retakeBody": "TODO: translate",
+  "held.title": "TODO: translate",
+  "held.checkingTitle": "TODO: translate",
+  "held.checkingBody": "TODO: translate",
+  "held.yourReading": "TODO: translate",
+  "held.sentOn": "TODO: translate"
 }
