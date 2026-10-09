@@ -5,7 +5,19 @@
  * cares about.
  */
 
-import type { AnomalyFlag, BillSummary, CalculateBillResponse, CustomerInfo } from '../api/types';
+import type {
+  AnomalyFlag,
+  AnomalyResult,
+  BillSummary,
+  CalculateBillResponse,
+  ConfirmReadingResponse,
+  CustomerInfo,
+} from '../api/types';
+
+/** A fetch Response with only what the API client reads: ok, status, json(). */
+export function jsonResponse(status: number, body: unknown): Response {
+  return { ok: status < 400, status, json: () => Promise.resolve(body) } as unknown as Response;
+}
 
 export function makeCustomer(overrides: Partial<CustomerInfo> = {}): CustomerInfo {
   return {
@@ -63,5 +75,41 @@ export function makeCalculatedBill(): CalculateBillResponse {
     service_charge: 1000,
     total_amount_due: 12400.5,
     currency: 'RWF',
+  };
+}
+
+export function makeAnomalyResult(overrides: Partial<AnomalyResult> = {}): AnomalyResult {
+  return {
+    household_id: 'MTR001',
+    reading_m3: 0.444,
+    daily_consumption: null,
+    anomaly_score: null,
+    is_anomaly: true,
+    anomaly_type: 'MISREAD_SUSPECTED',
+    needs_retake: false,
+    message_for_household: 'WASAC: backend English text',
+    features: {},
+    model_used: false,
+    flag_id: 2,
+    pending_review: true,
+    actions: [],
+    ...overrides,
+  };
+}
+
+/** A reading that created a bill; override for held or retake outcomes. */
+export function makeConfirmResponse(overrides: Partial<ConfirmReadingResponse> = {}): ConfirmReadingResponse {
+  return {
+    success: true,
+    bill_amount: 12400.5,
+    consumption_m3: 20.5,
+    tariff_breakdown: null,
+    validation_status: 'valid',
+    anomaly_flagged: false,
+    anomaly_score: null,
+    error_message: null,
+    bill_id: 19,
+    anomaly: null,
+    ...overrides,
   };
 }

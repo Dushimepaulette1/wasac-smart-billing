@@ -1,11 +1,10 @@
 /**
- * @file CustomerHome.jsx
+ * @file CustomerHome.tsx
  * @description Home leads with the household's next action, in words:
  * pay the bill that is due, or read the meter. No big-number hero and no
  * counter here; the counter belongs to readings.
  */
 
-import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';

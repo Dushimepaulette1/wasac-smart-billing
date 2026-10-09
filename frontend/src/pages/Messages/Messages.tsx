@@ -1,5 +1,5 @@
 /**
- * @file Messages.jsx
+ * @file Messages.tsx
  * @description What WASAC noticed about the household's readings, from
  * GET /api/anomaly/flags. Copy comes from the translation files by anomaly
  * type, never from the backend's English text. Leak alerts say what was
@@ -9,7 +9,6 @@
  * so a finished check is described neutrally.
  */
 
-import React from 'react';
 import Screen from '../../components/Screen/Screen';
 import Icon from '../../components/Icon/Icon';
 import RequestState from '../../components/RequestState/RequestState';
@@ -18,12 +17,13 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
 import { HIGH_USE_TYPES } from '../../household/loadHome';
 import { METER_ID } from '../../config';
+import type { AnomalyFlag, AnomalyType } from '../../api/types';
 import styles from './Messages.module.css';
 
 /** Types a household gets a message for; NORMAL and BASELINE need none. */
-export const SHOWN_TYPES = ['SPIKE', 'SUSTAINED_HIGH', 'MISREAD_SUSPECTED', 'METER_STUCK', 'UNUSUAL'];
+export const SHOWN_TYPES: readonly AnomalyType[] = ['SPIKE', 'SUSTAINED_HIGH', 'MISREAD_SUSPECTED', 'METER_STUCK', 'UNUSUAL'];
 
-function Message({ flag }) {
+function Message({ flag }: { flag: AnomalyFlag }) {
   const { t, date } = useI18n();
   const type = flag.anomaly_type;
   const open = flag.status === 'open';

@@ -27,9 +27,8 @@ export interface BillView {
   serviceCharge: number;
   /** Date of the bill before this one, if any. */
   periodStart: string | null;
-  /** This bill's meter reading; known for the newest bill only. */
-  reading: Cells | null;
-  previousReading: number | null;
+  /** This bill's meter reading and the one before it; newest bill only. */
+  reading: { cells: Cells; previous: number } | null;
   /** Up to six bills, oldest first, ending with this one. */
   history: BillSummary[];
 }
@@ -55,8 +54,12 @@ export default async function loadBill(customerId: string, billId: number | null
       .map((tier) => ({ units: tier.units, rate: tier.rate_rwf, amount: tier.amount })),
     serviceCharge: tariff.service_charge,
     periodStart: bills[index + 1]?.created_at ?? null,
-    reading: isNewest ? cellsFromCubicMetres(customer.last_reading) : null,
-    previousReading: isNewest ? customer.last_reading - bill.consumption_m3 : null,
+    reading: isNewest
+      ? {
+          cells: cellsFromCubicMetres(customer.last_reading),
+          previous: customer.last_reading - bill.consumption_m3,
+        }
+      : null,
     // Oldest first, ending with this bill, for the usage bars.
     history: bills.slice(index, index + 6).reverse(),
   };

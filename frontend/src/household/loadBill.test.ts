@@ -27,8 +27,8 @@ describe('loadBill', () => {
   it('loads the newest bill with its meter reading and the one before', async () => {
     const data = await loadBill('CUST001', null);
     expect(data.bill.bill_id).toBe(19);
-    expect(data.reading && cellsToDigits(data.reading)).toBe('00484500');
-    expect(data.previousReading).toBeCloseTo(464);
+    expect(data.reading && cellsToDigits(data.reading.cells)).toBe('00484500');
+    expect(data.reading?.previous).toBeCloseTo(464);
     expect(data.periodStart).toBe('2026-09-09T09:38:11');
     expect(api.calculateBill).toHaveBeenCalledWith(20.5);
   });
@@ -47,7 +47,6 @@ describe('loadBill', () => {
     const data = await loadBill('CUST001', 6);
     expect(data.bill.bill_id).toBe(6);
     expect(data.reading).toBeNull();
-    expect(data.previousReading).toBeNull();
   });
 
   it('lists usage oldest first, ending with this bill', async () => {

@@ -1,12 +1,12 @@
 /**
- * @file CameraCapture.jsx
+ * @file CameraCapture.tsx
  * @description Submit flow, step 1: photograph the meter.
  * Live camera where the phone allows it; uploading a photo or typing the
  * numbers are always offered, so a missing camera or a bad photo never
  * blocks the household. The photo is kept if sending fails.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
@@ -18,20 +18,23 @@ import { frameToDataUrl, fileToDataUrl, dataUrlToBlob } from '../../household/ph
 import { api } from '../../api/client';
 import styles from './CameraCapture.module.css';
 
+type CameraState = 'starting' | 'live' | 'unavailable';
+/** "saved": back on this screen (or reloaded) with a photo not yet read. */
+type SendState = 'idle' | 'sending' | 'failed' | 'unreadable' | 'saved';
+
 function CameraCapture() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const submission = useSubmission();
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const fileRef = useRef(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  // camera: starting | live | unavailable
-  const [camera, setCamera] = useState('starting');
-  // send: idle | sending | failed | unreadable | saved
-  // "saved": back on this screen (or reloaded) with a photo not yet read.
-  const [send, setSend] = useState(submission.photo && !submission.cells ? 'saved' : 'idle');
-  const [error, setError] = useState(null);
+  const [camera, setCamera] = useState<CameraState>('starting');
+  const [send, setSend] = useState<SendState>(submission.photo && !submission.cells ? 'saved' : 'idle');
+  const [error, setError] = useState<unknown>(null);
+  // The chosen file was not an image (not a network error).
+  const [notImage, setNotImage] = useState(false);
 
   const showPreview = submission.photo && send !== 'idle';
 
@@ -66,9 +69,10 @@ function CameraCapture() {
     };
   }, [showPreview, stopCamera]);
 
-  const sendPhoto = async (photo) => {
+  const sendPhoto = async (photo: string) => {
     setSend('sending');
     setError(null);
+    setNotImage(false);
     try {
       const result = await api.submitPhoto(dataUrlToBlob(photo));
       if (result.status === 'unreadable') {
@@ -92,7 +96,7 @@ function CameraCapture() {
     sendPhoto(photo);
   };
 
-  const choseFile = async (event) => {
+  const choseFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -102,7 +106,7 @@ function CameraCapture() {
       stopCamera();
       sendPhoto(photo);
     } catch {
-      setError({ kind: 'notImage' });
+      setNotImage(true);
       setSend('failed');
     }
   };
@@ -128,12 +132,13 @@ function CameraCapture() {
       </Button>
     );
   } else if ((send === 'failed' || send === 'saved') && submission.photo) {
+    const photo = submission.photo;
     action = (
       <>
         <Button variant="text" onClick={retake}>
           {t('camera.retake')}
         </Button>
-        <Button fullWidth onClick={() => sendPhoto(submission.photo)}>
+        <Button fullWidth onClick={() => sendPhoto(photo)}>
           {t('camera.sendAgain')}
         </Button>
       </>
@@ -189,7 +194,7 @@ function CameraCapture() {
 
       {send === 'failed' && (
         <Notice tone="error" live>
-          {error?.kind === 'notImage' ? t('camera.notImage') : errorMessage(t, error)}{' '}
+          {notImage ? t('camera.notImage') : errorMessage(t, error)}{' '}
           {submission.photo && t('camera.photoKept')}
         </Notice>
       )}
@@ -197,7 +202,7 @@ function CameraCapture() {
       {send === 'saved' && <Notice tone="info">{t('camera.saved')}</Notice>}
 
       {showPreview ? (
-        <img className={styles.frame} src={submission.photo} alt={t('camera.photoAlt')} />
+        <img className={styles.frame} src={submission.photo ?? undefined} alt={t('camera.photoAlt')} />
       ) : camera !== 'unavailable' && (
         <div className={styles.frame}>
           <video ref={videoRef} className={styles.video} autoPlay playsInline muted />

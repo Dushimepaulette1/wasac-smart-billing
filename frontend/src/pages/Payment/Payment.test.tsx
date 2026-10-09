@@ -1,16 +1,16 @@
-import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Payment from './Payment';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
+import { makeBill, makeCustomer } from '../../test/fixtures';
 
 vi.mock('../../api/client', async (importOriginal) => {
-  const actual = await importOriginal();
-  return { ...actual, api: { getBills: vi.fn(), getCustomer: vi.fn(), payBill: vi.fn() } };
+  const actual = await importOriginal<typeof import('../../api/client')>();
+  return { ...actual, api: { ...actual.api, getBills: vi.fn(), getCustomer: vi.fn(), payBill: vi.fn() } };
 });
 
-const BILL = { bill_id: 19, consumption_m3: 20.5, amount_due: 12400.5, payment_status: 'unpaid', created_at: '2026-10-09T10:26:25' };
+const BILL = makeBill({ bill_id: 19, amount_due: 12400.5, payment_status: 'unpaid' });
 
 function renderPayment() {
   return render(
@@ -28,8 +28,8 @@ function renderPayment() {
 }
 
 beforeEach(() => {
-  api.getBills.mockResolvedValue([BILL]);
-  api.getCustomer.mockResolvedValue({ customer_id: 'CUST001', phone: '+250788123456' });
+  vi.mocked(api.getBills).mockResolvedValue([BILL]);
+  vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ phone: '+250788123456' }));
 });
 
 describe('Payment', () => {
@@ -40,7 +40,13 @@ describe('Payment', () => {
   });
 
   it('shows Paid with the transaction id after paying', async () => {
-    api.payBill.mockResolvedValue({ success: true, transaction_id: 'MOMO-000019-RW' });
+    vi.mocked(api.payBill).mockResolvedValue({
+      success: true,
+      bill_id: 19,
+      transaction_id: 'MOMO-000019-RW',
+      amount_paid: 12400.5,
+      message: 'Payment successful',
+    });
     renderPayment();
     const button = await screen.findByRole('button', { name: 'Pay RWF 12,401' });
     await act(async () => fireEvent.click(button));
@@ -50,7 +56,7 @@ describe('Payment', () => {
   });
 
   it('does not claim the household was not charged when the connection drops', async () => {
-    api.payBill.mockRejectedValue(Object.assign(new Error('offline'), { kind: 'offline' }));
+    vi.mocked(api.payBill).mockRejectedValue(new ApiError('offline'));
     renderPayment();
     const button = await screen.findByRole('button', { name: 'Pay RWF 12,401' });
     await act(async () => fireEvent.click(button));
@@ -60,7 +66,7 @@ describe('Payment', () => {
   });
 
   it('shows an already-paid bill as paid, without a Pay button', async () => {
-    api.getBills.mockResolvedValue([{ ...BILL, payment_status: 'paid' }]);
+    vi.mocked(api.getBills).mockResolvedValue([{ ...BILL, payment_status: 'paid' }]);
     renderPayment();
     expect(await screen.findByText('This bill is already paid.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Pay/ })).not.toBeInTheDocument();

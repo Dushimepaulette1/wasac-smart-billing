@@ -1,5 +1,5 @@
 /**
- * @file Payment.jsx
+ * @file Payment.tsx
  * @description Pay one bill with MTN Mobile Money.
  * The button says the amount ("Pay RWF 12,401") and becomes "Paid".
  * If the connection drops mid-payment we cannot know whether it went
@@ -10,24 +10,37 @@
  * id; there is no real MoMo prompt behind it yet, so none is promised here.
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
 import RequestState, { errorMessage } from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
+import type { BillSummary } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
 import { localDateIso } from '../../i18n/format';
 import { formatRwandanPhone } from '../../utils/phone';
 import { CUSTOMER_ID } from '../../config';
 import styles from './Payment.module.css';
 
-async function loadPayment(customerId, billId) {
+interface PaymentView {
+  bill: BillSummary;
+  /** The account's MTN Mobile Money number. */
+  phone: string;
+}
+
+interface Receipt {
+  /** Null when the bill had already been paid (no new transaction). */
+  transactionId: string | null;
+  at: string;
+}
+
+async function loadPayment(customerId: string, billId: number): Promise<PaymentView> {
   const [bills, customer] = await Promise.all([api.getBills(customerId), api.getCustomer(customerId)]);
   const bill = bills.find((b) => b.bill_id === billId);
-  if (!bill) throw Object.assign(new Error('Bill not found'), { kind: 'notFound' });
+  if (!bill) throw new ApiError('notFound', 404, `Bill ${billId} not found`);
   return { bill, phone: customer.phone };
 }
 
@@ -38,10 +51,9 @@ function Payment() {
   const billId = Number(params.get('bill'));
   const load = useRequest(loadPayment);
   const { run } = load;
-  // ready | paying | paid | unsure | failed
-  const [state, setState] = useState('ready');
-  const [receipt, setReceipt] = useState(null);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState<'ready' | 'paying' | 'paid' | 'unsure' | 'failed'>('ready');
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     run(CUSTOMER_ID, billId);
@@ -64,12 +76,13 @@ function Payment() {
     setError(null);
     try {
       const result = await api.payBill(bill.bill_id);
-      setReceipt({ transactionId: result.transaction_id ?? null, at: localDateIso() });
+      // "Already paid" responses carry no transaction id.
+      setReceipt({ transactionId: 'transaction_id' in result ? result.transaction_id : null, at: localDateIso() });
       setState('paid');
     } catch (err) {
       setError(err);
       // No answer: the payment may or may not have gone through.
-      setState(err.kind === 'offline' || err.kind === 'timeout' ? 'unsure' : 'failed');
+      setState(err instanceof ApiError && (err.kind === 'offline' || err.kind === 'timeout') ? 'unsure' : 'failed');
     }
   };
 
