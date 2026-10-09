@@ -9,13 +9,14 @@ import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import AppRouter from './router/index';
+import { I18nProvider } from './i18n/I18nProvider';
 
 
 function App() {
   return (
-    <div className="app-root">
+    <I18nProvider>
       <AppRouter />
-    </div>
+    </I18nProvider>
   );
 }
 
