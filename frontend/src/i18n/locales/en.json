@@ -97,5 +97,8 @@
   "pay.bill": "Bill",
   "pay.amount": "Amount",
   "pay.date": "Date",
-  "pay.transaction": "Transaction ID"
+  "pay.transaction": "Transaction ID",
+  "history.title": "Your bills",
+  "history.empty": "No bills yet. Take your first meter photo.",
+  "home.read": "Read your meter"
 }

@@ -1,223 +1,49 @@
-/* Screen 8: Bill History Styles */
-.container {
-  min-height: 100vh;
-  width: 100%;
-  background-color: var(--color-bg-base);
-  padding-bottom: 96px;
-}
-
-.inner {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: var(--space-4) var(--space-5) var(--space-8);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-.summaryBanner {
-  border: 1px solid var(--color-border);
-}
-
-.bannerRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.bannerIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-accent-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.bannerText {
+/* Rows on Paper, separated by the Glass page showing through: one list,
+   not a stack of cards. Edge to edge on a phone. */
+.list {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: 0 calc(-1 * var(--gutter-household));
+  padding: 0;
+  list-style: none;
 }
 
-.bannerLabel {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+@media (min-width: 481px) {
+  .list {
+    margin-inline: 0;
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+  }
+}
+
+/* Month | amount on the first line, volume | status on the second. */
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-4);
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--gutter-household);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.month {
+  font-weight: var(--weight-bold);
+}
+
+.amount {
+  text-align: right;
+  font-weight: var(--weight-bold);
+}
+
+.status {
+  text-align: right;
   color: var(--color-text-secondary);
 }
 
-.bannerValue {
-  font-size: var(--text-xl);
+.unpaid {
+  color: var(--color-text);
   font-weight: var(--weight-bold);
-  color: var(--color-text-primary);
-}
-
-.bannerPeriod {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-regular);
-  color: var(--color-text-muted);
-}
-
-.historyList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  animation: slideUp var(--duration-base) var(--ease-out) both;
-}
-
-.billCard {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--duration-fast) var(--ease-out);
-  overflow: hidden;
-}
-
-.cardOpen {
-  border-color: var(--color-accent);
-  box-shadow: var(--shadow-md);
-}
-
-.cardHeaderRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  cursor: pointer;
-  user-select: none;
-}
-
-.headerLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.periodName {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.dateMeta {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.billTotal {
-  font-size: var(--text-base);
-  font-weight: var(--weight-bold);
-  color: var(--color-text-primary);
-}
-
-.chevron {
-  display: flex;
-  align-items: center;
-  transition: transform var(--duration-fast) var(--ease-out);
-}
-
-.chevronRotated {
-  transform: rotate(180deg);
-}
-
-.expandedSection {
-  animation: slideDown var(--duration-fast) var(--ease-out) both;
-}
-
-.expandedDivider {
-  height: 1px;
-  background-color: var(--color-border);
-  margin: 0 var(--space-5);
-}
-
-.expandedContent {
-  padding: var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  background-color: var(--color-bg-surface);
-}
-
-.tierSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.tierBarTrack {
-  display: flex;
-  height: 8px;
-  width: 100%;
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  background-color: var(--color-border);
-}
-
-.tierBarSlice {
-  height: 100%;
-}
-
-.itemsList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.itemRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--text-xs);
-}
-
-.itemLabel {
-  color: var(--color-text-secondary);
-}
-
-.itemVal {
-  font-weight: var(--weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.footerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: var(--space-2);
-  border-top: 1px dashed var(--color-border);
-}
-
-.paidMeta {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
-}
-
-.reviewNotice {
-  font-size: var(--text-xs);
-  color: var(--color-warning);
-  font-weight: var(--weight-medium);
-}
-
-.unpaidAction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.dueNotice {
-  font-size: var(--text-xs);
-  color: var(--color-error);
-  font-weight: var(--weight-medium);
 }
