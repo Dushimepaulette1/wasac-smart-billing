@@ -22,15 +22,18 @@ const blankCells = () => Array(READING_LENGTH).fill('');
  *   `needsCheck: true`, so the screen opens the editable counter instead
  *   of showing an error.
  *
+ * `raw` is always the reader's own output (trimmed), so a screen can show
+ * what was read ("We read 005162454...") rather than discard it.
+ *
  * @param {string|null|undefined} raw
- * @returns {{ cells: string[], needsCheck: boolean }}
+ * @returns {{ cells: string[], needsCheck: boolean, raw: string }}
  */
 export function normalizeReading(raw) {
   const text = raw == null ? '' : String(raw).trim();
   if (/^\d{1,8}$/.test(text)) {
-    return { cells: text.padStart(READING_LENGTH, '0').split(''), needsCheck: false };
+    return { cells: text.padStart(READING_LENGTH, '0').split(''), needsCheck: false, raw: text };
   }
-  return { cells: blankCells(), needsCheck: true };
+  return { cells: blankCells(), needsCheck: true, raw: text };
 }
 
 /**
