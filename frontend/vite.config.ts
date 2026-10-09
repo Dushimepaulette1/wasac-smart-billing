@@ -5,7 +5,7 @@
  * Backend routes are proxied to FastAPI on :8000, as CRA's "proxy" did, so
  * VITE_API_URL can stay empty in development.
  */
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 const BACKEND = 'http://localhost:8000';
