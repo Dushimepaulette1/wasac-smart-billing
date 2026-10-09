@@ -55,7 +55,7 @@ The rejected `feature/frontend-redesign` branch changed CSS only and has no API 
 | `POST /calculate-bill`, `POST /submit-ussd`, `GET /health` | not used | |
 
 **Only on `feature/anomaly-detection`, not on `rebuilt-main`:**
-`GET /flags`, `PATCH /flags/{id}/resolve` `{outcome: "accept" | "reject"}`, `POST /score`, and
+`GET /api/anomaly/flags`, `PATCH /api/anomaly/flags/{id}/resolve` `{outcome: "accept" | "reject"}`, `POST /api/anomaly/score`, and
 `ConfirmReadingResponse.anomaly` (with `pending_review`, `anomaly_type`, `message_for_household`,
 `needs_retake`). The staff review queue and the household "held for checking" state depend on these.
 Anomaly types: `MISREAD_SUSPECTED`, `SPIKE`, `SUSTAINED_HIGH`, `METER_STUCK`, `UNUSUAL`,
@@ -346,8 +346,8 @@ revised.
 ## 7. Decisions (09/10/2026)
 
 1. **Anomaly endpoints.** `feature/anomaly-detection` is merged into `rebuilt-main` (46 backend
-   tests pass) and this branch is rebased onto it. Staff screens use the real `/flags` and
-   `/flags/{id}/resolve`, not mocks.
+   tests pass) and this branch is rebased onto it. Staff screens use the real `/api/anomaly/flags` and
+   `/api/anomaly/flags/{id}/resolve`, not mocks.
 2. **Base.** 2ced262 is pushed; `rebuilt-main` is now d776deb, which also tracks the skill.
 3. **Translations.** English is filled in. Every Kinyarwanda and French string is
    `"TODO: translate"` for review by the product owner. No machine translation of Kinyarwanda.

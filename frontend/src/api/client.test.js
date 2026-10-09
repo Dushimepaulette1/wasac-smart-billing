@@ -69,6 +69,6 @@ describe('api', () => {
   it('asks for flags by meter id', async () => {
     const fetchMock = jest.spyOn(global, 'fetch').mockReturnValue(jsonResponse(200, []));
     await api.getHouseholdFlags('MTR001');
-    expect(fetchMock.mock.calls[0][0]).toBe('/flags?household_id=MTR001');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/anomaly/flags?household_id=MTR001');
   });
 });
