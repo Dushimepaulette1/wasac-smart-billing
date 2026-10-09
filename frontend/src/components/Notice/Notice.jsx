@@ -5,8 +5,8 @@
  *
  * error - something failed; says how to fix it. Black text, "!" icon.
  * held  - a reading is being checked. Brass, clock icon. Never alarming.
- * info  - advice, such as a soft retake prompt.
- * done  - something finished, such as a payment.
+ * info  - advice, such as a soft retake prompt. No frame.
+ * done  - something finished, such as a payment. No frame.
  */
 
 import React from 'react';

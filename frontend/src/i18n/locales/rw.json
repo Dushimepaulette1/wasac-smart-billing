@@ -85,5 +85,17 @@
   "bill.howTitle": "TODO: translate",
   "bill.tierLine": "TODO: translate",
   "bill.howNote": "TODO: translate",
-  "bill.usageTitle": "TODO: translate"
+  "bill.usageTitle": "TODO: translate",
+  "pay.title": "TODO: translate",
+  "pay.from": "TODO: translate",
+  "pay.paying": "TODO: translate",
+  "pay.paidTitle": "TODO: translate",
+  "pay.paidBody": "TODO: translate",
+  "pay.already": "TODO: translate",
+  "pay.unsure": "TODO: translate",
+  "pay.seeBills": "TODO: translate",
+  "pay.bill": "TODO: translate",
+  "pay.amount": "TODO: translate",
+  "pay.date": "TODO: translate",
+  "pay.transaction": "TODO: translate"
 }

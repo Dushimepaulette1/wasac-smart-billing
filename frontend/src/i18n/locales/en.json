@@ -85,5 +85,17 @@
   "bill.howTitle": "How this is worked out",
   "bill.tierLine": "{volume} at {rate} per m³",
   "bill.howNote": "The more water you use in a month, the higher the price for each extra cubic metre. The service charge is the same every month.",
-  "bill.usageTitle": "Your last months"
+  "bill.usageTitle": "Your last months",
+  "pay.title": "Pay with Mobile Money",
+  "pay.from": "You pay from the MTN Mobile Money number on your account: {phone}.",
+  "pay.paying": "Paying…",
+  "pay.paidTitle": "Paid",
+  "pay.paidBody": "You paid {amount}.",
+  "pay.already": "This bill is already paid.",
+  "pay.unsure": "We could not confirm the payment. Check your bills before you try again, so you don't pay twice.",
+  "pay.seeBills": "See your bills",
+  "pay.bill": "Bill",
+  "pay.amount": "Amount",
+  "pay.date": "Date",
+  "pay.transaction": "Transaction ID"
 }
