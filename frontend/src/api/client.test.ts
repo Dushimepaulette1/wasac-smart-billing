@@ -1,13 +1,9 @@
 import { api, ApiError, cellsToCubicMetreString } from './client';
 import { normalizeReading } from '../utils/reading';
 
-const jsonResponse = (status, body) =>
-  Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) });
-
-// jsdom has no fetch; give spyOn something to replace.
-beforeAll(() => {
-  if (!globalThis.fetch) globalThis.fetch = () => Promise.reject(new Error('fetch not mocked'));
-});
+/** Only what the client reads from a Response: ok, status, json(). */
+const jsonResponse = (status: number, body: unknown): Promise<Response> =>
+  Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) } as unknown as Response);
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -32,9 +28,9 @@ describe('api', () => {
       meterId: 'MTR001',
       cells: normalizeReading('00464500').cells,
     });
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe('/confirm-reading');
-    expect(JSON.parse(init.body)).toEqual({
+    expect(JSON.parse(String(init?.body))).toEqual({
       customer_id: 'CUST001',
       meter_id: 'MTR001',
       confirmed_reading: '00464.500',
@@ -48,10 +44,9 @@ describe('api', () => {
 
   it('maps a 404 to notFound and keeps the backend detail', async () => {
     vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(404, { detail: 'Meter not found' }));
-    const error = await api.payBill(99).catch((e) => e);
+    const error: unknown = await api.payBill(99).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ApiError);
-    expect(error.kind).toBe('notFound');
-    expect(error.detail).toBe('Meter not found');
+    expect(error).toMatchObject({ kind: 'notFound', detail: 'Meter not found' });
   });
 
   it('maps other failures to server', async () => {
@@ -69,6 +64,6 @@ describe('api', () => {
   it('asks for flags by meter id', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, []));
     await api.getHouseholdFlags('MTR001');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/anomaly/flags?household_id=MTR001');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/anomaly/flags?household_id=MTR001');
   });
 });
