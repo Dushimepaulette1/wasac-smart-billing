@@ -6,9 +6,9 @@ import { I18nProvider } from '../../i18n/I18nProvider';
 import en from '../../i18n/locales/en.json';
 import { api } from '../../api/client';
 
-jest.mock('../../api/client', () => {
-  const actual = jest.requireActual('../../api/client');
-  return { ...actual, api: { getHouseholdFlags: jest.fn() } };
+vi.mock('../../api/client', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, api: { getHouseholdFlags: vi.fn() } };
 });
 
 const flag = (id, anomaly_type, extra = {}) => ({

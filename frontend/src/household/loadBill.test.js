@@ -2,11 +2,11 @@ import loadBill from './loadBill';
 import { api } from '../api/client';
 import { cellsToDigits } from '../utils/reading';
 
-jest.mock('../api/client', () => {
-  const actual = jest.requireActual('../api/client');
+vi.mock('../api/client', async (importOriginal) => {
+  const actual = await importOriginal();
   return {
     ...actual,
-    api: { getBills: jest.fn(), getCustomer: jest.fn(), calculateBill: jest.fn() },
+    api: { getBills: vi.fn(), getCustomer: vi.fn(), calculateBill: vi.fn() },
   };
 });
 
