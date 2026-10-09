@@ -22,6 +22,7 @@ import OfficerMode from '../pages/OfficerMode/OfficerMode';
 import AnomalyReview from '../pages/AnomalyReview/AnomalyReview';
 import Account from '../pages/Account/Account';
 import NotFound from '../pages/NotFound/NotFound';
+import CounterPreview from '../pages/_dev/CounterPreview';
 
 /**
  * Shell layout component — wraps screen content with responsive navigation.
@@ -147,6 +148,10 @@ function AppRouter() {
             </AppShell>
           }
         />
+
+        {process.env.NODE_ENV !== 'production' && (
+          <Route path="/dev/counter" element={<CounterPreview />} />
+        )}
 
         <Route path="*" element={<NotFound />} />
       </Routes>
