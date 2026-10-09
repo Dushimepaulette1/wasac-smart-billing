@@ -118,7 +118,9 @@ font has no alternate. Numbers (amounts, volumes, readings, dates) use a plain z
 mix letters and numbers (account and meter IDs) keep the slashed zero so 0 and O stay distinct.
 The plain zero comes from "Atkinson Next Plain Zero", a derived font of under 800 bytes per
 weight that holds only the zero (built by `frontend/scripts/fonts/plain_zero.py`, OFL 1.1),
-layered over the main font with `unicode-range`. In CSS: `.num` for numbers, `.code` for IDs.
+layered over the main font with `unicode-range`. In CSS the body uses it, so every number in
+running text gets the plain zero; IDs use `.code` to keep the slashed zero, and `.num` adds
+tabular figures for aligned numbers.
 Comparison: `docs/design/screenshots/00-zero-options.png`.
 
 **Scale** (Bringhurst's classical scale, px):
