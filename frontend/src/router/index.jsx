@@ -75,14 +75,7 @@ function AppRouter() {
             </AppShell>
           }
         />
-        <Route
-          path="/submit/camera"
-          element={
-            <AppShell>
-              <CameraCapture />
-            </AppShell>
-          }
-        />
+        <Route path="/submit/camera" element={<CameraCapture />} />
         <Route
           path="/submit/confirm"
           element={
