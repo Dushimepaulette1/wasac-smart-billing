@@ -1,12 +1,11 @@
 import io
-from datetime import datetime
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
-from database import get_db, Customer, Meter, Reading, Bill, _calculate_bill
+from database import get_db, Customer, Meter, _calculate_bill
 from models.quality_gate import QualityGate
 from models.crnn_model import CRNNReader
-from anomaly.service import notify_household, score_reading
+from anomaly.service import notify_household, submit_reading
 from schemas import (
     AnomalyResultSchema,
     PhotoSubmitResponse,
@@ -58,37 +57,21 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
     except ValueError:
         raise HTTPException(status_code=422, detail="Reading must be a number")
 
-    if submitted < meter.last_reading:
+    sub = submit_reading(db, meter, body.customer_id, submitted, method="camera")
+    actions = notify_household(db, sub.anomaly)
+    anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
+
+    if sub.bill is None:
         return ConfirmReadingResponse(
-            success=False,
-            validation_status="rejected",
-            error_message=(
-                f"Submitted reading {submitted} is less than the last recorded "
-                f"reading {meter.last_reading}. Please check and re-enter."
-            ),
+            success=True,
+            consumption_m3=sub.consumption_m3,
+            validation_status=sub.reading.validation_status,
+            anomaly_flagged=True,
+            anomaly_score=sub.anomaly.anomaly_score,
+            anomaly=anomaly,
         )
 
-    consumption = submitted - meter.last_reading
-    now = datetime.utcnow()
-
-    new_reading = Reading(
-        meter_id=body.meter_id,
-        submitted_value=submitted,
-        implied_consumption=consumption,
-        submission_method="camera",
-        submission_time=now,
-    )
-    db.add(new_reading)
-    db.flush()
-
-    anomaly = score_reading(db, body.meter_id, submitted, now, reading_id=new_reading.reading_id)
-    is_anomalous = anomaly.is_anomaly
-    anomaly_score = anomaly.anomaly_score
-    validation_status = "anomaly_flagged" if is_anomalous else "valid"
-    new_reading.anomaly_score = anomaly_score
-    new_reading.validation_status = validation_status
-
-    bill_data = _calculate_bill(consumption)
+    bill_data = _calculate_bill(sub.consumption_m3)
     breakdown = TariffBreakdown(
         tier1_units=bill_data["tier1_units"],
         tier1_amount=bill_data["tier1_amount"],
@@ -102,42 +85,16 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
         total=bill_data["total"],
     )
 
-    new_bill = Bill(
-        customer_id=body.customer_id,
-        reading_id=new_reading.reading_id,
-        consumption_m3=consumption,
-        tier1_units=bill_data["tier1_units"],
-        tier2_units=bill_data["tier2_units"],
-        tier3_units=bill_data["tier3_units"],
-        tier4_units=bill_data["tier4_units"],
-        tier1_amount=bill_data["tier1_amount"],
-        tier2_amount=bill_data["tier2_amount"],
-        tier3_amount=bill_data["tier3_amount"],
-        tier4_amount=bill_data["tier4_amount"],
-        service_charge=1000.0,
-        amount_due=bill_data["total"],
-        payment_status="unpaid",
-        created_at=datetime.utcnow(),
-    )
-    db.add(new_bill)
-
-    meter.last_reading = submitted
-    meter.last_reading_date = now
-
-    db.commit()
-    db.refresh(new_bill)
-    actions = notify_household(db, anomaly)
-
     return ConfirmReadingResponse(
         success=True,
-        bill_amount=bill_data["total"],
-        consumption_m3=consumption,
+        bill_amount=sub.bill.amount_due,
+        consumption_m3=sub.consumption_m3,
         tariff_breakdown=breakdown,
-        validation_status=validation_status,
-        anomaly_flagged=is_anomalous,
-        anomaly_score=anomaly_score,
-        bill_id=new_bill.bill_id,
-        anomaly=AnomalyResultSchema(**anomaly.to_dict(), actions=actions),
+        validation_status=sub.reading.validation_status,
+        anomaly_flagged=sub.anomaly.is_anomaly,
+        anomaly_score=sub.anomaly.anomaly_score,
+        bill_id=sub.bill.bill_id,
+        anomaly=anomaly,
     )
 
 

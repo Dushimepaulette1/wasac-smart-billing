@@ -15,7 +15,7 @@ class Action:
 
 
 ACTIONS = {
-    AnomalyType.MISREAD_SUSPECTED: Action(sms_household=True, staff_review=False),
+    AnomalyType.MISREAD_SUSPECTED: Action(sms_household=True, staff_review=True),
     AnomalyType.SPIKE: Action(sms_household=True, staff_review=True),
     AnomalyType.SUSTAINED_HIGH: Action(sms_household=True, staff_review=True),
     AnomalyType.METER_STUCK: Action(sms_household=False, staff_review=True),
@@ -27,11 +27,13 @@ MESSAGES = {
     AnomalyType.BASELINE: "Thank you. Your first meter reading has been recorded.",
     AnomalyType.NORMAL: "Thank you. Your meter reading has been recorded.",
     AnomalyType.MISREAD_SUSPECTED: (
-        "WASAC: We could not read your meter reliably. Please retake a clear photo of your water meter."
+        "WASAC: Your meter reading does not match your recent readings and is being checked. "
+        "We will SMS you if we need a new photo."
     ),
     AnomalyType.SPIKE: (
         "WASAC: Unusually high water use was detected on your meter. "
-        "Please check taps, toilets and pipes for leaks. Call 1580 if you need help."
+        "Please check taps, toilets and pipes for leaks. WASAC will confirm the reading before billing. "
+        "Call 1580 if you need help."
     ),
     AnomalyType.SUSTAINED_HIGH: (
         "WASAC: Your water use has been higher than normal for several periods. "
@@ -40,6 +42,16 @@ MESSAGES = {
     AnomalyType.METER_STUCK: "Your reading has been recorded. WASAC may contact you to check your meter.",
     AnomalyType.UNUSUAL: "Your reading has been recorded and will be reviewed by WASAC.",
 }
+
+
+RETAKE_MESSAGE = "WASAC: We could not read your meter reliably. Please retake a clear photo of your water meter."
+RESUBMIT_MESSAGE = (
+    "WASAC: We could not confirm your last meter reading. Please submit a new, clear photo of your water meter."
+)
+
+
+def confirmed_message(reading_m3: float, amount_rwf: float) -> str:
+    return f"WASAC: Your meter reading of {reading_m3:.3f} m3 has been confirmed. Bill: RWF {amount_rwf:,.0f}."
 
 
 def action_for(anomaly_type: AnomalyType) -> Action:

@@ -1,9 +1,8 @@
-from datetime import datetime
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from database import get_db, Meter, Reading, Bill, _calculate_bill
-from anomaly.service import notify_household, score_reading
+from database import get_db, Meter
+from anomaly.service import notify_household, submit_reading
 from schemas import USSDRequest
 
 router = APIRouter()
@@ -33,63 +32,22 @@ async def submit_ussd(body: USSDRequest, db: Session = Depends(get_db)):
     except ValueError:
         return {"response": "END Invalid reading. Please enter numbers only, e.g. 00444"}
 
-    if submitted < meter.last_reading:
-        return {
-            "response": (
-                f"END Error: Reading {submitted:.0f} is less than your last reading "
-                f"{meter.last_reading:.0f}. Please recheck your meter and try again."
-            )
-        }
+    sub = submit_reading(db, meter, customer.customer_id, submitted, method="ussd")
+    actions = notify_household(db, sub.anomaly)
+    anomaly = {**sub.anomaly.to_dict(), "actions": actions}
 
-    consumption = submitted - meter.last_reading
-    now = datetime.utcnow()
+    if sub.bill is None:
+        response = (
+            f"END Reading received: {submitted:.0f} m3\n"
+            f"It is being checked by WASAC before billing. We will SMS you."
+        )
+        return {"response": response, "anomaly": anomaly}
 
-    new_reading = Reading(
-        meter_id=meter.meter_id,
-        submitted_value=submitted,
-        implied_consumption=consumption,
-        submission_method="ussd",
-        submission_time=now,
-    )
-    db.add(new_reading)
-    db.flush()
-
-    anomaly = score_reading(db, meter.meter_id, submitted, now, reading_id=new_reading.reading_id)
-    is_anomalous = anomaly.is_anomaly
-    new_reading.anomaly_score = anomaly.anomaly_score
-    new_reading.validation_status = "anomaly_flagged" if is_anomalous else "valid"
-
-    bill_data = _calculate_bill(consumption)
-
-    new_bill = Bill(
-        customer_id=customer.customer_id,
-        reading_id=new_reading.reading_id,
-        consumption_m3=consumption,
-        tier1_units=bill_data["tier1_units"],
-        tier2_units=bill_data["tier2_units"],
-        tier3_units=bill_data["tier3_units"],
-        tier4_units=bill_data["tier4_units"],
-        tier1_amount=bill_data["tier1_amount"],
-        tier2_amount=bill_data["tier2_amount"],
-        tier3_amount=bill_data["tier3_amount"],
-        tier4_amount=bill_data["tier4_amount"],
-        service_charge=1000.0,
-        amount_due=bill_data["total"],
-        payment_status="unpaid",
-        created_at=datetime.utcnow(),
-    )
-    db.add(new_bill)
-
-    meter.last_reading = submitted
-    meter.last_reading_date = now
-    db.commit()
-    actions = notify_household(db, anomaly)
-
-    flag_msg = f"\n{anomaly.message_for_household}" if is_anomalous else ""
+    flag_msg = f"\n{sub.anomaly.message_for_household}" if sub.anomaly.is_anomaly else ""
     response = (
         f"END Reading received: {submitted:.0f} m3\n"
-        f"Consumption: {consumption:.1f} m3\n"
-        f"Bill: RWF {bill_data['total']:,.0f}{flag_msg}\n"
+        f"Consumption: {sub.consumption_m3:.1f} m3\n"
+        f"Bill: RWF {sub.bill.amount_due:,.0f}{flag_msg}\n"
         f"Dial *225# to pay via Mobile Money."
     )
-    return {"response": response, "anomaly": {**anomaly.to_dict(), "actions": actions}}
+    return {"response": response, "anomaly": anomaly}

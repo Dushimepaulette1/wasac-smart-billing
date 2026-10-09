@@ -26,7 +26,7 @@ async def list_customers(db: Session = Depends(get_db)):
             if past else None
         )
         anomaly_flagged = any(
-            r.validation_status == "anomaly_flagged"
+            r.validation_status in ("anomaly_flagged", "pending_review")
             for r in (db.query(Reading)
                        .filter(Reading.meter_id == c.meter_id)
                        .order_by(Reading.submission_time.desc())

@@ -61,7 +61,8 @@ def test_backwards_reading_is_suspected_misread(config):
     history = make_history([0.6] * 5)
     result = assess("H1", history, history[-1].reading_m3 - 3, history[-1].date + timedelta(days=30), None, config)
     assert result.anomaly_type == AnomalyType.MISREAD_SUSPECTED.value
-    assert result.is_anomaly and result.needs_retake
+    assert result.is_anomaly and result.pending_review
+    assert not result.needs_retake  # the reading is usable; staff decide, the household is told it is being checked
 
 
 def test_above_hard_maximum_is_spike_even_in_cold_start(config):

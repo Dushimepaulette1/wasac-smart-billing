@@ -70,31 +70,34 @@ def test_confirm_reading_keeps_behaviour_and_adds_anomaly(client, db, demo_histo
     assert db.get(Meter, DEMO_ID).last_reading == submitted
 
 
-def test_confirm_reading_spike_sets_anomaly_flagged(client, db, demo_histories):
+def test_confirm_reading_spike_is_held_for_review(client, db, demo_histories):
     points = demo_histories[DEMO_ID]
     customer_id = add_household(db, DEMO_ID, points)
     huge = round(points[-1].reading_m3 + 100000, 3)  # far above 5 m3/day whatever the gap
     body = client.post("/confirm-reading", json={
         "customer_id": customer_id, "meter_id": DEMO_ID, "confirmed_reading": str(huge),
     }).json()
-    assert body["validation_status"] == "anomaly_flagged" and body["anomaly_flagged"]
-    assert body["anomaly"]["anomaly_type"] == "SPIKE" and body["anomaly"]["flag_id"]
+    assert body["success"] and body["validation_status"] == "pending_review" and body["anomaly_flagged"]
+    assert body["bill_id"] is None and body["bill_amount"] is None
+    assert body["anomaly"]["anomaly_type"] == "SPIKE" and body["anomaly"]["pending_review"]
+    assert db.get(Meter, DEMO_ID).last_reading == points[-1].reading_m3
 
 
-def test_confirm_reading_still_rejects_backwards(client, db, demo_histories):
-    points = demo_histories[DEMO_ID]
-    customer_id = add_household(db, DEMO_ID, points)
-    body = client.post("/confirm-reading", json={
-        "customer_id": customer_id, "meter_id": DEMO_ID, "confirmed_reading": str(points[-1].reading_m3 - 1),
-    }).json()
-    assert body["success"] is False and body["validation_status"] == "rejected"
-
-
-def test_ussd_includes_anomaly_and_message(client, db, demo_histories):
+def test_ussd_held_reading_says_it_is_being_checked(client, db, demo_histories):
     points = demo_histories[DEMO_ID]
     add_household(db, DEMO_ID, points, phone="+250788999000")
     huge = points[-1].reading_m3 + 100000
     body = client.post("/submit-ussd", json={"phone_number": "+250788999000", "reading_value": str(huge)}).json()
     assert body["response"].startswith("END Reading received")
-    assert "leaks" in body["response"]
-    assert body["anomaly"]["anomaly_type"] == "SPIKE"
+    assert "being checked" in body["response"] and "Bill:" not in body["response"]
+    assert body["anomaly"]["anomaly_type"] == "SPIKE" and body["anomaly"]["pending_review"]
+
+
+def test_ussd_lower_reading_is_held_not_rejected(client, db, demo_histories):
+    points = demo_histories[DEMO_ID]
+    add_household(db, DEMO_ID, points, phone="+250788999000")
+    body = client.post("/submit-ussd", json={
+        "phone_number": "+250788999000", "reading_value": str(points[-1].reading_m3 - 5),
+    }).json()
+    assert "being checked" in body["response"]
+    assert body["anomaly"]["anomaly_type"] == "MISREAD_SUSPECTED"

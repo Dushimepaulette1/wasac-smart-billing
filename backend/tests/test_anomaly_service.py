@@ -8,7 +8,7 @@ from anomaly.db_models import AnomalyFlag
 from anomaly.features import build_periods
 from anomaly.readings import m3_to_digits
 from anomaly.rules import AnomalyType
-from anomaly.service import assess, load_history, score_reading, score_submission
+from anomaly.service import assess, load_history, score_submission
 from database import Reading
 
 DEMO_ID = "DEMO-MTR-001"
@@ -70,17 +70,19 @@ def test_unknown_household_raises(db):
         score_submission(db, "NOPE", "00565846", T0)
 
 
-def test_open_misread_readings_are_excluded_from_history(db, config, demo_histories):
+@pytest.mark.parametrize("status", ["pending_review", "rejected"])
+def test_unconfirmed_readings_are_excluded_from_history(db, demo_histories, status):
     points = demo_histories[DEMO_ID]
     add_household(db, DEMO_ID, points)
     when = points[-1].date + timedelta(days=30)
-    bad = Reading(meter_id=DEMO_ID, submitted_value=points[-1].reading_m3 - 50, submission_time=when)
-    db.add(bad)
-    db.flush()
-    result = score_reading(db, DEMO_ID, bad.submitted_value, when, reading_id=bad.reading_id)
-    assert result.anomaly_type == AnomalyType.MISREAD_SUSPECTED.value
+    db.add(Reading(meter_id=DEMO_ID, submitted_value=points[-1].reading_m3 + 500,
+                   submission_time=when, validation_status=status))
+    db.add(Reading(meter_id=DEMO_ID, submitted_value=points[-1].reading_m3 + 9,
+                   submission_time=when + timedelta(days=1), validation_status="anomaly_flagged"))
     db.commit()
 
-    later = load_history(db, DEMO_ID, when + timedelta(days=30))
-    assert len(later) == len(points)
-    assert all(p.reading_m3 != bad.submitted_value for p in later)
+    history = load_history(db, DEMO_ID, when + timedelta(days=30))
+    values = [p.reading_m3 for p in history]
+    assert points[-1].reading_m3 + 500 not in values
+    assert points[-1].reading_m3 + 9 in values  # confirmed-but-flagged readings stay in history
+    assert len(history) == len(points) + 1

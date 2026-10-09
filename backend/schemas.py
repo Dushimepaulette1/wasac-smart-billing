@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
+from typing import List, Literal, Optional
 from datetime import datetime
 
 
@@ -48,6 +48,7 @@ class AnomalyResultSchema(BaseModel):
     features: dict = {}
     model_used: bool = False
     flag_id: Optional[int] = None
+    pending_review: bool = False
     actions: List[str] = []
 
 
@@ -71,6 +72,18 @@ class AnomalyFlagOut(BaseModel):
     status: str
     created_at: datetime
     resolved_at: Optional[datetime] = None
+
+
+class ResolveFlagRequest(BaseModel):
+    outcome: Optional[Literal["accept", "reject"]] = None
+
+
+class ResolveFlagResponse(AnomalyFlagOut):
+    outcome: Optional[str] = None
+    reading_status: Optional[str] = None
+    bill_id: Optional[int] = None
+    amount_due: Optional[float] = None
+    actions: List[str] = []
 
 
 class ConfirmReadingResponse(BaseModel):

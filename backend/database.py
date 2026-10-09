@@ -220,6 +220,19 @@ def seed_data():
         db.close()
 
 
+def build_bill(customer_id: str, reading_id: int, consumption: float) -> "Bill":
+    data = _calculate_bill(consumption)
+    return Bill(
+        customer_id=customer_id,
+        reading_id=reading_id,
+        consumption_m3=consumption,
+        **{k: v for k, v in data.items() if k != "total"},
+        amount_due=data["total"],
+        payment_status="unpaid",
+        created_at=datetime.utcnow(),
+    )
+
+
 def _calculate_bill(consumption: float) -> dict:
     """WASAC tiered tariff calculation."""
     remaining = consumption
