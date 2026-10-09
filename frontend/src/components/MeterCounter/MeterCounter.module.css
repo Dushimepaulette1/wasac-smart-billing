@@ -1,0 +1,160 @@
+/**
+ * MeterCounter: 5 black m³ cells + 3 red litre cells in a brass bezel.
+ * Cell size, gaps and the unit row are all driven by the custom properties
+ * on .large / .small, so the unit labels line up under their groups.
+ *
+ * 360px check (large): 8 x 34 cells + 6 x 2 gaps + 10 group gap
+ * + 2 x 6 padding + 2 x 3 border = 312px, inside the 328px content width.
+ */
+
+.root {
+  --bezel-border: 3px;
+  --bezel-pad: 6px;
+  --cell-gap: 2px;
+  --group-gap: 10px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+.large {
+  --cell-w: 34px;
+  --cell-h: 52px;
+  --digit-size: 36px;
+}
+
+@media (min-width: 600px) {
+  .large {
+    --cell-w: 45px;
+    --cell-h: 68px;
+    --digit-size: 48px;
+    --group-gap: 14px;
+  }
+}
+
+.small {
+  --cell-w: 22px;
+  --cell-h: 36px;
+  --digit-size: 24px;
+  --bezel-border: 2px;
+  --bezel-pad: 4px;
+  --group-gap: 8px;
+}
+
+/* Holds the bezel and, in edit mode, the input laid over it. */
+.window {
+  position: relative;
+}
+
+.bezel {
+  display: flex;
+  gap: var(--group-gap);
+  padding: var(--bezel-pad);
+  border: var(--bezel-border) solid var(--brass);
+  border-radius: var(--radius-bezel);
+  background: var(--glass);
+}
+
+.group {
+  display: flex;
+  gap: var(--cell-gap);
+}
+
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--cell-w);
+  height: var(--cell-h);
+  border-radius: var(--radius-cell);
+  color: var(--paper);
+  font-family: var(--font-counter);
+  font-weight: 600;
+  font-size: var(--digit-size);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+
+.cubicMetre {
+  background: var(--wheel-black);
+}
+
+.litre {
+  background: var(--litre-red);
+}
+
+/* An empty wheel window while typing: a short bar where the digit goes. */
+.blank::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 22%;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--paper);
+  opacity: 0.6;
+}
+
+.edit .cell {
+  cursor: text;
+}
+
+.active {
+  box-shadow: var(--focus-ring);
+  z-index: 1;
+}
+
+/* The one movement in the app: a digit settles into its wheel window. */
+.settle {
+  animation: settle var(--motion-digit) ease-out;
+}
+
+@keyframes settle {
+  from {
+    transform: translateY(-4px);
+  }
+}
+
+/* Real input over the cells. Invisible, but focusable and read by screen
+   readers. 16px stops iOS zooming on focus. Taps go to the cells. */
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 16px;
+  border: 0;
+  padding: 0;
+  caret-color: transparent;
+  pointer-events: none;
+}
+
+/* The bezel's own focus ring would duplicate the active cell's ring. */
+.input:focus-visible {
+  box-shadow: none;
+}
+
+/* Unit labels, aligned under their group of cells. Colour is never the
+   only thing that tells litres from cubic metres. */
+.units {
+  display: grid;
+  grid-template-columns:
+    calc(5 * var(--cell-w) + 4 * var(--cell-gap))
+    calc(3 * var(--cell-w) + 2 * var(--cell-gap));
+  column-gap: var(--group-gap);
+  padding-inline: calc(var(--bezel-border) + var(--bezel-pad));
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.value {
+  margin-top: var(--space-2);
+  font-size: var(--size-lead);
+  line-height: var(--leading-lead);
+  font-weight: var(--weight-bold);
+}
