@@ -1,56 +1,77 @@
 /**
  * @file tokens.css
- * @description Design tokens for the WASAC Smart Billing Platform (redesign v2).
- * Values come from docs/design/DESIGN_PLAN.md. Colours are taken from the
- * water meter itself: black and red number wheels, brass body, glass window.
- * Contrast ratios are noted where text sits on a colour.
+ * @description Design tokens: "deep water at night".
+ * A navy stage lit by static blue glows; anything read carefully sits on a
+ * light panel. Values and contrast checks: docs/design/DESIGN_PLAN.md.
+ *
+ * Colour roles (--color-*) are set twice: for the dark stage here, and for
+ * light panels in .panel (base.css). Components only use roles, so the same
+ * Button or Notice works on either surface.
  */
 
 :root {
   /* ------------------------------------------------------------------------
-     Palette: six values, no gradients, no dark mode.
+     Palette
      ------------------------------------------------------------------------ */
-  --wheel-black: #000000; /* m³ counter cells, primary buttons, body text */
-  --litre-red:   #A3111F; /* litre counter cells ONLY. Paper on it 7.9:1 */
-  --brass:       #6E5414; /* counter bezel, "held" state. On Paper 7.1:1; text on Paper only */
-  --slate:       #454E4B; /* secondary text. On Paper 8.6:1, on Glass 7.1:1 */
-  --glass:       #E4EAE7; /* page background, counter window */
-  --paper:       #FFFFFF; /* surfaces, digits on counter cells */
+  --night:  #040A16; /* page base, behind the gradient */
+  --deep:   #0B2244; /* lower stage */
+  --tide:   #1D4B82; /* mid-blue glow */
+  --glow:   #6CA0D6; /* luminous glow, used at 40% alpha */
+  --ice:    #BFD7F0; /* focus ring and highlights on dark */
+  --mist:   #F4F7FB; /* headlines on dark; panel surface. 7.2:1 on the lightest glow */
+  --haze:   #C3D2E6; /* body text on dark. 5.1:1 on the lightest glow */
+  --ink:    #0A1426; /* text on panels. 17:1 on mist */
+  --ink-2:  #45516A; /* secondary text on panels. 7.4:1 on mist */
+  --line:   #D5DEEA; /* hairlines inside panels */
 
-  /* Roles. Components use these, not the palette names, unless the
-     colour IS the meaning (the counter). */
-  --color-bg:             var(--glass);
-  --color-surface:        var(--paper);
-  --color-text:           var(--wheel-black);
-  --color-text-secondary: var(--slate);
-  --color-action:         var(--wheel-black);
-  --color-on-action:      var(--paper);
-  --color-held:           var(--brass);
-  --color-rule:           var(--slate);
+  /* The meter itself: counter only. Red is never used for anything else. */
+  --wheel-black: #000000;
+  --litre-red:   #A3111F;
+  --brass:       #6E5414; /* counter bezel and "held" state. 6.7:1 on mist */
+  --glass:       #E3EAF3; /* counter window */
+  --paper:       #FFFFFF; /* digits on counter cells */
 
   /* ------------------------------------------------------------------------
-     Type: Atkinson Hyperlegible Next for everything, Barlow Condensed for
-     counter digits only. Sizes follow Bringhurst's classical scale.
+     Roles on the dark stage (panels override these)
      ------------------------------------------------------------------------ */
+  --color-text:           var(--mist);
+  --color-text-secondary: var(--haze);
+  --color-surface:        transparent;
+  --color-action:         var(--mist);   /* solid light button */
+  --color-on-action:      var(--ink);
+  --color-outline:        rgba(244, 247, 251, 0.72); /* thin outlined pill */
+  --color-held:           #E2C27A;       /* held text on dark: 8.9:1 on --deep */
+  --color-rule:           rgba(195, 210, 230, 0.18);
+  --focus-gap:            var(--night);
+  --focus-color:          var(--ice);
+
+  /* ------------------------------------------------------------------------
+     Type: Cormorant Garamond for headlines only, Atkinson Hyperlegible Next
+     for everything else, Barlow Condensed for counter digits.
+     ------------------------------------------------------------------------ */
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --font-text: 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
-  /* Same face with an unslashed zero, for numbers only. */
   --font-numbers: 'Atkinson Next Plain Zero', 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
 
+  /* Bringhurst's scale; display sizes grow with the viewport. */
   --size-small: 14px;        --leading-small: 20px;
   --size-body-staff: 16px;   --leading-body-staff: 24px;
-  --size-body: 18px;         --leading-body: 28px;
-  --size-lead: 21px;         --leading-lead: 28px;
+  --size-body: 17px;         --leading-body: 27px;
+  --size-lead: 20px;         --leading-lead: 30px;
   --size-title: 24px;        --leading-title: 32px;
+  --size-display: clamp(2.5rem, 1.7rem + 3.2vw, 4.5rem);   /* landing hero */
+  --size-page-title: clamp(2.1rem, 1.6rem + 1.9vw, 3.25rem); /* app pages */
+  --size-panel-title: 1.75rem;
 
   --weight-regular: 400;
   --weight-bold: 700;
 
-  --measure-household: 60ch;
+  --measure-household: 62ch;
   --measure-staff: 75ch;
 
   /* ------------------------------------------------------------------------
-     Space: 4px grid.
+     Space: 4px grid. Layout widths.
      ------------------------------------------------------------------------ */
   --space-1: 4px;
   --space-2: 8px;
@@ -61,39 +82,41 @@
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
-  --gutter-household: 16px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --gutter-household: var(--gutter);
   --gutter-staff: 24px;
-  --width-household: 480px;
+  --width-site: 1180px;
+  --header-height: 72px;
+  --nav-height: 64px;
 
   /* ------------------------------------------------------------------------
      Size of things people touch.
      ------------------------------------------------------------------------ */
   --tap-min: 48px;
-  --button-height: 56px;
+  --button-height: 52px;
 
   /* ------------------------------------------------------------------------
-     Radii by object, not one radius everywhere.
+     Radii by object.
      ------------------------------------------------------------------------ */
-  --radius-cell: 3px;    /* counter wheel windows */
-  --radius-bezel: 10px;  /* counter body */
-  --radius-button: 8px;
-  --radius-panel: 8px;   /* desktop; panels run edge to edge on mobile */
+  --radius-cell: 3px;     /* counter wheel windows */
+  --radius-bezel: 10px;   /* counter body */
+  --radius-button: 999px; /* pills, as in the reference */
+  --radius-panel: 20px;
+  --radius-field: 12px;
 
-  /* ------------------------------------------------------------------------
-     Focus: black ring with a Paper gap, visible on black buttons and on
-     white or Glass surfaces. Not brass (2.9:1 on black).
-     ------------------------------------------------------------------------ */
-  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 5px var(--wheel-black);
+  --focus-ring: 0 0 0 2px var(--focus-gap), 0 0 0 5px var(--focus-color);
 
-  /* ------------------------------------------------------------------------
-     Motion: one movement in the whole app, a counter digit settling.
-     ------------------------------------------------------------------------ */
+  /* One counter digit settling; one orchestrated moment on the landing hero. */
   --motion-digit: 120ms;
+  --motion-hero: 700ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-digit: 0ms;
+    --motion-hero: 0ms;
   }
 }

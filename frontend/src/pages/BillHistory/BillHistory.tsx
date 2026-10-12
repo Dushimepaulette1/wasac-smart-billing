@@ -49,7 +49,7 @@ function BillHistory() {
       {empty && <p className="measure">{t('history.empty')}</p>}
 
       {list.length > 0 && (
-        <ul className={styles.list}>
+        <ul className={`panel ${styles.list}`}>
           {list.map((bill) => {
             const paid = bill.payment_status === 'paid';
             return (

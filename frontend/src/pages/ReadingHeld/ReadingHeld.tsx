@@ -52,7 +52,7 @@ function ReadingHeld() {
       </Notice>
 
       {held && (
-        <section className={styles.reading}>
+        <section className={`panel ${styles.reading}`}>
           <h2 className="text-body">{t('held.yourReading')}</h2>
           <MeterCounter cells={held.cells} labels={labels} locale={locale} />
           {held.at && <p className="text-small text-secondary">{t('held.sentOn', { date: date(held.at) })}</p>}

@@ -182,6 +182,7 @@ function CameraCapture() {
     <Screen
       title={t('camera.title')}
       step={t('flow.step', { current: 1, total: 3 })}
+      lede={send === 'idle' && camera !== 'unavailable' ? <p>{t('camera.hint')}</p> : undefined}
       back="/home"
       action={action}
     >
@@ -225,8 +226,6 @@ function CameraCapture() {
         aria-hidden="true"
         onChange={choseFile}
       />
-
-      {send === 'idle' && camera !== 'unavailable' && <p className="measure">{t('camera.hint')}</p>}
 
       {send === 'idle' && camera === 'unavailable' && (
         <Notice tone="info" title={t('camera.unavailable.title')}>

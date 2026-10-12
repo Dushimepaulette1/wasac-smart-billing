@@ -1,9 +1,7 @@
 /**
  * @file base.css
- * @description Reset and base typography for redesign v2.
- * Element selectors only reset; they never set spacing. Sizes and spacing
- * come from the classes below or from component CSS Modules, so the two
- * never fight.
+ * @description Reset, the gradient stage, panels and base typography.
+ * Element selectors only reset; spacing comes from classes and CSS Modules.
  */
 
 *,
@@ -15,12 +13,14 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--night);
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: var(--night);
   color: var(--color-text);
   /* Plain zero for every number in text; IDs opt back in with .code. */
   font-family: var(--font-numbers);
@@ -30,6 +30,109 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* --------------------------------------------------------------------------
+   The stage: static layered radial gradients on a navy base. No blur, no
+   canvas, no animation; one paint, so cheap phones render it instantly.
+   Fixed behind the page (a pseudo-element, not background-attachment,
+   which mobile browsers repaint on scroll).
+   -------------------------------------------------------------------------- */
+.stage {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.stage::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(62% 55% at 18% 100%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 72%),
+    radial-gradient(48% 42% at 70% 30%, rgba(29, 75, 130, 0.55) 0%, rgba(29, 75, 130, 0) 70%),
+    radial-gradient(36% 30% at 96% 4%, rgba(58, 104, 160, 0.3) 0%, rgba(58, 104, 160, 0) 70%),
+    linear-gradient(168deg, #03070f 0%, #06122a 46%, var(--deep) 100%);
+}
+
+/* Landing: the glow rises behind the centred headline, as in the reference. */
+.stage-hero::before {
+  background:
+    radial-gradient(55% 48% at 50% 108%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 74%),
+    radial-gradient(42% 40% at 38% 46%, rgba(29, 75, 130, 0.6) 0%, rgba(29, 75, 130, 0) 72%),
+    radial-gradient(34% 34% at 78% 22%, rgba(58, 104, 160, 0.34) 0%, rgba(58, 104, 160, 0) 70%),
+    linear-gradient(180deg, #03070f 0%, #06122a 50%, var(--deep) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   Panels: light surfaces floating on the stage. Anything read carefully
+   (readings, money, forms, errors) goes on one. Roles switch to dark ink.
+   -------------------------------------------------------------------------- */
+.panel {
+  --color-text:           var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-surface:        var(--paper);
+  --color-action:         var(--ink);
+  --color-on-action:      var(--mist);
+  --color-outline:        var(--ink);
+  --color-held:           var(--brass);
+  --color-rule:           var(--line);
+  --focus-gap:            var(--mist);
+  --focus-color:          var(--ink);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+  background: var(--mist);
+  color: var(--color-text);
+}
+
+@media (min-width: 768px) {
+  .panel {
+    padding: var(--space-8);
+  }
+}
+
+/* A quieter surface for secondary details that are short and not
+   critical, kept on the dark stage. */
+.panel-quiet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-panel);
+  background: rgba(6, 18, 42, 0.55);
+}
+
+/* --------------------------------------------------------------------------
+   Layout helpers
+   -------------------------------------------------------------------------- */
+.columns {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .columns {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Reset
+   -------------------------------------------------------------------------- */
 h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {
   margin: 0;
 }
@@ -64,16 +167,44 @@ a {
   text-underline-offset: 0.2em;
 }
 
-/* One focus style for everything. The outline keeps focus visible in
-   Windows high-contrast mode, where box-shadow is not drawn. */
+/* One focus style everywhere; its colours follow the surface. The outline
+   keeps focus visible in Windows high-contrast mode. */
 :focus-visible {
   outline: 3px solid transparent;
   box-shadow: var(--focus-ring);
 }
 
 /* --------------------------------------------------------------------------
-   Type scale (Bringhurst's classical scale). Sentence case only.
+   Type scale. Sentence case only.
    -------------------------------------------------------------------------- */
+.display {
+  font-variant-numeric: lining-nums;
+  font-family: var(--font-display);
+  font-size: var(--size-display);
+  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.page-title {
+  font-variant-numeric: lining-nums;
+  font-family: var(--font-display);
+  font-size: var(--size-page-title);
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.panel-title {
+  font-variant-numeric: lining-nums;
+  font-family: var(--font-display);
+  font-size: var(--size-panel-title);
+  line-height: 1.15;
+  font-weight: 600;
+}
+
 .text-small {
   font-size: var(--size-small);
   line-height: var(--leading-small);
@@ -99,14 +230,12 @@ a {
   color: var(--color-text-secondary);
 }
 
-/* Amounts, volumes, readings, dates in lists and tables: digits never shift.
-   (The plain zero comes from the body font.) */
+/* Aligned numbers: digits never shift. */
 .num {
   font-variant-numeric: tabular-nums;
 }
 
-/* Letter-and-number codes (account and meter IDs) keep the slashed zero,
-   so 0 and O stay distinct. */
+/* Letter-and-number codes keep the slashed zero, so 0 and O stay distinct. */
 .code {
   font-family: var(--font-text);
 }
@@ -115,7 +244,6 @@ a {
   max-width: var(--measure-household);
 }
 
-/* Staff dashboard is denser: smaller body, longer measure. */
 .staff {
   font-size: var(--size-body-staff);
   line-height: var(--leading-body-staff);
@@ -125,7 +253,6 @@ a {
   max-width: var(--measure-staff);
 }
 
-/* Read by screen readers, not shown. */
 .visually-hidden {
   position: absolute;
   width: 1px;

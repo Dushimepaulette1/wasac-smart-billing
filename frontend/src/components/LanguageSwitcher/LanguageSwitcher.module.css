@@ -1,0 +1,46 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  color: var(--color-text-secondary);
+}
+
+/* A native select keeps the phone's own picker; styled as a thin pill. */
+.select {
+  appearance: none;
+  min-height: 40px;
+  padding: 0 36px 0 var(--space-4);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-button);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23C3D2E6' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
+  color: var(--color-text);
+  font-size: var(--size-small);
+  cursor: pointer;
+}
+
+.select option {
+  color: var(--ink);
+  background: var(--mist);
+}
+
+.compact .select {
+  min-height: var(--tap-min);
+}
+
+.full .select {
+  min-height: var(--tap-min);
+  font-size: var(--size-body);
+  max-width: 320px;
+}
+
+@media (max-width: 479px) {
+  .compact .select {
+    max-width: 150px;
+    padding-left: var(--space-3);
+  }
+}

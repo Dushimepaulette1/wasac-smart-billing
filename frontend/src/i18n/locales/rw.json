@@ -129,5 +129,17 @@
   "msg.leak.check3": "TODO: translate",
   "msg.leak.cost": "TODO: translate",
   "msg.status.open": "TODO: translate",
-  "msg.status.resolved": "TODO: translate"
+  "msg.status.resolved": "TODO: translate",
+  "brand.tagline": "TODO: translate",
+  "landing.eyebrow": "TODO: translate",
+  "landing.title": "TODO: translate",
+  "landing.lede": "TODO: translate",
+  "landing.staff": "TODO: translate",
+  "landing.account": "TODO: translate",
+  "landing.stepsTitle": "TODO: translate",
+  "landing.step1": "TODO: translate",
+  "landing.step2": "TODO: translate",
+  "landing.step3": "TODO: translate",
+  "home.meterTitle": "TODO: translate",
+  "home.lastReadOn": "TODO: translate"
 }

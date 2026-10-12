@@ -6,9 +6,10 @@
   /* Landscape: the meter's number window is wide, and a short box keeps
      the instructions and any message above the pinned buttons at 360px. */
   aspect-ratio: 4 / 3;
+  max-width: 760px;
   border-radius: var(--radius-panel);
   overflow: hidden;
-  background: var(--wheel-black);
+  background: #020611;
   object-fit: cover;
 }
 
@@ -26,7 +27,7 @@
   right: 8%;
   top: 38%;
   height: 24%;
-  border: 3px solid var(--paper);
+  border: 2px solid var(--mist);
   border-radius: var(--radius-bezel);
   box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45);
 }

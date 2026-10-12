@@ -129,5 +129,17 @@
   "msg.leak.check3": "wet ground or walls near your pipes",
   "msg.leak.cost": "Leaking water goes through your meter and is on your bill, so fix a leak as soon as you can.",
   "msg.status.open": "We're checking this reading. You don't need to do anything. We'll text you when it's done.",
-  "msg.status.resolved": "Checked. If we need a new photo, we'll text you."
+  "msg.status.resolved": "Checked. If we need a new photo, we'll text you.",
+  "brand.tagline": "Smart water billing",
+  "landing.eyebrow": "WASAC smart water billing",
+  "landing.title": "Read your water meter in a minute.",
+  "landing.lede": "Take a photo of your meter, check the numbers, and pay your bill with MTN Mobile Money.",
+  "landing.staff": "Staff sign-in",
+  "landing.account": "See my bills",
+  "landing.stepsTitle": "How it works",
+  "landing.step1": "Take a photo of the numbers on your meter.",
+  "landing.step2": "Check the numbers we read and correct any that are wrong.",
+  "landing.step3": "See your bill and pay it with MTN Mobile Money.",
+  "home.meterTitle": "Your meter",
+  "home.lastReadOn": "Accepted on"
 }

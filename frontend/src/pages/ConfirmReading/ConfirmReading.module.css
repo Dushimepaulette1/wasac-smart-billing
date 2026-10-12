@@ -1,15 +1,31 @@
-/* The photo is a reference to compare against, so it stays short and the
-   counter is visible without scrolling at 360px. */
-.photo {
-  width: 100%;
-  aspect-ratio: 16 / 7;
-  object-fit: cover;
-  border-radius: var(--radius-panel);
-  background: var(--wheel-black);
+.reading {
+  align-items: flex-start;
 }
 
-.reading {
+.reading > p {
+  align-self: stretch;
+}
+
+/* The photo is a reference to compare against: short on phones, beside
+   the counter on wide screens. */
+.photoFrame {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  margin: 0;
+  --color-text-secondary: var(--haze);
+}
+
+.photo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-panel);
+  background: var(--night);
+}
+
+@media (min-width: 960px) {
+  .photo {
+    aspect-ratio: 4 / 3;
+  }
 }
