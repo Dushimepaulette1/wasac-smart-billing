@@ -131,3 +131,40 @@ class CustomerInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class StaffUserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    username: str
+    full_name: str
+    role: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+    expires_at: int
+    user: StaffUserOut
+
+
+class HistoryPoint(BaseModel):
+    date: datetime
+    reading_m3: float
+    consumption_m3: Optional[float] = None
+
+
+class ReviewItem(BaseModel):
+    flag: AnomalyFlagOut
+    reading_m3: Optional[float] = None
+    submitted_at: Optional[datetime] = None
+    reading_confidence: Optional[float] = None
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
+    sector: Optional[str] = None
+    history: List[HistoryPoint] = []

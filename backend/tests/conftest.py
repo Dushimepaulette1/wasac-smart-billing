@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import anomaly.db_models  # noqa: E402,F401  registers anomaly_flags on Base
+import auth.models  # noqa: E402,F401  registers staff_users on Base
 from anomaly.config import AnomalyConfig  # noqa: E402
 from anomaly.demo_data import generate_demo_histories  # noqa: E402
 from anomaly.features import ReadingPoint  # noqa: E402
@@ -88,8 +89,22 @@ def add_household(db, meter_id, points, phone="+250788000111"):
     return customer_id
 
 
-@pytest.fixture
-def client(db):
+def add_officer(db, username="officer1", password="correct horse", full_name="Test Officer", active=True):
+    from auth.models import StaffUser
+    from auth.security import hash_password
+
+    user = StaffUser(
+        username=username,
+        full_name=full_name,
+        password_hash=hash_password(password, iterations=1000),  # fast in tests
+        is_active=active,
+    )
+    db.add(user)
+    db.commit()
+    return user
+
+
+def _test_client(db, headers=None):
     from fastapi.testclient import TestClient
 
     from database import get_db
@@ -99,7 +114,32 @@ def client(db):
         yield db
 
     app.dependency_overrides[get_db] = override
+    # no context manager: lifespan (Postgres init_db) is not run
+    return app, TestClient(app, headers=headers or {})
+
+
+@pytest.fixture
+def client(db):
+    """Signed in as an officer, as the staff dashboard is."""
+    from auth.security import make_token
+
+    add_officer(db)
+    app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('officer1')[0]}"})
     try:
-        yield TestClient(app)  # no context manager: lifespan (Postgres init_db) is not run
+        yield test_client
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def anon_client(db):
+    """Not signed in, as the household app is."""
+    from auth.routes import reset_failures
+
+    reset_failures()
+    app, test_client = _test_client(db)
+    try:
+        yield test_client
+    finally:
+        app.dependency_overrides.clear()
+        reset_failures()

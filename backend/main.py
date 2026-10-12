@@ -10,6 +10,7 @@ from routes.reading import router as reading_router
 from routes.billing import router as billing_router
 from routes.ussd import router as ussd_router
 from routes.anomaly import router as anomaly_router
+from auth.routes import router as auth_router
 from anomaly.config import AnomalyConfig
 from anomaly.model import load_model_if_available
 from schemas import HealthResponse
@@ -44,6 +45,7 @@ app.include_router(reading_router, tags=["Meter Reading"])
 app.include_router(billing_router, tags=["Billing"])
 app.include_router(ussd_router, tags=["USSD"])
 app.include_router(anomaly_router, tags=["Anomaly Detection"])
+app.include_router(auth_router, tags=["Staff sign-in"])
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])

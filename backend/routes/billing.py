@@ -1,51 +1,63 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from auth.models import StaffUser
+from auth.routes import require_staff
 from database import get_db, Customer, Bill, Reading, Meter
 from schemas import CustomerInfo
 
 router = APIRouter()
 
 
+def _customer_info(db: Session, c: Customer) -> CustomerInfo:
+    meter = db.query(Meter).filter(Meter.meter_id == c.meter_id).first()
+
+    past = (
+        db.query(Reading)
+        .filter(Reading.meter_id == c.meter_id, Reading.validation_status == "valid")
+        .order_by(Reading.submission_time.desc())
+        .limit(6)
+        .all()
+    )
+    avg = (
+        sum(r.implied_consumption for r in past if r.implied_consumption) / len(past)
+        if past else None
+    )
+    anomaly_flagged = any(
+        r.validation_status in ("anomaly_flagged", "pending_review")
+        for r in (db.query(Reading)
+                   .filter(Reading.meter_id == c.meter_id)
+                   .order_by(Reading.submission_time.desc())
+                   .limit(1)
+                   .all())
+    )
+
+    return CustomerInfo(
+        customer_id=c.customer_id,
+        name=c.name,
+        phone=c.phone,
+        sector=c.sector,
+        meter_id=c.meter_id,
+        last_reading=meter.last_reading if meter else 0.0,
+        last_reading_date=meter.last_reading_date if meter else None,
+        avg_consumption=round(avg, 1) if avg else None,
+        anomaly_flagged=anomaly_flagged,
+    )
+
+
 @router.get("/customers", response_model=list[CustomerInfo])
-async def list_customers(db: Session = Depends(get_db)):
-    customers = db.query(Customer).all()
-    result = []
-    for c in customers:
-        meter = db.query(Meter).filter(Meter.meter_id == c.meter_id).first()
+async def list_customers(db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)):
+    """Every household. Staff only."""
+    return [_customer_info(db, c) for c in db.query(Customer).all()]
 
-        past = (
-            db.query(Reading)
-            .filter(Reading.meter_id == c.meter_id, Reading.validation_status == "valid")
-            .order_by(Reading.submission_time.desc())
-            .limit(6)
-            .all()
-        )
-        avg = (
-            sum(r.implied_consumption for r in past if r.implied_consumption) / len(past)
-            if past else None
-        )
-        anomaly_flagged = any(
-            r.validation_status in ("anomaly_flagged", "pending_review")
-            for r in (db.query(Reading)
-                       .filter(Reading.meter_id == c.meter_id)
-                       .order_by(Reading.submission_time.desc())
-                       .limit(1)
-                       .all())
-        )
 
-        result.append(CustomerInfo(
-            customer_id=c.customer_id,
-            name=c.name,
-            phone=c.phone,
-            sector=c.sector,
-            meter_id=c.meter_id,
-            last_reading=meter.last_reading if meter else 0.0,
-            last_reading_date=meter.last_reading_date if meter else None,
-            avg_consumption=round(avg, 1) if avg else None,
-            anomaly_flagged=anomaly_flagged,
-        ))
-    return result
+@router.get("/customers/{customer_id}", response_model=CustomerInfo)
+async def get_customer(customer_id: str, db: Session = Depends(get_db)):
+    """One household, for the household app (which no longer needs the full list)."""
+    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return _customer_info(db, customer)
 
 
 @router.get("/customers/{customer_id}/bills")
