@@ -12,7 +12,6 @@ import Notice from '../../components/Notice/Notice';
 import RequestState from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
-import LanguageSwitcher from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadHome from '../../household/loadHome';
 import { CUSTOMER_ID, METER_ID } from '../../config';
@@ -59,15 +58,13 @@ function CustomerHome() {
           <Link to={`/bill?id=${due.bill_id}`} className={styles.link}>
             {t('home.seeBill')}
           </Link>
-        ) : customer.last_reading_date ? (
-          <p>{t('home.lastRead', { date: date(customer.last_reading_date) })}</p>
         ) : null
       }
       nav
       action={action}
     >
-      <div className="columns">
-        <div className="stack">
+      {(checking || highUse) && (
+        <div className={styles.notices}>
           {checking && (
             <Notice tone="held" title={t('home.checkingTitle')}>
               {t('home.checkingBody')}
@@ -86,38 +83,33 @@ function CustomerHome() {
               {t('home.highUse')}
             </Notice>
           )}
-
         </div>
+      )}
 
-        <div className="stack">
-          <section className="panel" aria-labelledby="meter-title">
-            <h2 id="meter-title" className="panel-title">
-              {t('home.meterTitle')}
-            </h2>
-            <dl className={styles.meter}>
-              <div className={styles.line}>
-                <dt className="text-secondary">{t('home.meter')}</dt>
-                <dd className="code">{customer.meter_id}</dd>
-              </div>
-              <div className={styles.line}>
-                <dt className="text-secondary">{t('home.lastReading')}</dt>
-                <dd className="num">
-                  {formatReading(cellsFromCubicMetres(customer.last_reading), locale)} {t('counter.cubicMetres')}
-                </dd>
-              </div>
-              {customer.last_reading_date && (
-                <div className={styles.line}>
-                  <dt className="text-secondary">{t('home.lastReadOn')}</dt>
-                  <dd className="num">{date(customer.last_reading_date)}</dd>
-                </div>
-              )}
-            </dl>
-          </section>
-          <aside className="panel-quiet">
-            <LanguageSwitcher variant="full" />
-          </aside>
-        </div>
-      </div>
+      {/* One strip: three facts side by side on wide screens, stacked on phones. */}
+      <section className={`panel ${styles.meterPanel}`} aria-labelledby="meter-title">
+        <h2 id="meter-title" className="panel-title">
+          {t('home.meterTitle')}
+        </h2>
+        <dl className={styles.facts}>
+          <div className={styles.fact}>
+            <dt>{t('home.meter')}</dt>
+            <dd className="code">{customer.meter_id}</dd>
+          </div>
+          <div className={styles.fact}>
+            <dt>{t('home.lastReading')}</dt>
+            <dd className="num">
+              {formatReading(cellsFromCubicMetres(customer.last_reading), locale)} {t('counter.cubicMetres')}
+            </dd>
+          </div>
+          {customer.last_reading_date && (
+            <div className={styles.fact}>
+              <dt>{t('home.lastReadOn')}</dt>
+              <dd className="num">{date(customer.last_reading_date)}</dd>
+            </div>
+          )}
+        </dl>
+      </section>
     </Screen>
   );
 }
