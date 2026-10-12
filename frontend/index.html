@@ -3,11 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#E4EAE7" />
+    <meta name="theme-color" content="#040A16" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EEF3F9" media="(prefers-color-scheme: light)" />
     <meta name="description" content="WASAC Smart Water Billing Platform — Submit readings, view bills, and manage your water account." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
+    <script>
+      // Apply the saved or system theme before the first paint (see src/theme/theme.ts).
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('wasac.theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
     <title>WASAC Smart Billing Platform</title>
   </head>
   <body>

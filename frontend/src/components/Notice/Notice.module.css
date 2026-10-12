@@ -6,8 +6,9 @@
   gap: var(--space-3);
   padding: var(--space-5);
   border-radius: 16px;
-  background: var(--mist);
+  background: var(--panel-bg);
   color: var(--ink);
+  box-shadow: var(--panel-shadow);
   --color-text: var(--ink);
   --color-text-secondary: var(--ink-2);
   --color-action: var(--ink);
@@ -47,12 +48,12 @@
 
 /* Errors: a light card with an ink edge, so it stands out on any surface. */
 .error {
-  box-shadow: inset 4px 0 0 var(--ink);
+  box-shadow: inset 4px 0 0 var(--ink), var(--panel-shadow);
 }
 
 /* Held: brass edge and title. Calm, never alarming. */
 .held {
-  box-shadow: inset 4px 0 0 var(--brass);
+  box-shadow: inset 4px 0 0 var(--brass), var(--panel-shadow);
 }
 
 .held .icon,
@@ -66,5 +67,6 @@
 .done {
   padding: 0;
   background: none;
+  box-shadow: none;
   color: var(--color-text);
 }

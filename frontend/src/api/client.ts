@@ -14,11 +14,33 @@ import type {
   CalculateBillResponse,
   ConfirmReadingResponse,
   CustomerInfo,
+  LoginResponse,
   PayBillResponse,
   PhotoSubmitResponse,
+  ResolveFlagResponse,
+  ReviewItem,
+  StaffUser,
 } from './types';
 
-export type ApiErrorKind = 'offline' | 'timeout' | 'notFound' | 'server' | 'invalid';
+export type ApiErrorKind =
+  | 'offline'
+  | 'timeout'
+  | 'notFound'
+  | 'server'
+  | 'invalid'
+  | 'unauthorized'
+  | 'locked'
+  | 'conflict';
+
+/** Staff session token, sent on every request while signed in. */
+let staffToken: string | null = null;
+/** Called when the backend rejects the token (expired or revoked). */
+let onUnauthorized: (() => void) | null = null;
+
+export function setStaffToken(token: string | null, onExpired?: () => void): void {
+  staffToken = token;
+  onUnauthorized = onExpired ?? null;
+}
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
@@ -48,9 +70,11 @@ async function request<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
-  const init: RequestInit = { method, signal: controller.signal };
+  const headers: Record<string, string> = {};
+  if (staffToken) headers.Authorization = `Bearer ${staffToken}`;
+  const init: RequestInit = { method, signal: controller.signal, headers };
   if (json !== undefined) {
-    init.headers = { 'Content-Type': 'application/json' };
+    headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(json);
   } else if (body !== undefined) {
     init.body = body;
@@ -77,6 +101,12 @@ async function request<T>(
     // Error responses from FastAPI carry { detail }; anything else has none.
     const detail = (data as ApiErrorBody | null)?.detail;
     const text = typeof detail === 'string' ? detail : undefined;
+    if (response.status === 401) {
+      if (staffToken) onUnauthorized?.();
+      throw new ApiError('unauthorized', 401, text);
+    }
+    if (response.status === 429) throw new ApiError('locked', 429, text);
+    if (response.status === 409) throw new ApiError('conflict', 409, text);
     if (response.status === 404) throw new ApiError('notFound', 404, text);
     if (response.status === 422) throw new ApiError('invalid', 422, text);
     throw new ApiError('server', response.status, text);
@@ -128,12 +158,9 @@ export const api = {
     return request('/calculate-bill', { method: 'POST', json: { consumption_m3: consumptionM3 } });
   },
 
-  /** GET /customers, then the one household. There is no single-customer route. */
-  async getCustomer(customerId: string): Promise<CustomerInfo> {
-    const customers = await request<CustomerInfo[]>('/customers');
-    const customer = customers.find((c) => c.customer_id === customerId);
-    if (!customer) throw new ApiError('notFound', 404, `Customer ${customerId} not found`);
-    return customer;
+  /** GET /customers/{id}: the household's own details. */
+  getCustomer(customerId: string): Promise<CustomerInfo> {
+    return request(`/customers/${encodeURIComponent(customerId)}`);
   },
 
   /** GET /customers/{id}/bills: newest first, at most 12. */
@@ -149,5 +176,40 @@ export const api = {
   /** GET /api/anomaly/flags?household_id= (the household id is the meter id). */
   getHouseholdFlags(meterId: string): Promise<AnomalyFlag[]> {
     return request(`/api/anomaly/flags?household_id=${encodeURIComponent(meterId)}`);
+  },
+
+  // ---- Staff (need a signed-in token) ------------------------------------
+
+  /** POST /auth/login */
+  login(username: string, password: string): Promise<LoginResponse> {
+    return request('/auth/login', { method: 'POST', json: { username, password } });
+  },
+
+  /** GET /auth/me: check a saved session is still valid. */
+  me(): Promise<StaffUser> {
+    return request('/auth/me');
+  },
+
+  /** GET /customers: every household. */
+  listCustomers(): Promise<CustomerInfo[]> {
+    return request('/customers');
+  },
+
+  /** GET /api/anomaly/flags: every household's flags. */
+  listFlags(status?: 'open' | 'resolved'): Promise<AnomalyFlag[]> {
+    return request(`/api/anomaly/flags${status ? `?status=${status}` : ''}`);
+  },
+
+  /** GET /api/anomaly/review-queue: held readings with their context. */
+  reviewQueue(): Promise<ReviewItem[]> {
+    return request('/api/anomaly/review-queue');
+  },
+
+  /** PATCH /api/anomaly/flags/{id}/resolve */
+  resolveFlag(flagId: number, outcome: 'accept' | 'reject'): Promise<ResolveFlagResponse> {
+    return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
+      method: 'PATCH',
+      json: { outcome },
+    });
   },
 };

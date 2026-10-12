@@ -1,4 +1,4 @@
-import { api, ApiError, cellsToCubicMetreString } from './client';
+import { api, ApiError, cellsToCubicMetreString, setStaffToken } from './client';
 import { normalizeReading } from '../utils/reading';
 import { jsonResponse as response } from '../test/fixtures';
 
@@ -53,11 +53,28 @@ describe('api', () => {
     await expect(api.getBills('CUST001')).rejects.toMatchObject({ kind: 'server', status: 500 });
   });
 
-  it('finds the household among all customers', async () => {
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(
-      jsonResponse(200, [{ customer_id: 'CUST002' }, { customer_id: 'CUST001', name: 'Uwimana' }]),
-    );
-    await expect(api.getCustomer('CUST001')).resolves.toMatchObject({ name: 'Uwimana' });
+  it('asks for the household by id, not the whole customer list', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, { customer_id: 'CUST001' }));
+    await api.getCustomer('CUST001');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/customers/CUST001');
+  });
+
+  it('sends the staff token, and reports an expired one', async () => {
+    const onExpired = vi.fn();
+    setStaffToken('abc.def', onExpired);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(401, { detail: 'Sign in to continue.' }));
+    await expect(api.reviewQueue()).rejects.toMatchObject({ kind: 'unauthorized' });
+    const init = fetchMock.mock.calls[0]?.[1];
+    expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer abc.def');
+    expect(onExpired).toHaveBeenCalled();
+    setStaffToken(null);
+  });
+
+  it('sends no token for household requests when nobody is signed in', async () => {
+    setStaffToken(null);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, []));
+    await api.getBills('CUST001');
+    expect((fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>).Authorization).toBeUndefined();
   });
 
   it('asks for flags by meter id', async () => {

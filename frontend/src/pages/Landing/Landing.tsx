@@ -37,7 +37,7 @@ function Landing() {
             <Button icon="camera" onClick={() => navigate('/submit/camera')}>
               {t('home.read')}
             </Button>
-            <Button variant="secondary" onClick={() => navigate('/officer')}>
+            <Button variant="secondary" onClick={() => navigate('/staff')}>
               {t('landing.staff')}
             </Button>
           </div>

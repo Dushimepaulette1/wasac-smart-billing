@@ -1,0 +1,219 @@
+/* Shared staff dashboard pieces: summary figures, panels with headers,
+   and tables that become stacked cards on narrow screens. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.stat {
+  gap: var(--space-2);
+  color: var(--color-text);
+  text-decoration: none;
+  padding: var(--space-5) var(--space-6);
+}
+
+.statLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+}
+
+.statValue {
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.statNote {
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+}
+
+/* The figure that needs attention gets the held (brass) edge. */
+.attention {
+  box-shadow: inset 4px 0 0 var(--brass), var(--panel-shadow);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.panelHead a {
+  font-size: var(--size-small);
+  font-weight: var(--weight-bold);
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.queueList li + li {
+  border-top: 1px solid var(--color-rule);
+}
+
+.queueRow {
+  color: inherit;
+  text-decoration: none;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.queueName {
+  font-weight: var(--weight-bold);
+}
+
+.empty {
+  color: var(--color-text-secondary);
+}
+
+/* ---- Tables ------------------------------------------------------------ */
+.tableWrap {
+  overflow-x: auto;
+  margin-inline: calc(-1 * var(--space-2));
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+  font-weight: var(--weight-bold);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-rule);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table .right {
+  text-align: right;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.flagged {
+  color: var(--brass);
+  font-weight: var(--weight-bold);
+}
+
+.cellSub {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+}
+
+/* Narrow screens: each row becomes a card; labels come from data-label. */
+@media (max-width: 719px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-1) 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-secondary);
+    font-size: var(--size-small);
+    text-align: left;
+  }
+
+  .table td:first-child {
+    display: block;
+    text-align: left;
+    font-weight: var(--weight-bold);
+  }
+
+  .table td:first-child::before {
+    content: none;
+  }
+}
+
+a.stat:hover .statNote,
+.queueRow:hover .queueName {
+  text-decoration: underline;
+}
+
+.search {
+  width: 100%;
+  max-width: 420px;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border: 1px solid #B9C6D8;
+  border-radius: var(--radius-field);
+  background: #FFFFFF;
+  color: var(--ink);
+}

@@ -7,6 +7,7 @@
 
 import { Link, NavLink } from 'react-router-dom';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
 import styles from './SiteHeader.module.css';
 
@@ -50,6 +51,7 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
 
         <div className={styles.end}>
           <LanguageSwitcher />
+          <ThemeToggle />
         </div>
       </div>
     </header>

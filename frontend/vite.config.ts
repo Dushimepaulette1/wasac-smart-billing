@@ -11,6 +11,7 @@ import react from '@vitejs/plugin-react';
 const BACKEND = 'http://localhost:8000';
 // Backend paths only; the app's own routes (/bill, /payment, ...) are not proxied.
 const API_PATHS = [
+  '/auth',
   '/submit-photo',
   '/confirm-reading',
   '/calculate-bill',
