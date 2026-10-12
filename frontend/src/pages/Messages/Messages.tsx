@@ -31,8 +31,8 @@ function Message({ flag }: { flag: AnomalyFlag }) {
   const leak = HIGH_USE_TYPES.includes(type);
 
   return (
-    <article className={styles.message}>
-      <h2 className="text-body">{t(`msg.${type}.title`)}</h2>
+    <article className={`panel ${styles.message}`}>
+      <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
 
       <p>{t(`msg.${type}.noticed`, { date: when })}</p>
 

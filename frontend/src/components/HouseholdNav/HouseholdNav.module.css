@@ -1,8 +1,19 @@
+/* Phones only: the header carries these links on wider screens. */
 .nav {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
-  background: var(--color-surface);
+  z-index: 4;
+  border-top: 1px solid var(--color-rule);
+  background: #06122a;
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (min-width: 768px) {
+  .nav {
+    display: none;
+  }
 }
 
 .list {
@@ -20,26 +31,25 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 64px;
+  min-height: var(--nav-height);
   padding: var(--space-1);
-  color: var(--color-text-secondary);
+  color: var(--haze);
   text-decoration: none;
   text-align: center;
 }
 
+/* Current page: bright text, bold, and a bar; not colour alone. */
 .active {
-  color: var(--color-text);
+  color: var(--mist);
   font-weight: var(--weight-bold);
 }
 
-/* The bar marks the current page alongside the bold label. */
 .active::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 25%;
-  right: 25%;
-  height: 4px;
-  border-radius: 0 0 2px 2px;
-  background: var(--color-text);
+  left: 30%;
+  right: 30%;
+  height: 2px;
+  background: var(--mist);
 }

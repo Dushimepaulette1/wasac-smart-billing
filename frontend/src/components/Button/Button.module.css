@@ -1,18 +1,21 @@
+/* Colours come from the surface (stage or panel): on the dark stage the
+   primary is a solid light pill with dark text; on a panel, solid ink. */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-5);
-  border: 2px solid transparent;
+  padding: var(--space-2) var(--space-6);
+  border: 1.5px solid transparent;
   border-radius: var(--radius-button);
   font-family: var(--font-numbers);
   font-size: var(--size-body);
-  line-height: var(--leading-body);
+  line-height: 1.25;
   font-weight: var(--weight-bold);
   text-align: center;
   text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .primary {
@@ -21,10 +24,16 @@
   color: var(--color-on-action);
 }
 
+/* Thin outlined pill, as in the reference. */
 .secondary {
-  background: var(--color-surface);
-  border-color: var(--color-action);
-  color: var(--color-action);
+  min-height: var(--button-height);
+  background: transparent;
+  border-color: var(--color-outline);
+  color: var(--color-text);
+}
+
+.secondary:hover {
+  border-color: var(--color-text);
 }
 
 .text {
@@ -32,25 +41,29 @@
   background: none;
   color: var(--color-text);
   text-decoration: underline;
-  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
 }
 
 .fullWidth {
   width: 100%;
 }
 
-/* Busy or unavailable: keep the label readable (it says what is happening),
-   just stop it looking pressable. */
 .button:disabled {
   cursor: default;
 }
 
 .primary:disabled {
-  background: var(--slate);
+  opacity: 0.72;
 }
 
 .secondary:disabled,
 .text:disabled {
-  color: var(--color-text-secondary);
-  border-color: var(--color-text-secondary);
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
 }

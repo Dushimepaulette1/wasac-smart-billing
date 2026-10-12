@@ -10,7 +10,7 @@ import BottomNav from '../components/BottomNav/BottomNav';
 import SideNav from '../components/SideNav/SideNav';
 
 // Screen Component Imports
-import Welcome from '../pages/Welcome/Welcome';
+import Landing from '../pages/Landing/Landing';
 import CustomerHome from '../pages/CustomerHome/CustomerHome';
 import CameraCapture from '../pages/CameraCapture/CameraCapture';
 import ConfirmReading from '../pages/ConfirmReading/ConfirmReading';
@@ -66,7 +66,7 @@ function AppRouter() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        <Route path="/" element={<Welcome />} />
+        <Route path="/" element={<Landing />} />
 
         <Route path="/home" element={<CustomerHome />} />
         <Route path="/submit/camera" element={<CameraCapture />} />

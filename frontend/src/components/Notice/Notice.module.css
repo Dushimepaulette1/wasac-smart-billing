@@ -1,12 +1,20 @@
+/* Messages in the flow of a screen. Colours follow the surface (stage or
+   panel); tone is carried by icon and words, never colour alone. */
 .notice {
   display: grid;
   grid-template-columns: 24px 1fr;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  color: var(--color-text);
+  padding: var(--space-5);
+  border-radius: 16px;
+  background: var(--mist);
+  color: var(--ink);
+  --color-text: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-action: var(--ink);
+  --color-on-action: var(--mist);
+  --color-outline: var(--ink);
+  --focus-gap: var(--mist);
+  --focus-color: var(--ink);
 }
 
 .icon {
@@ -33,14 +41,18 @@
   margin-top: var(--space-2);
 }
 
-/* A text button's label lines up with the text above it. */
 .actions > [data-variant='text']:first-child {
   margin-left: calc(-1 * var(--space-2));
 }
 
-/* Held: brass, calm. Brass text is only used on Paper (7.1:1). */
+/* Errors: a light card with an ink edge, so it stands out on any surface. */
+.error {
+  box-shadow: inset 4px 0 0 var(--ink);
+}
+
+/* Held: brass edge and title. Calm, never alarming. */
 .held {
-  border-color: var(--brass);
+  box-shadow: inset 4px 0 0 var(--brass);
 }
 
 .held .icon,
@@ -48,11 +60,11 @@
   color: var(--brass);
 }
 
-/* Advice and confirmations need no frame, just icon and words. Frames are
-   kept for what needs attention: errors and held readings. */
+/* Advice and confirmations: no card, just icon and words in the surface's
+   own colours. */
 .info,
 .done {
-  border: 0;
   padding: 0;
   background: none;
+  color: var(--color-text);
 }

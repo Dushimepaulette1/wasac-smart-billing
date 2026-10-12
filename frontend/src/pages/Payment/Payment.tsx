@@ -103,7 +103,7 @@ function Payment() {
       >
         <Notice tone="done" live title={alreadyPaid ? t('pay.already') : t('pay.paidBody', { amount })} />
         {receipt && (
-          <dl className={styles.receipt}>
+          <dl className={`panel ${styles.receipt}`}>
             <div className={styles.line}>
               <dt className="text-secondary">{t('pay.bill')}</dt>
               <dd>{t('bill.title', { month: month(bill.created_at) })}</dd>
@@ -160,12 +160,11 @@ function Payment() {
         </Notice>
       )}
 
-      <section className={styles.panel}>
+      <section className={`panel ${styles.panel}`}>
         <p className="text-secondary">{t('bill.title', { month: month(bill.created_at) })}</p>
         <p className={`${styles.amount} num`}>{amount}</p>
+        <p className={styles.from}>{t('pay.from', { phone: formatRwandanPhone(phone) })}</p>
       </section>
-
-      <p className="measure">{t('pay.from', { phone: formatRwandanPhone(phone) })}</p>
     </Screen>
   );
 }

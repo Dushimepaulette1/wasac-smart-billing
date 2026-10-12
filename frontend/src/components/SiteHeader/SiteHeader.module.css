@@ -1,0 +1,95 @@
+.header {
+  position: relative;
+  z-index: 2;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  max-width: var(--width-site);
+  min-height: var(--header-height);
+  margin-inline: auto;
+  padding: var(--space-3) var(--gutter);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  align-self: center;
+  padding-top: 10px;
+  text-decoration: none;
+  color: var(--mist);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tagline {
+  color: var(--haze);
+  font-size: var(--size-small);
+}
+
+/* Household links: header on wide screens, bottom bar on phones. */
+.nav {
+  display: none;
+  margin-left: auto;
+}
+
+.links {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  color: var(--haze);
+  font-size: var(--size-small);
+  text-decoration: none;
+  border-radius: var(--radius-button);
+}
+
+.link:hover {
+  color: var(--mist);
+}
+
+/* Current page: brighter text and an underline, not colour alone. */
+.active {
+  color: var(--mist);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.5em;
+}
+
+.end {
+  margin-left: auto;
+}
+
+.nav + .end {
+  margin-left: 0;
+}
+
+@media (max-width: 479px) {
+  .tagline {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .nav {
+    display: block;
+  }
+}

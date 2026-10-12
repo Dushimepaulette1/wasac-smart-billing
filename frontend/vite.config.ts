@@ -25,6 +25,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    // The project lives on the Windows drive under WSL (/mnt/c), where file
+    // change events never arrive; poll so edits show up without a restart.
+    watch: { usePolling: true, interval: 300 },
     proxy: Object.fromEntries(API_PATHS.map((path) => [path, { target: BACKEND, changeOrigin: true }])),
   },
   build: {
@@ -36,6 +39,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
+    // Few workers: on the Windows drive under WSL, many jsdom workers start
+    // too slowly and time out.
+    maxWorkers: 2,
     // Plain class names in tests ("cell", "active"), as CRA's Jest setup gave.
     css: { include: [/\.module\.css$/], modules: { classNameStrategy: 'non-scoped' } },
   },

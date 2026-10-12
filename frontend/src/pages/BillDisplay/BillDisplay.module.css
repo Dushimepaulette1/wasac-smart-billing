@@ -1,30 +1,18 @@
 .reading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  align-items: flex-start;
 }
 
 .previous {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
+  align-self: stretch;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-rule);
 }
 
-/* The money: on Paper, edge to edge on a phone, numbers right-aligned. */
-.panel {
-  display: flex;
-  flex-direction: column;
+.cost {
   gap: var(--space-4);
-  margin-inline: calc(-1 * var(--gutter-household));
-  padding: var(--space-5) var(--gutter-household);
-  background: var(--color-surface);
-}
-
-@media (min-width: 481px) {
-  .panel {
-    margin-inline: 0;
-    border-radius: var(--radius-panel);
-  }
 }
 
 .lines {
@@ -47,10 +35,12 @@
   white-space: nowrap;
 }
 
+/* The total: the one big number on the page, in the display face's
+   neighbour size but the text face, so money never looks like a reading. */
 .total {
-  margin-top: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 2px solid var(--color-text);
+  margin-top: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--ink);
   font-size: var(--size-title);
   line-height: var(--leading-title);
   font-weight: var(--weight-bold);
@@ -69,7 +59,8 @@
   min-height: var(--tap-min);
   cursor: pointer;
   text-decoration: underline;
-  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
 }
 
 .tiers {
@@ -82,15 +73,13 @@
 }
 
 .usage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .bars {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -99,21 +88,22 @@
 /* Month | bar | volume. Month names can be long in Kinyarwanda. */
 .barRow {
   display: grid;
-  grid-template-columns: minmax(6.5em, auto) 1fr auto;
+  grid-template-columns: minmax(6em, auto) 1fr auto;
   align-items: center;
   gap: var(--space-3);
   color: var(--color-text-secondary);
 }
 
 .track {
-  height: 12px;
+  height: 10px;
 }
 
 .bar {
   display: block;
   height: 100%;
   min-width: 2px;
-  background: var(--slate);
+  border-radius: 0 5px 5px 0;
+  background: #9AB0CC;
 }
 
 .current {
@@ -122,5 +112,5 @@
 }
 
 .current .bar {
-  background: var(--color-text);
+  background: var(--ink);
 }

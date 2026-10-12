@@ -25,8 +25,8 @@ function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: 
   const { t, month, volume } = useI18n();
   const max = Math.max(...history.map((b) => b.consumption_m3), 1);
   return (
-    <section className={styles.usage} aria-labelledby="usage-title">
-      <h2 id="usage-title" className="text-body">
+    <section className={`panel ${styles.usage}`} aria-labelledby="usage-title">
+      <h2 id="usage-title" className="panel-title">
         {t('bill.usageTitle')}
       </h2>
       <ol className={styles.bars}>
@@ -77,6 +77,16 @@ function BillDisplay() {
   return (
     <Screen
       title={t('bill.title', { month: month(bill.created_at) })}
+      lede={
+        <>
+          <p>{t('bill.used', { volume: volume(bill.consumption_m3) })}</p>
+          <p className="text-small">
+            {periodStart
+              ? t('bill.period', { from: date(periodStart), to: date(bill.created_at) })
+              : t('bill.issued', { date: date(bill.created_at) })}
+          </p>
+        </>
+      }
       back
       nav
       action={
@@ -87,18 +97,11 @@ function BillDisplay() {
         )
       }
     >
-      <div>
-        <p className="text-lead">{t('bill.used', { volume: volume(bill.consumption_m3) })}</p>
-        <p className="text-secondary">
-          {periodStart
-            ? t('bill.period', { from: date(periodStart), to: date(bill.created_at) })
-            : t('bill.issued', { date: date(bill.created_at) })}
-        </p>
-      </div>
-
+      <div className="columns">
+      <div className="stack">
       {reading && (
-        <section className={styles.reading} aria-labelledby="reading-title">
-          <h2 id="reading-title" className="text-body">
+        <section className={`panel ${styles.reading}`} aria-labelledby="reading-title">
+          <h2 id="reading-title" className="panel-title">
             {t('bill.thisReading')}
           </h2>
           <MeterCounter cells={reading.cells} labels={labels} locale={locale} />
@@ -111,7 +114,7 @@ function BillDisplay() {
         </section>
       )}
 
-      <section className={styles.panel} aria-labelledby="cost-title">
+      <section className={`panel ${styles.cost}`} aria-labelledby="cost-title">
         <h2 id="cost-title" className="visually-hidden">
           {t('bill.costTitle')}
         </h2>
@@ -155,7 +158,10 @@ function BillDisplay() {
         </details>
       </section>
 
+      </div>
+
       {history.length > 1 && <UsageBars history={history} currentId={bill.bill_id} />}
+      </div>
     </Screen>
   );
 }

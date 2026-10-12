@@ -1,14 +1,18 @@
 /**
  * @file Screen.tsx
- * @description Layout for every household screen: one column, the title at
- * the top, the main action pinned at the bottom within thumb reach, and the
- * bottom navigation on the screens you navigate between (not inside a flow).
- * On wider screens the same column is centred; households are mobile first.
+ * @description Layout for every household page, on the gradient stage:
+ * site header, then the page heading (step, serif title, lede) with the
+ * main action beside it, then the content (usually light panels).
+ *
+ * Wide screens: the action sits under the heading, where the eye already is.
+ * Phones: the action is pinned to the bottom within thumb reach, above the
+ * bottom navigation when there is one.
  */
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon/Icon';
+import SiteHeader from '../SiteHeader/SiteHeader';
 import HouseholdNav from '../HouseholdNav/HouseholdNav';
 import { useI18n } from '../../i18n/I18nProvider';
 import styles from './Screen.module.css';
@@ -17,22 +21,24 @@ interface ScreenProps {
   title: string;
   /** "Step 2 of 3", shown above the title in the submit flow. */
   step?: string;
+  /** A sentence under the title. */
+  lede?: ReactNode;
   /** A path, or true for browser history. */
   back?: string | boolean;
-  /** The pinned bottom area (primary button, maybe one text button). */
+  /** The main action (one primary button, maybe one text button). */
   action?: ReactNode;
-  /** Show the bottom navigation. */
+  /** Show the household navigation (header links; bottom bar on phones). */
   nav?: boolean;
   children: ReactNode;
 }
 
-function Screen({ title, step, back, action, nav = false, children }: ScreenProps) {
+function Screen({ title, step, lede, back, action, nav = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const headingRef = useRef<HTMLHeadingElement>(null);
 
-  // Move focus to the new screen's title so screen readers announce it,
-  // unless something on the screen already took focus (such as the meter
+  // Move focus to the new page's title so screen readers announce it,
+  // unless something on the page already took focus (such as the meter
   // counter opening for typing). Child effects run first, so check.
   useEffect(() => {
     document.title = `${title} | ${t('app.name')}`;
@@ -42,26 +48,33 @@ function Screen({ title, step, back, action, nav = false, children }: ScreenProp
 
   const goBack = () => (typeof back === 'string' ? navigate(back) : navigate(-1));
 
+  const classes = [styles.screen, 'stage', nav ? styles.withNav : '', action ? styles.withAction : '']
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={`${styles.screen} ${nav ? styles.withNav : ''}`}>
-      <header className={styles.bar}>
-        {back && (
-          <button type="button" className={styles.back} onClick={goBack}>
-            <Icon name="back" />
-            <span className="visually-hidden">{t('action.back')}</span>
-          </button>
-        )}
-        <div className={styles.heading}>
+    <div className={classes}>
+      <SiteHeader links={nav} />
+
+      <main className={styles.main}>
+        <div className={styles.head}>
+          {back && (
+            <button type="button" className={styles.back} onClick={goBack}>
+              <Icon name="back" size={20} />
+              <span>{t('action.back')}</span>
+            </button>
+          )}
           {step && <p className={`${styles.step} text-small`}>{step}</p>}
-          <h1 ref={headingRef} tabIndex={-1} className={`${styles.title} text-lead`}>
+          <h1 ref={headingRef} tabIndex={-1} className={`${styles.title} page-title`}>
             {title}
           </h1>
+          {lede && <div className={`${styles.lede} text-lead`}>{lede}</div>}
+          {action && <div className={styles.action}>{action}</div>}
         </div>
-      </header>
 
-      <main className={styles.body}>{children}</main>
+        <div className={styles.body}>{children}</div>
+      </main>
 
-      {action && <div className={styles.action}>{action}</div>}
       {nav && <HouseholdNav />}
     </div>
   );

@@ -1,0 +1,117 @@
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--width-site);
+  margin-inline: auto;
+  padding: 0 var(--gutter) var(--space-10);
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  min-height: min(72vh, 680px);
+  padding: var(--space-16) 0 var(--space-12);
+  text-align: center;
+  animation: rise var(--motion-hero) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* The one eyebrow on the page, as in the reference. */
+.eyebrow {
+  color: var(--haze);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 17ch;
+  color: var(--mist);
+}
+
+.lede {
+  max-width: 44ch;
+  color: var(--haze);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  color: var(--haze);
+  font-size: var(--size-small);
+}
+
+.account:hover {
+  color: var(--mist);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* The three real steps of a reading, along the bottom of the stage. */
+.steps {
+  border-top: 1px solid var(--color-rule);
+  padding-top: var(--space-8);
+}
+
+.stepList {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .stepList {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+.step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  color: var(--haze);
+}
+
+.stepNumber {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+  color: var(--mist);
+}
+
+@media (max-width: 479px) {
+  .actions {
+    flex-direction: column;
+    align-self: stretch;
+  }
+}

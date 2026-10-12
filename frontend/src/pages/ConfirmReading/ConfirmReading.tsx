@@ -130,9 +130,8 @@ function ConfirmReading() {
         </Notice>
       )}
 
-      {photo && <img className={styles.photo} src={photo} alt={t('camera.photoAlt')} />}
-
-      <section className={styles.reading} aria-labelledby={helpId}>
+      <div className={photo ? 'columns' : undefined}>
+      <section className={`panel ${styles.reading}`} aria-labelledby={helpId}>
         <p id={helpId} className="measure">
           {lead}
         </p>
@@ -155,20 +154,28 @@ function ConfirmReading() {
             {t('confirm.incomplete')}
           </Notice>
         )}
+
+        {lowConfidence && state !== 'retake' && (
+          <Notice
+            tone="info"
+            actions={
+              <Button variant="text" icon="camera" onClick={retake}>
+                {t('camera.retake')}
+              </Button>
+            }
+          >
+            {t('confirm.lowConfidence')}
+          </Notice>
+        )}
       </section>
 
-      {lowConfidence && state !== 'retake' && (
-        <Notice
-          tone="info"
-          actions={
-            <Button variant="text" icon="camera" onClick={retake}>
-              {t('camera.retake')}
-            </Button>
-          }
-        >
-          {t('confirm.lowConfidence')}
-        </Notice>
+      {photo && (
+        <figure className={styles.photoFrame}>
+          <img className={styles.photo} src={photo} alt={t('camera.photoAlt')} />
+          <figcaption className="text-small text-secondary">{t('camera.photoAlt')}</figcaption>
+        </figure>
       )}
+      </div>
     </Screen>
   );
 }

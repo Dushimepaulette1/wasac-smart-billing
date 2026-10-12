@@ -1,21 +1,15 @@
-.next {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
 .link {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
   min-height: var(--tap-min);
-  text-underline-offset: 0.2em;
+  color: var(--mist);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
 }
 
 .meter {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
   margin: 0;
 }
 
@@ -23,25 +17,16 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.line:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .line dd {
   margin: 0;
   text-align: right;
-}
-
-.language {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  color: var(--color-text-secondary);
-}
-
-.select {
-  min-height: var(--tap-min);
-  padding: 0 var(--space-3);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius-button);
-  background: var(--color-surface);
-  color: var(--color-text);
 }

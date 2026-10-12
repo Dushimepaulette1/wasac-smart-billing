@@ -1,5 +1,4 @@
 .reading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  align-items: flex-start;
+  max-width: 640px;
 }
