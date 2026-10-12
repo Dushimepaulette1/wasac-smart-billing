@@ -25,7 +25,7 @@
 }
 
 .row:hover {
-  background: #E9EFF6;
+  background: var(--row-hover);
 }
 
 .month {

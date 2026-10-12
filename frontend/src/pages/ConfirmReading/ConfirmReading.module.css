@@ -13,7 +13,7 @@
   flex-direction: column;
   gap: var(--space-2);
   margin: 0;
-  --color-text-secondary: var(--haze);
+  --color-text-secondary: var(--stage-soft);
 }
 
 .photo {
@@ -21,7 +21,7 @@
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: var(--radius-panel);
-  background: var(--night);
+  background: var(--stage-base);
 }
 
 @media (min-width: 960px) {

@@ -6,7 +6,7 @@
   bottom: 0;
   z-index: 4;
   border-top: 1px solid var(--color-rule);
-  background: #06122a;
+  background: var(--stage-bar);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -33,14 +33,14 @@
   gap: 2px;
   min-height: var(--nav-height);
   padding: var(--space-1);
-  color: var(--haze);
+  color: var(--stage-soft);
   text-decoration: none;
   text-align: center;
 }
 
 /* Current page: bright text, bold, and a bar; not colour alone. */
 .active {
-  color: var(--mist);
+  color: var(--stage-strong);
   font-weight: var(--weight-bold);
 }
 
@@ -51,5 +51,5 @@
   left: 30%;
   right: 30%;
   height: 2px;
-  background: var(--mist);
+  background: var(--stage-strong);
 }

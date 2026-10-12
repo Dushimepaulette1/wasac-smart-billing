@@ -1,54 +1,30 @@
 /**
  * @file NotFound.tsx
- * @description Screen 11: Clean, on-brand 404 page for the WASAC platform.
+ * @description An address that does not exist: say so, and offer the way back.
  */
 
 import { useNavigate } from 'react-router-dom';
+import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
-import styles from './NotFound.module.css';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export default function NotFound() {
   const navigate = useNavigate();
-
+  const { t } = useI18n();
   return (
-    <div className={styles.container}>
-      <div className={styles.inner}>
-        <div className={styles.iconCircle}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" stroke="var(--color-accent)" strokeWidth="1.5" />
-            <polygon
-              points="12,7 15,12 12,17 9,12"
-              fill="var(--color-accent-light)"
-              stroke="var(--color-accent)"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="12" r="1.5" fill="var(--color-accent)" />
-          </svg>
-        </div>
-
-        <h1 className={styles.title}>Page not found</h1>
-
-        <p className={styles.description}>
-          The page you requested does not exist or has been relocated within the WASAC Smart Billing Platform.
-        </p>
-
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            onClick={() => navigate('/home')}
-          >
-            Return to Dashboard
+    <Screen
+      title={t('notFound.title')}
+      lede={<p>{t('notFound.body')}</p>}
+      action={
+        <>
+          <Button variant="secondary" onClick={() => navigate(-1)}>
+            {t('action.back')}
           </Button>
-
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-          >
-            Go Back
-          </Button>
-        </div>
-      </div>
-    </div>
+          <Button onClick={() => navigate('/')}>{t('notFound.home')}</Button>
+        </>
+      }
+    >
+      {null}
+    </Screen>
   );
 }

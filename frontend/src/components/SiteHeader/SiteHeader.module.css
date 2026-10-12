@@ -13,28 +13,28 @@
   padding: var(--space-3) var(--gutter);
 }
 
+/* "WASAC Smart water billing": one title, one size, one face. */
 .brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-3);
+  column-gap: 0.32em;
   min-height: var(--tap-min);
-  align-self: center;
-  padding-top: 10px;
+  align-content: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  line-height: 1.05;
   text-decoration: none;
-  color: var(--mist);
+  color: var(--stage-strong);
 }
 
 .wordmark {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  line-height: 1;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .tagline {
-  color: var(--haze);
-  font-size: var(--size-small);
+  font-weight: 500;
 }
 
 /* Household links: header on wide screens, bottom bar on phones. */
@@ -56,25 +56,28 @@
   align-items: center;
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
-  color: var(--haze);
+  color: var(--stage-soft);
   font-size: var(--size-small);
   text-decoration: none;
   border-radius: var(--radius-button);
 }
 
 .link:hover {
-  color: var(--mist);
+  color: var(--stage-strong);
 }
 
 /* Current page: brighter text and an underline, not colour alone. */
 .active {
-  color: var(--mist);
+  color: var(--stage-strong);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.5em;
 }
 
 .end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin-left: auto;
 }
 
@@ -82,9 +85,11 @@
   margin-left: 0;
 }
 
+/* Phones: the title stacks onto two lines so the controls still fit. */
 @media (max-width: 479px) {
-  .tagline {
-    display: none;
+  .brand {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

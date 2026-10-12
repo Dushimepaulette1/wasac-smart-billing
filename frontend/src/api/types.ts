@@ -226,6 +226,46 @@ export interface ResolveFlagResponse extends AnomalyFlag {
   actions: string[];
 }
 
+/** schemas.HistoryPoint */
+export interface HistoryPoint {
+  date: IsoDateTime;
+  reading_m3: number;
+  consumption_m3: number | null;
+}
+
+/** schemas.ReviewItem: a held reading with what a decision needs. */
+export interface ReviewItem {
+  flag: AnomalyFlag;
+  reading_m3: number | null;
+  submitted_at: IsoDateTime | null;
+  reading_confidence: number | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  sector: string | null;
+  /** Up to six accepted readings, oldest first. */
+  history: HistoryPoint[];
+}
+
+// ---------------------------------------------------------------------------
+// Staff sign-in: /auth/*
+// ---------------------------------------------------------------------------
+
+/** schemas.StaffUserOut */
+export interface StaffUser {
+  username: string;
+  full_name: string;
+  role: string;
+}
+
+/** schemas.LoginResponse */
+export interface LoginResponse {
+  access_token: string;
+  token_type: 'bearer';
+  /** Unix seconds. */
+  expires_at: number;
+  user: StaffUser;
+}
+
 // ---------------------------------------------------------------------------
 // System and USSD
 // ---------------------------------------------------------------------------

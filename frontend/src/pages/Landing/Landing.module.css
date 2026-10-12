@@ -28,7 +28,7 @@
 
 /* The one eyebrow on the page, as in the reference. */
 .eyebrow {
-  color: var(--haze);
+  color: var(--stage-soft);
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0.16em;
@@ -37,12 +37,12 @@
 
 .title {
   max-width: 17ch;
-  color: var(--mist);
+  color: var(--stage-strong);
 }
 
 .lede {
   max-width: 44ch;
-  color: var(--haze);
+  color: var(--stage-soft);
 }
 
 .actions {
@@ -57,12 +57,12 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  color: var(--haze);
+  color: var(--stage-soft);
   font-size: var(--size-small);
 }
 
 .account:hover {
-  color: var(--mist);
+  color: var(--stage-strong);
 }
 
 @keyframes rise {
@@ -97,7 +97,7 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-4);
-  color: var(--haze);
+  color: var(--stage-soft);
 }
 
 .stepNumber {
@@ -106,7 +106,7 @@
   font-size: 2rem;
   line-height: 1;
   font-variant-numeric: lining-nums;
-  color: var(--mist);
+  color: var(--stage-strong);
 }
 
 @media (max-width: 479px) {

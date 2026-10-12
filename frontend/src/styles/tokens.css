@@ -45,6 +45,21 @@
   --focus-gap:            var(--night);
   --focus-color:          var(--ice);
 
+  /* Stage surfaces (switch with the theme) */
+  --stage-base:       var(--night);
+  --stage-base-clear: rgba(4, 10, 22, 0);
+  --stage-strong:     var(--mist);  /* headlines, wordmark */
+  --stage-soft:       var(--haze);  /* body text on the stage */
+  --stage-bar:        #06122a;      /* phone navigation bar */
+  --panel-bg:         var(--mist);
+  --panel-shadow:     none;
+  --quiet-bg:         rgba(6, 18, 42, 0.55);
+  --row-hover:        #E3EAF3;
+  --sidebar-bg:       rgba(5, 14, 32, 0.82);
+  --sidebar-active:   rgba(191, 215, 240, 0.12);
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23C3D2E6' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: dark;
+
   /* ------------------------------------------------------------------------
      Type: Cormorant Garamond for headlines only, Atkinson Hyperlegible Next
      for everything else, Barlow Condensed for counter digits.
@@ -112,6 +127,37 @@
   /* One counter digit settling; one orchestrated moment on the landing hero. */
   --motion-digit: 120ms;
   --motion-hero: 700ms;
+}
+
+/* --------------------------------------------------------------------------
+   Light theme: morning over the water. Pale ice-blue stage with the same
+   blue glows; white panels lifted by a soft blue shadow; ink text.
+   Contrast at the deepest glow (#AECAE7): ink 10.9:1, --stage-soft 5.4:1.
+   -------------------------------------------------------------------------- */
+:root[data-theme='light'] {
+  --color-text:           var(--ink);
+  --color-text-secondary: #3C4860;
+  --color-action:         var(--ink);
+  --color-on-action:      #FFFFFF;
+  --color-outline:        rgba(10, 20, 38, 0.55);
+  --color-held:           var(--brass);
+  --color-rule:           rgba(10, 20, 38, 0.12);
+  --focus-gap:            #F4F7FB;
+  --focus-color:          var(--ink);
+
+  --stage-base:       #EEF3F9;
+  --stage-base-clear: rgba(238, 243, 249, 0);
+  --stage-strong:     var(--ink);
+  --stage-soft:       #3C4860;
+  --stage-bar:        #FFFFFF;
+  --panel-bg:         #FFFFFF;
+  --panel-shadow:     0 1px 2px rgba(10, 20, 38, 0.05), 0 18px 40px -20px rgba(29, 75, 130, 0.3);
+  --quiet-bg:         rgba(255, 255, 255, 0.55);
+  --row-hover:        #EEF3F9;
+  --sidebar-bg:       rgba(255, 255, 255, 0.86);
+  --sidebar-active:   rgba(29, 75, 130, 0.09);
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%233C4860' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: light;
 }
 
 @media (prefers-reduced-motion: reduce) {

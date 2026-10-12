@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  color: var(--mist);
+  color: var(--stage-strong);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.25em;
 }

@@ -1,0 +1,325 @@
+.shell {
+  --sidebar-width: 264px;
+  --sidebar-collapsed: 80px;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.skip {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 20;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--ink);
+}
+
+.skip:focus {
+  top: var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: var(--sidebar-width);
+  height: 100vh;
+  height: 100dvh;
+  padding: var(--space-5) var(--space-3);
+  border-right: 1px solid var(--color-rule);
+  background: var(--sidebar-bg);
+  transition: width 180ms ease;
+}
+
+.collapsed .sidebar {
+  width: var(--sidebar-collapsed);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--space-1) var(--space-3) var(--space-5);
+  color: var(--stage-strong);
+  font-family: var(--font-display);
+  line-height: 1.05;
+}
+
+.collapsed .brand {
+  align-items: center;
+  padding-inline: 0;
+}
+
+.wordmark {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.collapsed .wordmark {
+  font-size: 1.05rem;
+}
+
+.brandSub {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--stage-soft);
+}
+
+.nav {
+  flex: 1;
+}
+
+.nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--stage-soft);
+  font-size: var(--size-body-staff);
+  text-align: left;
+  text-decoration: none;
+}
+
+.collapsed .link {
+  justify-content: center;
+  padding: 0;
+}
+
+.link:hover {
+  background: var(--sidebar-active);
+  color: var(--stage-strong);
+}
+
+/* Current page: tinted background, bold text and an edge marker. */
+.active {
+  position: relative;
+  background: var(--sidebar-active);
+  color: var(--stage-strong);
+  font-weight: var(--weight-bold);
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--stage-strong);
+}
+
+.linkLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.count {
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-held);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme='light'] .count {
+  color: #FFFFFF;
+}
+
+.collapsed .count {
+  position: absolute;
+  margin: -24px 0 0 26px;
+  min-width: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+}
+
+.collapsed .link {
+  position: relative;
+}
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-rule);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  color: var(--stage-soft);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--stage-strong);
+  color: var(--stage-base);
+  font-weight: var(--weight-bold);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.personName {
+  color: var(--stage-strong);
+  font-weight: var(--weight-bold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Content
+   -------------------------------------------------------------------------- */
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 68px;
+  padding: var(--space-2) var(--gutter);
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--sidebar-bg);
+}
+
+.menuButton {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 1px solid var(--color-outline);
+  border-radius: 12px;
+  background: none;
+  color: var(--stage-strong);
+}
+
+.topbarEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.main {
+  width: 100%;
+  max-width: 1320px;
+  padding: var(--space-8) var(--gutter) var(--space-16);
+}
+
+.main:focus {
+  outline: none;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.title {
+  color: var(--stage-strong);
+}
+
+.title:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.lede {
+  color: var(--stage-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Narrow screens: the sidebar becomes a drawer over the page.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 30;
+    width: min(300px, 86vw);
+    background: var(--stage-bar);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+    animation: slide 180ms ease-out;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    border: 0;
+    background: rgba(4, 10, 22, 0.55);
+  }
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* `display: flex` above would otherwise override the hidden attribute and
+   leave the closed drawer covering the page on narrow screens. */
+.sidebar[hidden] {
+  display: none;
+}
