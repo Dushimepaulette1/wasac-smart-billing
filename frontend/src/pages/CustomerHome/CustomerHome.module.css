@@ -7,26 +7,67 @@
   text-underline-offset: 0.25em;
 }
 
-.meter {
-  display: flex;
-  flex-direction: column;
+/* Notices side by side when there are two and room for both. */
+.notices {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 960px) {
+  .notices {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+.meterPanel {
+  gap: var(--space-4);
+}
+
+/* Label above value, each fact in its own cell divided by hairlines. */
+.facts {
+  display: grid;
   margin: 0;
 }
 
-.line {
+.fact {
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) 0;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) 0;
   border-top: 1px solid var(--color-rule);
 }
 
-.line:first-child {
+.fact:first-child {
   border-top: 0;
   padding-top: 0;
 }
 
-.line dd {
+.fact dt {
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+}
+
+.fact dd {
   margin: 0;
-  text-align: right;
+  font-size: var(--size-lead);
+  line-height: var(--leading-lead);
+  font-weight: var(--weight-bold);
+}
+
+@media (min-width: 720px) {
+  .facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fact,
+  .fact:first-child {
+    padding: 0 var(--space-6);
+    border-top: 0;
+    border-left: 1px solid var(--color-rule);
+  }
+
+  .fact:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
 }
