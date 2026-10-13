@@ -9,7 +9,9 @@ submission; `NO_METER` only means that no reading is suggested.
 >
 > In the same way, the readable photos are the meter reader's training labels, and the unreadable
 > photos were negative examples for the quality gate. The HARD_TO_READ and CHECK_NUMBERS rates are
-> therefore also likely optimistic.
+> therefore also likely optimistic. The **held-out** table below uses only photos that were never
+> used in training. On them, HARD_TO_READ still separates the groups (11% vs 60%), but CHECK_NUMBERS
+> barely does (15% vs 20%). The thresholds were left unchanged.
 
 ## Method
 
@@ -54,6 +56,15 @@ class index (`positive_class_index: 1`).
 The tables below are the measured rates with the chosen thresholds. In the NO_METER table, the
 non-meter columns show the share **wrongly accepted as a meter**. Everywhere else, a cell is the
 share of images in that group for which the code fired. One image can get several codes.
+
+## Held-out photos (never used in training)
+
+HARD_TO_READ and CHECK_NUMBERS on the test split of the training run only: photos that neither the reader nor the quality gate saw during training. **This is a small sample** (see the 95% confidence intervals), so these numbers are indicative; the thresholds were not changed because of them.
+
+| Code | Threshold | readable (held-out) | unreadable (held-out) |
+|---|---|---|---|
+| HARD_TO_READ | 0.5 | 9/79 = 11.4% (95% CI 6–20%) | 9/15 = 60.0% (95% CI 36–80%) |
+| CHECK_NUMBERS | 0.5 | 12/79 = 15.2% (95% CI 9–25%) | 3/15 = 20.0% (95% CI 7–45%) |
 
 ## Data
 
