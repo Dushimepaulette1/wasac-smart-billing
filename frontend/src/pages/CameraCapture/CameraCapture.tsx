@@ -309,6 +309,13 @@ function CameraCapture() {
         <div className={styles.frame}>
           <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
           {camera === 'live' && <div className={styles.guide} aria-hidden="true" />}
+          {/* On the camera itself, so the tip is visible while aiming on any screen height.
+              Always mounted while the camera is live, so a changed tip is announced. */}
+          {camera === 'live' && send === 'idle' && (
+            <p className={`panel ${styles.tip}`} role="status" aria-live="polite">
+              {liveText}
+            </p>
+          )}
           {camera === 'starting' && (
             <p role="status" className={styles.overlayText}>
               {t('camera.starting')}
@@ -319,10 +326,6 @@ function CameraCapture() {
 
       {cameraOpen && camera === 'live' && (
         <>
-          {/* Always mounted while the camera is open, so a changed tip is announced. */}
-          <p className={`panel ${styles.tip}`} role="status" aria-live="polite">
-            {liveText}
-          </p>
           <label className={styles.saveData}>
             <input
               type="checkbox"
