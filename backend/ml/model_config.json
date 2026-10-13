@@ -1,0 +1,56 @@
+{
+  "reader": {
+    "arch": "resnet_gru",
+    "weights": "meter_reader.pt",
+    "experiment": "E4 ResNet18+BiGRU mixed",
+    "input_size": [
+      64,
+      256
+    ],
+    "grayscale": true,
+    "normalize_mean": 0.5,
+    "normalize_std": 0.5,
+    "blank_index": 10,
+    "reading_length": 8,
+    "decimals": 3
+  },
+  "quality_gate": {
+    "arch": "mobilenet_v2",
+    "weights": "quality_gate.pt",
+    "input_size": [
+      128,
+      384
+    ],
+    "normalize_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalize_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "positive_class": "unreadable",
+    "selected_method": "MobileNetV2 v1",
+    "shipped_model": "MobileNetV2 v1",
+    "threshold": 0.4289516615867615,
+    "use_as": "soft retake prompt, never blocking"
+  },
+  "cropper": {
+    "yolo_weights": "best.pt (Benax YOLOv8, not included)",
+    "conf": 0.15,
+    "imgsz": 640,
+    "padding": 0.05
+  },
+  "test_results": {
+    "photos": 79,
+    "meters": 34,
+    "reading_accuracy_pct": 55.7,
+    "per_meter_pct": 55.74,
+    "within_one_digit_pct": 70.89,
+    "ci95": "42-69"
+  },
+  "created": "2026-10-12 13:52",
+  "fast_run": false
+}
