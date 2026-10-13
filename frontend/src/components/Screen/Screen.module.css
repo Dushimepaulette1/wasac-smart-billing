@@ -51,6 +51,18 @@
   color: var(--stage-soft);
 }
 
+/* "Demo data": small and quiet, but never missing while a DEMO- household is shown. */
+.demo {
+  justify-self: start;
+  align-self: start;
+  width: fit-content;
+  margin: 0;
+  padding: 2px var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-button);
+  color: var(--stage-soft);
+}
+
 .title {
   max-width: 22ch;
   overflow-wrap: anywhere;

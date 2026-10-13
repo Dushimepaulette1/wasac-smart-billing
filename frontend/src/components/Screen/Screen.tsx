@@ -15,6 +15,7 @@ import Icon from '../Icon/Icon';
 import SiteHeader from '../SiteHeader/SiteHeader';
 import HouseholdNav from '../HouseholdNav/HouseholdNav';
 import { useI18n } from '../../i18n/I18nProvider';
+import { IS_DEMO_HOUSEHOLD } from '../../config';
 import styles from './Screen.module.css';
 
 interface ScreenProps {
@@ -58,6 +59,7 @@ function Screen({ title, step, lede, back, action, nav = false, children }: Scre
 
       <main className={styles.main}>
         <div className={styles.head}>
+          {IS_DEMO_HOUSEHOLD && <p className={`${styles.demo} text-small`}>{t('demo.label')}</p>}
           {back && (
             <button type="button" className={styles.back} onClick={goBack}>
               <Icon name="back" size={20} />

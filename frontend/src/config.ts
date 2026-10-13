@@ -14,5 +14,8 @@ export const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 export const CUSTOMER_ID = import.meta.env.VITE_CUSTOMER_ID || 'CUST001';
 export const METER_ID = import.meta.env.VITE_METER_ID || 'MTR001';
 
+/** A DEMO- household (deployments): household screens say "Demo data". */
+export const IS_DEMO_HOUSEHOLD = CUSTOMER_ID.startsWith('DEMO-');
+
 /** A request that takes longer than this fails with a retry option. */
 export const REQUEST_TIMEOUT_MS = 20000;

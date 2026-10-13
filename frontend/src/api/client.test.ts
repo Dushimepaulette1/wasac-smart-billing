@@ -83,3 +83,20 @@ describe('api', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/anomaly/flags?household_id=MTR001');
   });
 });
+
+describe('rate limits and size limits', () => {
+  it('reports a 429 on a photo endpoint as "too many", not as a sign-in lockout', async () => {
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(429, { detail: 'Too many photos' }));
+    await expect(api.submitPhoto(new Blob(['p']))).rejects.toMatchObject({ kind: 'tooMany', status: 429 });
+  });
+
+  it('keeps a 429 on sign-in as the lockout', async () => {
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(429, { detail: 'Too many wrong attempts' }));
+    await expect(api.login('officer1', 'x')).rejects.toMatchObject({ kind: 'locked' });
+  });
+
+  it('reports a 413 as a photo that is too large', async () => {
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(413, { detail: 'Image larger than 10 MB' }));
+    await expect(api.submitPhoto(new Blob(['p']))).rejects.toMatchObject({ kind: 'tooLarge' });
+  });
+});
