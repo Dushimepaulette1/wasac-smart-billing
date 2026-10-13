@@ -1,9 +1,14 @@
 /**
  * @file CameraCapture.tsx
  * @description Submit flow, step 1: photograph the meter.
- * Live camera where the phone allows it; uploading a photo or typing the
- * numbers are always offered, so a missing camera or a bad photo never
- * blocks the household. The photo is kept if sending fails.
+ *
+ * While the camera is open, small frames go to /guide-frame one at a time and
+ * one calm tip is shown. Two good frames in a row take the photo by
+ * themselves, after a short "Hold still". The shutter button always works,
+ * live tips stop after 30 s, and "Save mobile data" turns them off. After the
+ * photo, nothing blocks: a missing meter offers "Retake" or typing, any other
+ * problem offers "Retake" or "Use this photo anyway". Uploading a photo or
+ * typing the numbers is always possible, and the photo is kept if sending fails.
  */
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
@@ -14,13 +19,22 @@ import Notice from '../../components/Notice/Notice';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSubmission } from '../../household/submission';
-import { frameToDataUrl, fileToDataUrl, dataUrlToBlob } from '../../household/photo';
+import { frameToBlob, frameToDataUrl, fileToDataUrl, dataUrlToBlob } from '../../household/photo';
+import { liveHint, messageKey, photoOutcome, thumbnailUrl, type PhotoOutcome } from '../../household/guidance';
+import { GuidanceLoop } from '../../household/guidanceLoop';
+import { useSaveData } from '../../household/saveData';
+import type { PhotoSubmitResponse } from '../../api/types';
 import { api } from '../../api/client';
 import styles from './CameraCapture.module.css';
 
 type CameraState = 'starting' | 'live' | 'unavailable';
 /** "saved": back on this screen (or reloaded) with a photo not yet read. */
-type SendState = 'idle' | 'sending' | 'failed' | 'unreadable' | 'saved';
+type SendState = 'idle' | 'sending' | 'failed' | 'saved' | 'outcome';
+/** "ended": live tips stopped (time limit); "quiet": stopped without a message (network, no detector). */
+type LiveState = 'checking' | 'ended' | 'quiet';
+
+/** The "Hold still" moment before an automatic photo. */
+export const HOLD_STILL_MS = 700;
 
 function CameraCapture() {
   const { t } = useI18n();
@@ -29,12 +43,18 @@ function CameraCapture() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<PhotoSubmitResponse | null>(null);
+  const takePhotoRef = useRef<() => void>(() => undefined);
 
   const [camera, setCamera] = useState<CameraState>('starting');
   const [send, setSend] = useState<SendState>(submission.photo && !submission.cells ? 'saved' : 'idle');
+  const [outcome, setOutcome] = useState<PhotoOutcome | null>(null);
   const [error, setError] = useState<unknown>(null);
   // The chosen file was not an image (not a network error).
   const [notImage, setNotImage] = useState(false);
+  const [saveData, setSaveData] = useSaveData();
+  const [live, setLive] = useState<LiveState>('checking');
+  const [hint, setHint] = useState<string | null>(null);
 
   const showPreview = submission.photo && send !== 'idle';
 
@@ -69,18 +89,60 @@ function CameraCapture() {
     };
   }, [showPreview, stopCamera]);
 
+  // Live tips: only while the camera is open, nothing is being sent, and data saving is off.
+  useEffect(() => {
+    if (camera !== 'live' || send !== 'idle' || saveData) return undefined;
+    let holdTimer: ReturnType<typeof setTimeout> | undefined;
+    setLive('checking');
+    setHint(null);
+    const loop = new GuidanceLoop({
+      grab: () => (videoRef.current ? frameToBlob(videoRef.current) : Promise.resolve(null)),
+      send: (frame) => api.guideFrame(frame),
+      onResult: (result) => setHint(liveHint(result.guidance)),
+      onReady: () => {
+        setHint('guidance.holdStill');
+        holdTimer = setTimeout(() => takePhotoRef.current(), HOLD_STILL_MS);
+      },
+      onEnd: (reason) => {
+        setHint(null);
+        setLive(reason === 'timeLimit' ? 'ended' : 'quiet');
+      },
+    });
+    const onVisibility = () => (document.hidden ? loop.pause() : loop.resume());
+    document.addEventListener('visibilitychange', onVisibility);
+    loop.start();
+    if (document.hidden) loop.pause();
+    return () => {
+      loop.stop();
+      clearTimeout(holdTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [camera, send, saveData]);
+
+  /** Store what the reader found and go to the confirm screen. */
+  const applyResult = (result: PhotoSubmitResponse) => {
+    submission.setReadResult(result.predicted_reading, result.confidence, {
+      crop: thumbnailUrl(result),
+      checkNumbers: result.guidance.includes('CHECK_NUMBERS') || result.needs_check,
+    });
+    navigate('/submit/confirm');
+  };
+
   const sendPhoto = async (photo: string) => {
     setSend('sending');
     setError(null);
     setNotImage(false);
+    setOutcome(null);
     try {
       const result = await api.submitPhoto(dataUrlToBlob(photo));
-      if (result.status === 'unreadable') {
-        setSend('unreadable');
+      resultRef.current = result;
+      const next = photoOutcome(result);
+      if (next.kind === 'confirm') {
+        applyResult(result);
         return;
       }
-      submission.setReadResult(result.predicted_reading, result.confidence);
-      navigate('/submit/confirm');
+      setOutcome(next);
+      setSend('outcome');
     } catch (err) {
       setError(err);
       setSend('failed');
@@ -89,12 +151,13 @@ function CameraCapture() {
 
   const takePhoto = () => {
     const video = videoRef.current;
-    if (!video || !video.videoWidth) return;
-    const photo = frameToDataUrl(video);
+    const photo = video ? frameToDataUrl(video) : null;
+    if (!photo) return;
     submission.setPhoto(photo);
     stopCamera();
     sendPhoto(photo);
   };
+  takePhotoRef.current = takePhoto;
 
   const choseFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -113,6 +176,8 @@ function CameraCapture() {
 
   const retake = () => {
     submission.reset();
+    resultRef.current = null;
+    setOutcome(null);
     setSend('idle');
     setError(null);
   };
@@ -120,6 +185,10 @@ function CameraCapture() {
   const typeNumbers = () => {
     submission.startManual();
     navigate('/submit/confirm');
+  };
+
+  const acceptPhoto = () => {
+    if (resultRef.current) applyResult(resultRef.current);
   };
 
   const chooseFile = () => fileRef.current?.click();
@@ -143,14 +212,26 @@ function CameraCapture() {
         </Button>
       </>
     );
-  } else if (send === 'unreadable') {
+  } else if (send === 'outcome' && outcome?.kind === 'soft') {
+    action = (
+      <>
+        <Button variant="text" onClick={acceptPhoto}>
+          {t('camera.useAnyway')}
+        </Button>
+        <Button fullWidth icon="camera" onClick={retake}>
+          {t('camera.retakeShort')}
+        </Button>
+      </>
+    );
+  } else if (send === 'outcome') {
+    // NO_METER, or no reading for another reason: retake or type.
     action = (
       <>
         <Button variant="text" icon="keypad" onClick={typeNumbers}>
           {t('camera.type')}
         </Button>
         <Button fullWidth icon="camera" onClick={retake}>
-          {t('camera.retake')}
+          {outcome?.kind === 'noMeter' ? t('camera.retakeShort') : t('camera.retake')}
         </Button>
       </>
     );
@@ -178,16 +259,36 @@ function CameraCapture() {
     );
   }
 
+  const softKey = outcome?.kind === 'soft' ? messageKey(outcome.code) : null;
+  const cameraOpen = send === 'idle' && camera !== 'unavailable';
+
+  let liveText: string | null = null;
+  if (saveData) liveText = t('camera.liveOff');
+  else if (live === 'ended') liveText = t('camera.liveEnded');
+  else if (hint) liveText = t(hint);
+
   return (
     <Screen
       title={t('camera.title')}
       step={t('flow.step', { current: 1, total: 3 })}
-      lede={send === 'idle' && camera !== 'unavailable' ? <p>{t('camera.hint')}</p> : undefined}
+      lede={cameraOpen ? <p>{t('camera.hint')}</p> : undefined}
       back="/home"
       action={action}
     >
       {/* Messages first: when something went wrong, that matters more than the photo. */}
-      {send === 'unreadable' && (
+      {outcome?.kind === 'noMeter' && (
+        <Notice tone="info" live>
+          {t('guidance.noMeter')}
+        </Notice>
+      )}
+
+      {softKey && (
+        <Notice tone="info" live>
+          {t(softKey)}
+        </Notice>
+      )}
+
+      {outcome?.kind === 'unreadable' && (
         <Notice tone="info" live title={t('camera.unreadable.title')}>
           {t('camera.unreadable.body')}
         </Notice>
@@ -214,6 +315,27 @@ function CameraCapture() {
             </p>
           )}
         </div>
+      )}
+
+      {cameraOpen && camera === 'live' && (
+        <>
+          {/* Always mounted while the camera is open, so a changed tip is announced. */}
+          <p className={`panel ${styles.tip}`} role="status" aria-live="polite">
+            {liveText}
+          </p>
+          <label className={styles.saveData}>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={saveData}
+              onChange={(event) => setSaveData(event.target.checked)}
+            />
+            <span>
+              <span className={styles.saveDataLabel}>{t('camera.saveData')}</span>
+              <span className="text-small text-secondary">{t('camera.saveDataHint')}</span>
+            </span>
+          </label>
+        </>
       )}
 
       {/* One file input for every "upload a photo" button. */}

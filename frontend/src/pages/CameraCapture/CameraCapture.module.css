@@ -32,6 +32,49 @@
   box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45);
 }
 
+/* One live tip at a time, on a light panel so it reads in sunlight.
+   Room for two lines, so a new tip never moves the buttons. */
+.tip {
+  max-width: 760px;
+  min-height: calc(2 * 1.5em + 2 * var(--space-3));
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--size-body);
+}
+
+/* Empty: no panel, but the live region stays in the accessibility tree so its first tip is announced. */
+.tip:empty {
+  background: transparent;
+  box-shadow: none;
+}
+
+.saveData {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: 760px;
+  min-height: var(--tap-min);
+  padding-block: var(--space-2);
+  cursor: pointer;
+}
+
+.saveData input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 2px 0 0;
+  accent-color: var(--ice);
+}
+
+.saveData > span {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.saveDataLabel {
+  font-weight: var(--weight-bold);
+}
+
 .overlayText {
   position: absolute;
   inset: 0;
