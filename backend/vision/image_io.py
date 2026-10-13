@@ -14,8 +14,12 @@ def load_bgr(data: bytes, max_long_side: int) -> np.ndarray:
     """Decode an uploaded photo, apply the phone's EXIF rotation, shrink the long side to max_long_side."""
     try:
         img = Image.open(io.BytesIO(data))
+        if img.format == "JPEG":
+            img.draft("RGB", (max_long_side, max_long_side))  # decode at a reduced scale: less memory and time
         img = ImageOps.exif_transpose(img)
         img = img.convert("RGB")
+    except Image.DecompressionBombError as e:
+        raise BadImage(f"Image too large: {e}") from e
     except (UnidentifiedImageError, OSError) as e:
         raise BadImage(f"Not a readable image: {e}") from e
     if max(img.size) > max_long_side:
