@@ -10,10 +10,6 @@ from vision.config import GuidanceConfig, load_model_config, weights_dir, yolo_w
 
 logger = logging.getLogger(__name__)
 
-# model_config.json names the positive class ("unreadable") but not its index. The gate was trained
-# with an ImageFolder-style alphabetical class order (readable=0, unreadable=1).
-QUALITY_GATE_UNREADABLE_INDEX = 1
-
 LOADED, MISSING, ERROR = "loaded", "missing", "error"
 
 
@@ -45,13 +41,14 @@ class QualityGate:
             transforms.Normalize(gate_config["normalize_mean"], gate_config["normalize_std"]),
         ])
         self.threshold = float(gate_config["threshold"])
+        self.unreadable_index = int(gate_config["positive_class_index"])
         self._torch = torch
 
     def score(self, pil_image) -> float:
         with self._torch.no_grad():
             x = self.transform(pil_image.convert("RGB")).unsqueeze(0)
             probs = self._torch.softmax(self.model(x), dim=1)[0]
-        return float(probs[QUALITY_GATE_UNREADABLE_INDEX])
+        return float(probs[self.unreadable_index])
 
 
 class ModelRegistry:
