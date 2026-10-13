@@ -32,6 +32,7 @@
       0.225
     ],
     "positive_class": "unreadable",
+    "positive_class_index": 1,
     "selected_method": "MobileNetV2 v1",
     "shipped_model": "MobileNetV2 v1",
     "threshold": 0.4289516615867615,
