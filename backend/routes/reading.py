@@ -3,6 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from database import get_db, Customer, Meter, _calculate_bill
+from ratelimit import MAX_UPLOAD_BYTES
 from anomaly.service import notify_household, submit_reading
 from vision.image_io import BadImage
 from vision.models import ModelRegistry, get_registry
@@ -19,7 +20,7 @@ from schemas import (
 
 router = APIRouter()
 
-MAX_PHOTO_BYTES = 15 * 1024 * 1024
+MAX_PHOTO_BYTES = MAX_UPLOAD_BYTES  # 10 MB; ratelimit.upload_guard refuses larger ones earlier
 MAX_FRAME_BYTES = 2 * 1024 * 1024
 
 
