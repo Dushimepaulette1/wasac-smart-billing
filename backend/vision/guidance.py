@@ -76,21 +76,24 @@ def guidance_codes(m: Measurements, cfg: GuidanceConfig, has_detections: bool = 
         fired.add(NO_METER)
     elif m.box is not None:
         x1, y1, x2, y2 = m.box
-        if (x2 - x1) / m.image_w < cfg.too_far_min_width_frac:
+        if cfg.too_far_min_width_frac is not None and (x2 - x1) / m.image_w < cfg.too_far_min_width_frac:
             fired.add(TOO_FAR)
-        ex, ey = cfg.cut_off_edge_frac * m.image_w, cfg.cut_off_edge_frac * m.image_h
-        if x1 <= ex or y1 <= ey or x2 >= m.image_w - ex or y2 >= m.image_h - ey:
-            fired.add(CUT_OFF)
-    if m.region_mean < cfg.too_dark_max_mean:
+        if cfg.cut_off_edge_frac is not None:
+            ex, ey = cfg.cut_off_edge_frac * m.image_w, cfg.cut_off_edge_frac * m.image_h
+            if x1 <= ex or y1 <= ey or x2 >= m.image_w - ex or y2 >= m.image_h - ey:
+                fired.add(CUT_OFF)
+    # A threshold of None (null in guidance_config.json) turns that check off.
+    if cfg.too_dark_max_mean is not None and m.region_mean < cfg.too_dark_max_mean:
         fired.add(TOO_DARK)
-    if m.glare_frac > cfg.glare_max_frac:
+    if cfg.glare_max_frac is not None and m.glare_frac > cfg.glare_max_frac:
         fired.add(GLARE)
-    if m.laplacian_var < cfg.blurry_max_laplacian_var:
+    if cfg.blurry_max_laplacian_var is not None and m.laplacian_var < cfg.blurry_max_laplacian_var:
         fired.add(BLURRY)
     if m.quality_score is not None and cfg.hard_to_read_threshold is not None \
             and m.quality_score >= cfg.hard_to_read_threshold:
         fired.add(HARD_TO_READ)
-    if not no_meter and (m.needs_check or (m.confidence_min is not None
+    if not no_meter and (m.needs_check or (cfg.check_numbers_min_confidence is not None
+                                           and m.confidence_min is not None
                                            and m.confidence_min < cfg.check_numbers_min_confidence)):
         fired.add(CHECK_NUMBERS)
     ordered = [code for code in cfg.priority if code in fired]
