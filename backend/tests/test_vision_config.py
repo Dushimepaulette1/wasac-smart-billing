@@ -119,11 +119,49 @@ def test_download_verifies_checksum(server, tmp_path):
 
 def test_download_rejects_wrong_checksum_and_saves_nothing(server, tmp_path):
     dest = tmp_path / "w2.pt"
-    with pytest.raises(SystemExit, match="Checksum mismatch"):
+    with pytest.raises(dl.DownloadError, match="checksum mismatch"):
         dl.download(f"{server}/w.pt", dest, "0" * 64)
     assert not dest.exists() and not dest.with_suffix(".pt.part").exists()
 
 
 def test_download_rejects_a_web_page(server, tmp_path):
-    with pytest.raises(SystemExit, match="web page"):
+    with pytest.raises(dl.DownloadError, match="web page"):
         dl.download(f"{server}/page.html", tmp_path / "x.pt", "0" * 64)
+
+
+SECRET_LINK = "https://drive.google.com/file/d/SECRET-DRIVE-ID-123/view?usp=sharing"
+
+
+def test_failed_downloads_never_print_the_links(tmp_path, monkeypatch, capsys):
+    import sys
+
+    def boom(url, dest, sha):
+        raise OSError(f"could not open {url}")  # a library error that echoes the URL
+
+    monkeypatch.setattr(dl, "download", boom)
+    monkeypatch.setattr(sys, "argv", ["download_models.py", "--dest", str(tmp_path), "--urls",
+                                      f"best.pt={SECRET_LINK},meter_reader.pt=not a url,quality_gate.pt="])
+    with pytest.raises(SystemExit) as exit_info:
+        dl.main()
+    out = capsys.readouterr().out + str(exit_info.value)
+    assert "SECRET-DRIVE-ID-123" not in out and "drive.google" not in out and "not a url" not in out
+    assert "best.pt: failed (OSError)" in out and "quality_gate.pt: failed (no link" in out
+    assert "best.pt, meter_reader.pt, quality_gate.pt" in out  # every file tried, all reported
+
+
+def test_malformed_model_urls_entry_is_not_echoed():
+    with pytest.raises(SystemExit) as exit_info:
+        dl.parse_urls("best.pt=https://a/SECRET-PATH,https://b/SECRET-WITHOUT-EQUALS")
+    assert "SECRET" not in str(exit_info.value)
+
+
+def test_stray_link_in_model_urls_is_not_echoed(tmp_path, monkeypatch, capsys):
+    import sys
+
+    # A link pasted without "name=" still contains "=" (usp=sharing), so it parses as a bogus name.
+    monkeypatch.setattr(sys, "argv", ["download_models.py", "--dest", str(tmp_path), "--urls", SECRET_LINK])
+    with pytest.raises(SystemExit) as exit_info:
+        dl.main()
+    out = capsys.readouterr().out + str(exit_info.value)
+    assert "SECRET-DRIVE-ID-123" not in out and "drive.google" not in out
+    assert "unknown file name" in out

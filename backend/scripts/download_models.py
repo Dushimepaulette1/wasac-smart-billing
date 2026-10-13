@@ -55,10 +55,15 @@ def parse_urls(spec: Optional[str]) -> Dict[str, str]:
     for part in filter(None, (p.strip() for p in (spec or "").split(","))):
         name, sep, url = part.partition("=")
         if not sep:
-            raise SystemExit(f"MODEL_URLS entry '{part}' is not name=url")
+            # Never echo the entry: it may contain a private link.
+            raise SystemExit("A MODEL_URLS entry is not in the form name=url")
         if url.strip():  # "best.pt=" (as in .env.example) means not set yet
             urls[name.strip()] = url.strip()
     return urls
+
+
+class DownloadError(Exception):
+    """A failure whose message is safe to log: it never contains a URL or a secret."""
 
 
 def download(url: str, dest: Path, expected_sha: str) -> None:
@@ -66,9 +71,9 @@ def download(url: str, dest: Path, expected_sha: str) -> None:
     request = urllib.request.Request(url, headers={"User-Agent": "wasac-download-models"})
     with urllib.request.urlopen(request, timeout=60) as resp:
         if "text/html" in (resp.headers.get("Content-Type") or ""):
-            raise SystemExit(
-                f"{dest.name}: the link returned a web page, not the file. For Google Drive, share the "
-                "file as 'Anyone with the link' and use its share link or file id."
+            raise DownloadError(
+                "the link returned a web page, not the file. For Google Drive, share the "
+                "file as 'Anyone with the link' and use its share link or file id"
             )
         total = int(resp.headers.get("Content-Length") or 0)
         done = 0
@@ -82,7 +87,7 @@ def download(url: str, dest: Path, expected_sha: str) -> None:
     actual = sha256(tmp)
     if actual != expected_sha:
         tmp.unlink()
-        raise SystemExit(f"Checksum mismatch for {dest.name}: expected {expected_sha}, got {actual}. Nothing saved.")
+        raise DownloadError(f"checksum mismatch (expected {expected_sha}, got {actual}); nothing saved")
     tmp.replace(dest)
 
 
@@ -98,10 +103,13 @@ def main() -> None:
     per_file = parse_urls(args.urls)
     unknown = set(per_file) - set(expected)
     if unknown:
-        sys.exit(f"MODEL_URLS names unknown files: {', '.join(sorted(unknown))}. Expected: {', '.join(expected)}")
+        # Do not echo the unknown names: a stray link (links contain '=') would be printed here.
+        sys.exit(f"MODEL_URLS has {len(unknown)} entry/entries with an unknown file name. "
+                 f"Use exactly: {', '.join(expected)}")
 
     dest_dir = args.dest or weights_dir()
     dest_dir.mkdir(parents=True, exist_ok=True)
+    failed = []
     for name, info in expected.items():
         dest = dest_dir / name
         if dest.exists() and not args.force and sha256(dest) == info["sha256"]:
@@ -112,10 +120,23 @@ def main() -> None:
         elif args.base_url:
             url = f"{args.base_url.rstrip('/')}/{name}"
         else:
-            sys.exit(f"No URL for {name}: set MODEL_URLS (one link per file) or MODEL_BASE_URL.")
+            print(f"  {name}: failed (no link set in MODEL_URLS or MODEL_BASE_URL)")
+            failed.append(name)
+            continue
         print(f"  {name}: downloading")
-        download(url, dest, info["sha256"])
-        print(f"  {name}: verified")
+        try:
+            download(url, dest, info["sha256"])
+        except DownloadError as e:
+            print(f"\n  {name}: failed ({e})")
+            failed.append(name)
+        except Exception as e:  # noqa: BLE001 - its message may contain the URL; log only the type
+            print(f"\n  {name}: failed ({type(e).__name__})")
+            failed.append(name)
+        else:
+            print(f"  {name}: verified")
+    if failed:
+        # Non-zero exit; the API still starts, and /health lists the missing models.
+        sys.exit(f"Download failed for: {', '.join(failed)}")
     print(f"All model files are in {dest_dir}")
 
 
