@@ -14,11 +14,13 @@ from auth.routes import router as auth_router
 from anomaly.config import AnomalyConfig
 from anomaly.model import load_model_if_available
 from schemas import HealthResponse
+from vision.models import registry as model_registry
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    model_registry.load()
     yield
 
 
@@ -26,8 +28,8 @@ app = FastAPI(
     title="WASAC Smart Water Billing Platform",
     description=(
         "AI-assisted water meter reading and billing for Kigali, Rwanda. "
-        "Three-stage pipeline: MobileNetV2 quality gate → CRNN digit reader → "
-        "Isolation Forest anomaly detection."
+        "Pipeline: YOLOv8 number-window crop → MobileNetV2 quality gate → "
+        "ResNet18+BiGRU (CTC) digit reader → Isolation Forest anomaly detection."
     ),
     version="1.0.0",
     lifespan=lifespan,
@@ -61,8 +63,10 @@ async def health_check():
     return HealthResponse(
         status="ok",
         database=db_status,
-        quality_gate_model="stub_active",
-        crnn_model="stub_active",
+        quality_gate_model=model_registry.status["quality_gate"].label(),
+        crnn_model=model_registry.status["reader"].label(),
+        yolo_model=model_registry.status["yolo"].label(),
+        photo_reading="ready" if model_registry.ready else "manual_entry_only",
         anomaly_detector=(
             "isolation_forest_loaded"
             if load_model_if_available(AnomalyConfig.from_env())

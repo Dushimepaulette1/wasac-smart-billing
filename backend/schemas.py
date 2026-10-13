@@ -1,14 +1,44 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from datetime import datetime
 
 
 class PhotoSubmitResponse(BaseModel):
+    # Fields the current app reads. "unreadable" means: no reading suggested, offer manual entry.
     status: str  # "readable" | "unreadable"
-    predicted_reading: Optional[str] = None
-    confidence: Optional[float] = None
+    predicted_reading: Optional[str] = None   # = raw_digits
+    confidence: Optional[float] = None        # = confidence_min
     quality_gate_score: Optional[float] = None
-    guidance_message: Optional[str] = None
+    guidance_message: Optional[str] = None    # unused; guidance codes are translated by the app
+
+    models_ready: bool = False
+    offer_manual_entry: bool = True
+    guidance: List[str] = []                  # most important first; never blocks a submission
+    raw_digits: Optional[str] = None
+    reading_digits: Optional[str] = None      # 8 digits, or null when the read is impossible
+    reading_m3: Optional[float] = None
+    confidence_min: Optional[float] = None
+    confidence_mean: Optional[float] = None
+    needs_check: bool = False
+    quality_score: Optional[float] = None     # P(unreadable) from the quality gate
+    crop_method: str = "none"
+    thumbnail_jpeg_base64: Optional[str] = None
+    timings_ms: Dict[str, float] = {}
+
+
+class NormalizedBox(BaseModel):
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+
+
+class GuideFrameResponse(BaseModel):
+    available: bool                           # false when the window detector is not loaded
+    guidance: List[str]
+    box: Optional[NormalizedBox] = None       # number window, 0-1 coordinates
+    box_method: str = "none"
+    elapsed_ms: float
 
 
 class ConfirmReadingRequest(BaseModel):
@@ -114,6 +144,8 @@ class HealthResponse(BaseModel):
     database: str
     quality_gate_model: str
     crnn_model: str
+    yolo_model: str
+    photo_reading: str                        # "ready" or "manual_entry_only"
     anomaly_detector: str
     timestamp: datetime
 
