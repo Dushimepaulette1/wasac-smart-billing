@@ -14,6 +14,7 @@ import type {
   CalculateBillResponse,
   ConfirmReadingResponse,
   CustomerInfo,
+  GuideFrameResponse,
   LoginResponse,
   PayBillResponse,
   PhotoSubmitResponse,
@@ -21,6 +22,9 @@ import type {
   ReviewItem,
   StaffUser,
 } from './types';
+
+/** A live tip that arrives late is useless; give up quickly and keep the shutter usable. */
+const GUIDE_FRAME_TIMEOUT_MS = 8000;
 
 export type ApiErrorKind =
   | 'offline'
@@ -131,6 +135,13 @@ export const api = {
     const form = new FormData();
     form.append('file', blob, 'meter.jpg');
     return request('/submit-photo', { method: 'POST', body: form, timeout: 60000 });
+  },
+
+  /** POST /guide-frame: live framing tips for a small (640 px) camera frame. */
+  guideFrame(blob: Blob): Promise<GuideFrameResponse> {
+    const form = new FormData();
+    form.append('file', blob, 'frame.jpg');
+    return request('/guide-frame', { method: 'POST', body: form, timeout: GUIDE_FRAME_TIMEOUT_MS });
   },
 
   /** POST /confirm-reading */

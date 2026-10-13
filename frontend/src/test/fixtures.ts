@@ -12,7 +12,58 @@ import type {
   CalculateBillResponse,
   ConfirmReadingResponse,
   CustomerInfo,
+  GuidanceCode,
+  GuideFrameResponse,
+  PhotoSubmitResponse,
 } from '../api/types';
+
+/** A /submit-photo result for a clear photo; override guidance and digits per case. */
+export function makePhotoResponse(overrides: Partial<PhotoSubmitResponse> = {}): PhotoSubmitResponse {
+  return {
+    status: 'readable',
+    predicted_reading: '565846',
+    confidence: 0.95,
+    quality_gate_score: 0.1,
+    guidance_message: null,
+    models_ready: true,
+    offer_manual_entry: false,
+    guidance: ['OK'],
+    raw_digits: '565846',
+    reading_digits: '00565846',
+    reading_m3: 565.846,
+    confidence_min: 0.95,
+    confidence_mean: 0.97,
+    needs_check: false,
+    quality_score: 0.1,
+    crop_method: 'window',
+    thumbnail_jpeg_base64: 'AAAA',
+    timings_ms: {},
+    ...overrides,
+  };
+}
+
+/** A /submit-photo result where no meter was found: no reading suggested. */
+export function makeNoMeterResponse(): PhotoSubmitResponse {
+  return makePhotoResponse({
+    status: 'unreadable',
+    predicted_reading: null,
+    confidence: null,
+    offer_manual_entry: true,
+    guidance: ['NO_METER'],
+    raw_digits: null,
+    reading_digits: null,
+    reading_m3: null,
+    confidence_min: null,
+    confidence_mean: null,
+    quality_score: null,
+    crop_method: 'none',
+    thumbnail_jpeg_base64: null,
+  });
+}
+
+export function makeGuideFrame(guidance: GuidanceCode[] = ['OK']): GuideFrameResponse {
+  return { available: true, guidance, box: null, box_method: 'window', elapsed_ms: 300 };
+}
 
 /** A fetch Response with only what the API client reads: ok, status, json(). */
 export function jsonResponse(status: number, body: unknown): Response {
