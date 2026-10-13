@@ -60,3 +60,7 @@ logs/
 # Database
 *.sqlite3
 *.db
+
+# Calibration photos and labels (WASAC household photos: never commit)
+/calibration/
+/backend/calibration/
