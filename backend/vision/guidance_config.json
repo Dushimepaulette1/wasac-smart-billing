@@ -22,7 +22,7 @@
     "glare_max_frac": 0.05,
     "blur_resize_height": 128,
     "blurry_max_laplacian_var": 80,
-    "hard_to_read_threshold": null,
+    "hard_to_read_threshold": "model",
     "check_numbers_min_confidence": 0.60
   },
   "priority": [
