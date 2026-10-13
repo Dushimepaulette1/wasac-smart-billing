@@ -1,0 +1,14 @@
+{
+  "best.pt": {
+    "sha256": "736cff5bc56c3bc7b09ac214c12d01ec206135702da139a41a44035da1025cca",
+    "bytes": 6246890
+  },
+  "meter_reader.pt": {
+    "sha256": "48be69d45b53ceb2795f3a4807c76e45a64edef5ece6b71d737f3043b26241ca",
+    "bytes": 19095676
+  },
+  "quality_gate.pt": {
+    "sha256": "d5f30182c79276494c0c8b023cbcca2c15d137ec41619d84a487748c23cd05bd",
+    "bytes": 9156875
+  }
+}
