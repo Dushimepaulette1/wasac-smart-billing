@@ -32,20 +32,23 @@
   box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45);
 }
 
-/* One live tip at a time, on a light panel so it reads in sunlight.
-   Room for two lines, so a new tip never moves the buttons. */
+/* One live tip at a time, on a light panel over the bottom of the camera, below
+   the guide box, so it reads in sunlight and is seen while aiming. */
 .tip {
-  max-width: 760px;
-  min-height: calc(2 * 1.5em + 2 * var(--space-3));
+  position: absolute;
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: var(--space-2);
   margin: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--size-body);
+  line-height: 1.35;
+  box-shadow: none; /* over a live camera image a shadow is decoration */
 }
 
 /* Empty: no panel, but the live region stays in the accessibility tree so its first tip is announced. */
 .tip:empty {
   background: transparent;
-  box-shadow: none;
 }
 
 .saveData {
