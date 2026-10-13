@@ -247,10 +247,50 @@ def timing_table(data: Data) -> List[str]:
     return lines
 
 
+def wilson(k: int, n: int, z: float = 1.96):
+    if n == 0:
+        return 0.0, 0.0
+    p = k / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return 100 * max(0.0, centre - half), 100 * min(1.0, centre + half)
+
+
+def held_out_table(csv_path: Path, cfg: GuidanceConfig, readable_csv: Path, unreadable_csv: Path) -> List[str]:
+    """HARD_TO_READ and CHECK_NUMBERS on held-out test photos only (never used to train the models)."""
+    names = {}
+    for path, group in ((readable_csv, "readable (held-out)"), (unreadable_csv, "unreadable (held-out)")):
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                names[row["original_filename"]] = group
+    by_group: Dict[str, List[Measurements]] = defaultdict(list)
+    with open(csv_path, newline="") as f:
+        for row in csv.DictReader(f):
+            if row["mode"] == "photo" and row["file"] in names:
+                by_group[names[row["file"]]].append(to_measurements(row))
+    lines = ["| Code | Threshold | " + " | ".join(by_group) + " |", "|---|---|" + "---|" * len(by_group)]
+    for code, value in (("HARD_TO_READ", cfg.hard_to_read_threshold),
+                        ("CHECK_NUMBERS", cfg.check_numbers_min_confidence)):
+        cells = []
+        for ms in by_group.values():
+            k = sum(code in guidance_codes(m, cfg) for m in ms)
+            lo, hi = wilson(k, len(ms))
+            cells.append(f"{k}/{len(ms)} = {100 * k / len(ms):.1f}% (95% CI {lo:.0f}–{hi:.0f}%)")
+        lines.append(f"| {code} | {value} | " + " | ".join(cells) + " |")
+    return lines
+
+
 def run_report(args) -> None:
     cfg = GuidanceConfig.load(quality_threshold=load_model_config()["quality_gate"]["threshold"])
     data = Data(args.csv)
     out: List[str] = []
+    if args.held_out_readable and args.held_out_unreadable:
+        out += ["## Held-out photos (never used in training)", "",
+                "HARD_TO_READ and CHECK_NUMBERS on the test split of the training run only: photos that "
+                "neither the reader nor the quality gate saw during training. **This is a small sample** "
+                "(see the 95% confidence intervals), so these numbers are indicative; the thresholds "
+                "were not changed because of them.", ""]
+        out += held_out_table(args.csv, cfg, args.held_out_readable, args.held_out_unreadable) + [""]
 
     out += ["## Data", "", "| Group | Images |", "|---|---|"]
     out += [f"| {g} | {data.count(g)} |" for g in data.groups]
@@ -319,6 +359,8 @@ def main() -> None:
     r.add_argument("--csv", type=Path, required=True)
     r.add_argument("--markdown", type=Path, help="Write the tables (no file names) to this file")
     r.add_argument("--header", type=Path, help="Markdown to put above the tables")
+    r.add_argument("--held-out-readable", type=Path, help="Test-split CSV of readable photos (original_filename)")
+    r.add_argument("--held-out-unreadable", type=Path, help="Test-split CSV of unreadable photos")
     args = parser.parse_args()
     run_measure(args) if args.command == "measure" else run_report(args)
 
