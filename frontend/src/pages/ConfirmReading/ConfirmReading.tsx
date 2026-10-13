@@ -2,10 +2,11 @@
  * @file ConfirmReading.tsx
  * @description Submit flow, step 2: the household checks the numbers.
  *
- * The reading is shown on the editable meter counter. If the digit reader
- * returned something unusable (wrong length), its raw output is shown
- * above an empty counter so nothing is hidden. A low-confidence read shows
- * a soft retake prompt; "Confirm reading" always stays enabled.
+ * The reading is shown on the editable meter counter, under the meter's
+ * number window cut from the photo. If the digit reader returned something
+ * unusable (wrong length), its raw output is shown above an empty counter so
+ * nothing is hidden. When the backend was unsure (CHECK_NUMBERS) the screen
+ * says "Please check the numbers."; "Confirm reading" always stays enabled.
  */
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -24,9 +25,6 @@ import { isComplete } from '../../utils/reading';
 import { api } from '../../api/client';
 import { CUSTOMER_ID, METER_ID } from '../../config';
 import styles from './ConfirmReading.module.css';
-
-/** Below this digit-reader confidence, suggest checking or retaking. */
-export const LOW_CONFIDENCE = 0.8;
 
 /**
  * A translated sentence with one {name} placeholder, with the value in bold.
@@ -55,8 +53,8 @@ function ConfirmReading() {
   // does not trigger the "no reading yet" redirect below.
   const leaving = useRef(false);
 
-  const { cells, photo, raw, needsCheck, manual, confidence } = submission;
-  const lowConfidence = !manual && !needsCheck && confidence != null && confidence < LOW_CONFIDENCE;
+  const { cells, photo, raw, needsCheck, manual, crop, checkNumbers } = submission;
+  const askToCheck = !manual && !needsCheck && checkNumbers;
 
   useEffect(() => {
     if (state === 'incomplete' && cells && isComplete(cells)) setState('idle');
@@ -130,11 +128,15 @@ function ConfirmReading() {
         </Notice>
       )}
 
-      <div className={photo ? 'columns' : undefined}>
+      <div className={photo && !crop ? 'columns' : undefined}>
       <section className={`panel ${styles.reading}`} aria-labelledby={helpId}>
+        {crop && !manual && <img className={styles.crop} src={crop} alt={t('camera.cropAlt')} />}
+
         <p id={helpId} className="measure">
           {lead}
         </p>
+
+        {askToCheck && <p className={styles.check}>{t('guidance.checkNumbers')}</p>}
 
         <MeterCounter
           cells={cells}
@@ -155,21 +157,9 @@ function ConfirmReading() {
           </Notice>
         )}
 
-        {lowConfidence && state !== 'retake' && (
-          <Notice
-            tone="info"
-            actions={
-              <Button variant="text" icon="camera" onClick={retake}>
-                {t('camera.retake')}
-              </Button>
-            }
-          >
-            {t('confirm.lowConfidence')}
-          </Notice>
-        )}
       </section>
 
-      {photo && (
+      {photo && !crop && (
         <figure className={styles.photoFrame}>
           <img className={styles.photo} src={photo} alt={t('camera.photoAlt')} />
           <figcaption className="text-small text-secondary">{t('camera.photoAlt')}</figcaption>

@@ -8,7 +8,17 @@ import { normalizeReading } from '../../utils/reading';
 
 function renderWith(fromReader: string, extra: Partial<Submission> = {}) {
   const { cells, needsCheck, raw } = normalizeReading(fromReader);
-  const initial: Submission = { photo: null, raw, confidence: 0.9, cells, needsCheck, manual: false, ...extra };
+  const initial: Submission = {
+    photo: null,
+    raw,
+    confidence: 0.9,
+    cells,
+    needsCheck,
+    manual: false,
+    crop: null,
+    checkNumbers: false,
+    ...extra,
+  };
   return render(
     <I18nProvider locale="en">
       <SubmissionProvider initial={initial}>
@@ -57,10 +67,24 @@ describe('ConfirmReading', () => {
     expect(screen.getByText('Do these numbers match your meter?')).toBeInTheDocument();
   });
 
-  it('keeps Confirm reading enabled while the blurry-photo prompt shows', () => {
-    renderWith('02813450', { confidence: 0.5 });
-    expect(screen.getByText(/may be blurry/)).toBeInTheDocument();
+  it('says "Please check the numbers." when the reader was unsure, and still allows confirming', () => {
+    renderWith('02813450', { checkNumbers: true });
+    expect(screen.getByText('Please check the numbers.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirm reading' })).toBeEnabled();
+  });
+
+  it('does not nag about a confident reading', () => {
+    renderWith('02813450', { confidence: 0.55 });
+    expect(screen.queryByText('Please check the numbers.')).not.toBeInTheDocument();
+  });
+
+  it('shows the number window from the photo above the counter', () => {
+    const { container } = renderWith('02813450', { photo: 'data:image/jpeg;base64,BBBB', crop: 'data:image/jpeg;base64,AAAA' });
+    const crop = screen.getByAltText('The meter numbers, cut from your photo');
+    const counter = screen.getByLabelText('Meter reading');
+    // The crop comes first in the reading panel; the full photo is not repeated beside it.
+    expect(crop.compareDocumentPosition(counter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelectorAll('img')).toHaveLength(1);
   });
 
   it('asks for all 8 numbers instead of sending an incomplete reading', () => {

@@ -24,19 +24,37 @@ export interface Submission {
   needsCheck: boolean;
   /** The household chose to type the numbers. */
   manual: boolean;
+  /** The meter's number window cut from the photo (data URL), shown above the counter. */
+  crop: string | null;
+  /** The reader was unsure: say "Please check the numbers." */
+  checkNumbers: boolean;
+}
+
+export interface ReadExtras {
+  crop?: string | null;
+  checkNumbers?: boolean;
 }
 
 export interface SubmissionValue extends Submission {
   setPhoto: (photo: string) => void;
   /** Store a /submit-photo result; pads short readings, flags wrong ones. */
-  setReadResult: (predicted: string | null, confidence: number | null) => void;
+  setReadResult: (predicted: string | null, confidence: number | null, extras?: ReadExtras) => void;
   /** Typing by hand, with or without a photo. */
   startManual: () => void;
   setCells: (cells: Cells) => void;
   reset: () => void;
 }
 
-const EMPTY: Submission = { photo: null, raw: null, confidence: null, cells: null, needsCheck: false, manual: false };
+const EMPTY: Submission = {
+  photo: null,
+  raw: null,
+  confidence: null,
+  cells: null,
+  needsCheck: false,
+  manual: false,
+  crop: null,
+  checkNumbers: false,
+};
 
 function load(): Submission {
   try {
@@ -63,13 +81,29 @@ export function SubmissionProvider({ children, initial }: { children: ReactNode;
 
   const setPhoto = useCallback((photo: string) => setState({ ...EMPTY, photo }), []);
 
-  const setReadResult = useCallback((predicted: string | null, confidence: number | null) => {
+  const setReadResult = useCallback((predicted: string | null, confidence: number | null, extras: ReadExtras = {}) => {
     const { cells, needsCheck, raw } = normalizeReading(predicted);
-    setState((s) => ({ ...s, raw, confidence, cells, needsCheck, manual: false }));
+    setState((s) => ({
+      ...s,
+      raw,
+      confidence,
+      cells,
+      needsCheck,
+      manual: false,
+      crop: extras.crop ?? null,
+      checkNumbers: extras.checkNumbers ?? false,
+    }));
   }, []);
 
   const startManual = useCallback(() => {
-    setState((s) => ({ ...s, cells: normalizeReading(null).cells, needsCheck: false, manual: true }));
+    setState((s) => ({
+      ...s,
+      cells: normalizeReading(null).cells,
+      needsCheck: false,
+      manual: true,
+      crop: null,
+      checkNumbers: false,
+    }));
   }, []);
 
   const setCells = useCallback((cells: Cells) => setState((s) => ({ ...s, cells })), []);

@@ -6,6 +6,23 @@
   align-self: stretch;
 }
 
+/* The number window cut from the photo, right above the counter it was read into. */
+.crop {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: var(--radius-bezel);
+  background: var(--stage-base);
+}
+
+/* "Please check the numbers.": a plain line, not a warning. */
+.check {
+  margin: 0;
+  font-weight: var(--weight-bold);
+}
+
 /* The photo is a reference to compare against: short on phones, beside
    the counter on wide screens. */
 .photoFrame {
