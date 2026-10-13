@@ -280,6 +280,80 @@ def held_out_table(csv_path: Path, cfg: GuidanceConfig, readable_csv: Path, unre
     return lines
 
 
+def same_reading(read: Optional[str], label: str) -> bool:
+    """Compare digit strings ignoring leading zeros (the reader may drop them)."""
+    return read is not None and read.lstrip("0") == label.lstrip("0")
+
+
+def run_reader_check(args) -> None:
+    """Run /submit-photo's pipeline on held-out readable photos and record, per photo, whether
+    CHECK_NUMBERS fired and whether the reading was right. Writes no file names to the report."""
+    from vision.models import ModelRegistry
+    from vision.pipeline import analyze_photo
+
+    registry = ModelRegistry().load()
+    if not registry.ready:
+        sys.exit(f"Models not loaded: {registry.health()}")
+    cfg = registry.guidance_config()
+    with open(args.readable_csv, newline="") as f:
+        labels = [(row["original_filename"], row["label"]) for row in csv.DictReader(f)]
+    rows = []
+    for i, (name, label) in enumerate(labels, 1):
+        result = analyze_photo((args.photos / name).read_bytes(), registry, cfg)
+        if "NO_METER" in result.guidance:
+            outcome = "no_meter"
+        elif "CHECK_NUMBERS" in result.guidance:
+            outcome = "check_numbers"
+        else:
+            outcome = "not_flagged"
+        rows.append({"file": name, "outcome": outcome,
+                     "correct": same_reading(result.reading_digits or result.raw_digits, label)})
+        print(f"\r  {i}/{len(labels)}", end="", flush=True)
+    print()
+    with open(args.csv, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["file", "outcome", "correct"])
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"Saved {len(rows)} results to {args.csv}")
+
+
+def reader_table(path: Path) -> List[str]:
+    with open(path, newline="") as f:
+        rows = list(csv.DictReader(f))
+    labels = {"check_numbers": "CHECK_NUMBERS fired", "not_flagged": "CHECK_NUMBERS did not fire",
+              "no_meter": "No reading suggested (NO_METER)"}
+    lines = ["| Photos | Count | Reading right | Reading wrong |", "|---|---|---|---|"]
+    for key, label in labels.items():
+        group = [r for r in rows if r["outcome"] == key]
+        if not group:
+            continue
+        right = sum(r["correct"] == "True" for r in group)
+        n = len(group)
+        lines.append(f"| {label} | {n} | {right}/{n} = {100 * right / n:.1f}% | "
+                     f"{n - right}/{n} = {100 * (n - right) / n:.1f}% |")
+
+    flagged = [r for r in rows if r["outcome"] == "check_numbers"]
+    passed = [r for r in rows if r["outcome"] == "not_flagged"]
+    if flagged and passed:
+        fw = sum(r["correct"] != "True" for r in flagged)
+        pw = sum(r["correct"] != "True" for r in passed)
+        wrong_total = fw + pw
+        try:
+            from scipy.stats import fisher_exact
+
+            p = fisher_exact([[fw, len(flagged) - fw], [pw, len(passed) - pw]])[1]
+            p_text = f" (Fisher's exact test p = {p:.3f})"
+        except ImportError:
+            p_text = ""
+        lines += ["",
+                  f"Flagged readings were wrong {100 * fw / len(flagged):.0f}% of the time, against "
+                  f"{100 * pw / len(passed):.0f}% for readings that were not flagged{p_text}. So CHECK_NUMBERS "
+                  f"points at the riskier readings, but it caught only {fw} of the {wrong_total} wrong readings, "
+                  "and many unflagged readings were still wrong. That is why every reading is shown to the "
+                  "household to confirm, and why the anomaly checks follow."]
+    return lines
+
+
 def run_report(args) -> None:
     cfg = GuidanceConfig.load(quality_threshold=load_model_config()["quality_gate"]["threshold"])
     data = Data(args.csv)
@@ -291,6 +365,12 @@ def run_report(args) -> None:
                 "(see the 95% confidence intervals), so these numbers are indicative; the thresholds "
                 "were not changed because of them.", ""]
         out += held_out_table(args.csv, cfg, args.held_out_readable, args.held_out_unreadable) + [""]
+    if args.held_out_reader:
+        out += ["### Is CHECK_NUMBERS doing its job?", "",
+                "Reader accuracy on the held-out readable photos, split by whether CHECK_NUMBERS fired "
+                "(digits compared ignoring leading zeros; a reading with too many digits counts as wrong). "
+                "Small sample.", ""]
+        out += reader_table(args.held_out_reader) + [""]
 
     out += ["## Data", "", "| Group | Images |", "|---|---|"]
     out += [f"| {g} | {data.count(g)} |" for g in data.groups]
@@ -361,8 +441,13 @@ def main() -> None:
     r.add_argument("--header", type=Path, help="Markdown to put above the tables")
     r.add_argument("--held-out-readable", type=Path, help="Test-split CSV of readable photos (original_filename)")
     r.add_argument("--held-out-unreadable", type=Path, help="Test-split CSV of unreadable photos")
+    r.add_argument("--held-out-reader", type=Path, help="CSV written by the reader-check command")
+    c = sub.add_parser("reader-check", help="Reader accuracy vs CHECK_NUMBERS on held-out readable photos")
+    c.add_argument("--photos", type=Path, required=True)
+    c.add_argument("--readable-csv", type=Path, required=True, help="Held-out CSV with original_filename, label")
+    c.add_argument("--csv", type=Path, required=True)
     args = parser.parse_args()
-    run_measure(args) if args.command == "measure" else run_report(args)
+    {"measure": run_measure, "report": run_report, "reader-check": run_reader_check}[args.command](args)
 
 
 if __name__ == "__main__":
