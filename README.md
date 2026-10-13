@@ -250,7 +250,7 @@ wasac-platform/
 │       ├── router/          # Routes
 │       └── styles/          # Design tokens, fonts, base typography
 ├── notebooks/
-│   └── model_training.ipynb
+│   └── wasac_meter_reading_pipeline.ipynb
 └── README.md
 ```
 
