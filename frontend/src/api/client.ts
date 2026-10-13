@@ -34,7 +34,11 @@ export type ApiErrorKind =
   | 'invalid'
   | 'unauthorized'
   | 'locked'
-  | 'conflict';
+  | 'conflict'
+  /** Too many requests in a short time (photo endpoints). */
+  | 'tooMany'
+  /** Upload over the size limit. */
+  | 'tooLarge';
 
 /** Staff session token, sent on every request while signed in. */
 let staffToken: string | null = null;
@@ -109,7 +113,9 @@ async function request<T>(
       if (staffToken) onUnauthorized?.();
       throw new ApiError('unauthorized', 401, text);
     }
-    if (response.status === 429) throw new ApiError('locked', 429, text);
+    // 429 means a sign-in lockout on /auth, and a rate limit on the photo endpoints.
+    if (response.status === 429) throw new ApiError(path.startsWith('/auth') ? 'locked' : 'tooMany', 429, text);
+    if (response.status === 413) throw new ApiError('tooLarge', 413, text);
     if (response.status === 409) throw new ApiError('conflict', 409, text);
     if (response.status === 404) throw new ApiError('notFound', 404, text);
     if (response.status === 422) throw new ApiError('invalid', 422, text);
