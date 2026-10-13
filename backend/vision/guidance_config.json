@@ -1,0 +1,38 @@
+{
+  "_status": "PROVISIONAL: not yet calibrated on real photos. Run scripts/calibrate_guidance.py and update.",
+  "yolo": {
+    "conf": 0.15,
+    "imgsz": 640,
+    "guide_imgsz": 640,
+    "crop_pad": 0.05
+  },
+  "image": {
+    "max_long_side": 1600,
+    "guide_max_long_side": 640,
+    "thumbnail_max_width": 480,
+    "thumbnail_jpeg_quality": 70
+  },
+  "checks": {
+    "no_meter_window_conf": 0.40,
+    "no_meter_min_digit_boxes": 3,
+    "too_far_min_width_frac": 0.20,
+    "cut_off_edge_frac": 0.01,
+    "too_dark_max_mean": 60,
+    "glare_pixel_value": 245,
+    "glare_max_frac": 0.05,
+    "blur_resize_height": 128,
+    "blurry_max_laplacian_var": 80,
+    "hard_to_read_threshold": null,
+    "check_numbers_min_confidence": 0.60
+  },
+  "priority": [
+    "NO_METER",
+    "TOO_FAR",
+    "CUT_OFF",
+    "TOO_DARK",
+    "GLARE",
+    "BLURRY",
+    "HARD_TO_READ",
+    "CHECK_NUMBERS"
+  ]
+}
