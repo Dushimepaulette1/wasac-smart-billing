@@ -57,6 +57,7 @@ The tables below are the measured rates with the chosen thresholds. In the NO_ME
 non-meter columns show the share **wrongly accepted as a meter**. Everywhere else, a cell is the
 share of images in that group for which the code fired. One image can get several codes.
 
+
 ## Held-out photos (never used in training)
 
 HARD_TO_READ and CHECK_NUMBERS on the test split of the training run only: photos that neither the reader nor the quality gate saw during training. **This is a small sample** (see the 95% confidence intervals), so these numbers are indicative; the thresholds were not changed because of them.
@@ -65,6 +66,18 @@ HARD_TO_READ and CHECK_NUMBERS on the test split of the training run only: photo
 |---|---|---|---|
 | HARD_TO_READ | 0.5 | 9/79 = 11.4% (95% CI 6–20%) | 9/15 = 60.0% (95% CI 36–80%) |
 | CHECK_NUMBERS | 0.5 | 12/79 = 15.2% (95% CI 9–25%) | 3/15 = 20.0% (95% CI 7–45%) |
+
+### Is CHECK_NUMBERS doing its job?
+
+Reader accuracy on the held-out readable photos, split by whether CHECK_NUMBERS fired (digits compared ignoring leading zeros; a reading with too many digits counts as wrong). Small sample.
+
+| Photos | Count | Reading right | Reading wrong |
+|---|---|---|---|
+| CHECK_NUMBERS fired | 12 | 4/12 = 33.3% | 8/12 = 66.7% |
+| CHECK_NUMBERS did not fire | 66 | 44/66 = 66.7% | 22/66 = 33.3% |
+| No reading suggested (NO_METER) | 1 | 0/1 = 0.0% | 1/1 = 100.0% |
+
+Flagged readings were wrong 67% of the time, against 33% for readings that were not flagged (Fisher's exact test p = 0.050). So CHECK_NUMBERS points at the riskier readings, but it caught only 8 of the 30 wrong readings, and many unflagged readings were still wrong. That is why every reading is shown to the household to confirm, and why the anomaly checks follow.
 
 ## Data
 
