@@ -1,0 +1,21 @@
+# Never in the image: weights (downloaded at start), secrets, local data, dev tooling.
+ml/*.pt
+ml/*.pth
+ml/*.part
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+calibration/
+tests/
+.pytest_cache/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+*.sqlite3
+anomaly/artifacts/
+scripts/demo/output/
+Dockerfile
+.dockerignore
