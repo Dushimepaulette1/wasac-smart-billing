@@ -44,14 +44,65 @@ export type AnomalyFeatures = Record<string, unknown>;
 // Meter reading: POST /submit-photo, POST /confirm-reading
 // ---------------------------------------------------------------------------
 
+/**
+ * Photo guidance codes, most important first in every response. None of them
+ * blocks a submission; NO_METER only means no reading is suggested.
+ * (BLURRY is turned off in the backend's calibrated config.)
+ */
+export type GuidanceCode =
+  | 'NO_METER'
+  | 'TOO_FAR'
+  | 'CUT_OFF'
+  | 'TOO_DARK'
+  | 'GLARE'
+  | 'BLURRY'
+  | 'HARD_TO_READ'
+  | 'CHECK_NUMBERS'
+  | 'OK';
+
 /** schemas.PhotoSubmitResponse */
 export interface PhotoSubmitResponse {
+  /** "unreadable": no reading suggested; offer typing the numbers. */
   status: 'readable' | 'unreadable';
-  /** Raw digit-reader output, e.g. "00444"; null when unreadable. */
+  /** Raw digit-reader output, e.g. "565846"; null when no reading. */
   predicted_reading: string | null;
+  /** Lowest digit confidence. */
   confidence: number | null;
   quality_gate_score: number | null;
   guidance_message: string | null;
+  models_ready: boolean;
+  offer_manual_entry: boolean;
+  guidance: GuidanceCode[];
+  raw_digits: string | null;
+  /** 8 digits, or null when the read is impossible. */
+  reading_digits: string | null;
+  reading_m3: number | null;
+  confidence_min: number | null;
+  confidence_mean: number | null;
+  needs_check: boolean;
+  quality_score: number | null;
+  crop_method: string;
+  /** The number window as a small JPEG, for the confirm screen. */
+  thumbnail_jpeg_base64: string | null;
+  timings_ms: Record<string, number>;
+}
+
+/** schemas.NormalizedBox: 0-1 image coordinates */
+export interface NormalizedBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/** schemas.GuideFrameResponse (POST /guide-frame) */
+export interface GuideFrameResponse {
+  /** false when the window detector is not loaded: no live tips. */
+  available: boolean;
+  guidance: GuidanceCode[];
+  box: NormalizedBox | null;
+  box_method: string;
+  elapsed_ms: number;
 }
 
 /** schemas.ConfirmReadingRequest */
