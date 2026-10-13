@@ -4,6 +4,7 @@ Synthetic images exercise the brightness, glare and blur checks; fake YOLO / rea
 exercise the detection-based codes. No .pt files are needed.
 """
 import base64
+import dataclasses
 import io
 
 import cv2
@@ -84,7 +85,9 @@ class FakeGate:
 
 @pytest.fixture
 def cfg():
-    return GuidanceConfig.load(quality_threshold=0.4289516615867615)
+    # BLURRY is off in the shipped config (calibration); give it a value so its logic is still tested.
+    return dataclasses.replace(GuidanceConfig.load(quality_threshold=0.4289516615867615),
+                               blurry_max_laplacian_var=80.0)
 
 
 def registry(cfg, dets=((WINDOW_CLS, WINDOW, 0.9),), reader=None, gate=None, yolo=True):
@@ -227,6 +230,21 @@ def test_long_side_is_capped():
 def test_bad_image_raises():
     with pytest.raises(BadImage):
         load_bgr(b"not an image", 1600)
+
+
+def test_oversized_image_is_a_bad_image_not_a_crash(monkeypatch):
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1000)  # Pillow refuses anything over 2x this
+    with pytest.raises(BadImage, match="too large"):
+        load_bgr(jpeg(np.zeros((300, 400, 3), np.uint8)), 1600)
+
+
+def test_large_jpeg_is_decoded_at_reduced_scale_with_exif_rotation():
+    img = Image.new("RGB", (6000, 3000), "white")
+    exif = img.getexif()
+    exif[0x0112] = 6
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", exif=exif.tobytes())
+    assert load_bgr(buf.getvalue(), 1600).shape[:2] == (1600, 800)
 
 
 # --- guide frame --------------------------------------------------------------
