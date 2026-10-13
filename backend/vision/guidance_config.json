@@ -1,9 +1,10 @@
 {
-  "_status": "PROVISIONAL: not yet calibrated on real photos. Run scripts/calibrate_guidance.py and update.",
+  "_about": "Calibrated on 652 WASAC meter photos (536 readable, 98 unreadable, 17 unlabelled; 1 too large to decode), 1132 background patches and 50 COCO images. Full tables: docs/calibration/guidance_calibration.md. A null threshold turns that check off. Keys ending in _note explain each value and are ignored by the code.",
   "yolo": {
     "conf": 0.15,
     "imgsz": 640,
     "guide_imgsz": 640,
+    "guide_imgsz_note": "CALIBRATED: 416 and 320 flag 5.4% and 11.5% of real meters as NO_METER (640: 2.4%), missing the 97% target, for only ~120 / ~190 ms less per frame.",
     "crop_pad": 0.05
   },
   "image": {
@@ -13,17 +14,26 @@
     "thumbnail_jpeg_quality": 70
   },
   "checks": {
-    "no_meter_window_conf": 0.40,
+    "no_meter_window_conf": 0.35,
+    "no_meter_window_conf_note": "CALIBRATED: highest value keeping >= 97% of real meters (flags 2.7% in /submit-photo, 2.4% in frames). Non-meters passing as a meter: patches 0.5%, COCO 0% (frames 4%). Higher values only flag more meters.",
     "no_meter_min_digit_boxes": 3,
+    "no_meter_min_digit_boxes_note": "Spec value; with the window threshold above it meets the 97% target.",
     "too_far_min_width_frac": 0.20,
+    "too_far_min_width_frac_note": "PROVISIONAL: fires on 6.7% readable vs 8.2% unreadable photos; the labels do not capture distance, so the data cannot validate it. Keep as a soft hint.",
     "cut_off_edge_frac": 0.01,
+    "cut_off_edge_frac_note": "PROVISIONAL: fires on ~1% of meter photos in both groups; too rare in the data to validate. Keep as a soft hint.",
     "too_dark_max_mean": 60,
+    "too_dark_max_mean_note": "PROVISIONAL: fires on 0.6% readable, 0% unreadable; the photo set has almost no dark photos. Keep as a soft hint.",
     "glare_pixel_value": 245,
-    "glare_max_frac": 0.05,
+    "glare_max_frac": 0.10,
+    "glare_max_frac_note": "PROVISIONAL, raised from 0.05: no value separates readable from unreadable (0.1 -> 4.7% vs 7.1%); 0.1 halves how often good photos are told about glare. Use a soft message.",
     "blur_resize_height": 128,
-    "blurry_max_laplacian_var": 80,
-    "hard_to_read_threshold": "model",
-    "check_numbers_min_confidence": 0.60
+    "blurry_max_laplacian_var": null,
+    "blurry_max_laplacian_var_note": "OFF (calibrated decision): at every useful threshold it fires MORE on readable than unreadable photos (e.g. 80 -> 39% vs 26%), because dirty glass adds texture. Needs a better blur measure before it is used.",
+    "hard_to_read_threshold": 0.5,
+    "hard_to_read_threshold_note": "CALIBRATED: fires on 8.4% readable vs 83.7% unreadable (model default 0.43 -> 12.5% vs 88.8%, above the 10% nag limit). Optimistic: the unreadable photos were quality-gate training negatives.",
+    "check_numbers_min_confidence": 0.5,
+    "check_numbers_min_confidence_note": "CALIBRATED: fires on 9.7% readable vs 32.7% unreadable (0.6 -> 26% vs 50%). Optimistic: the readable photos are the reader's training labels."
   },
   "priority": [
     "NO_METER",
