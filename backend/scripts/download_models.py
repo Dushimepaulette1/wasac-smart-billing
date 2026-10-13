@@ -1,23 +1,33 @@
-"""Download the three model weight files (not kept in git) and verify their checksums.
+"""Download the three model weight files (not kept in git) and verify their SHA-256 checksums.
 
-    MODEL_BASE_URL=https://github.com/<owner>/<repo>/releases/download/<tag> python scripts/download_models.py
+Two ways to say where the files are:
 
-Each file is fetched from <MODEL_BASE_URL>/<file name> into ML_WEIGHTS_DIR (default backend/ml).
-Files already present with the right checksum are skipped; use --force to fetch them again.
-Checksums come from backend/ml/weights.sha256.json.
+  One link per file (e.g. Google Drive; each Drive file has its own id):
+    MODEL_URLS="best.pt=<link>,meter_reader.pt=<link>,quality_gate.pt=<link>" python scripts/download_models.py
+
+  One folder for all three (e.g. a release, or any server with <base>/<file name>):
+    MODEL_BASE_URL=https://example.org/models python scripts/download_models.py
+
+Google Drive share links (https://drive.google.com/file/d/<id>/view?...) are turned into direct
+downloads. The Drive files must be shared as "Anyone with the link"; keep the links in .env, not git.
+Files already present with the right checksum are skipped (--force fetches them again). Nothing is
+saved unless its checksum matches backend/ml/weights.sha256.json.
 """
 import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 import urllib.request
 from pathlib import Path
+from typing import Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vision.config import ML_CODE_DIR, weights_dir  # noqa: E402
 
 CHUNK = 1 << 20
+_DRIVE_ID = re.compile(r"drive\.google\.com/(?:file/d/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]+)")
 
 
 def sha256(path: Path) -> str:
@@ -28,16 +38,41 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def direct_url(url: str) -> str:
+    """Google Drive share/view links -> the direct-download endpoint; other URLs unchanged."""
+    match = _DRIVE_ID.search(url)
+    if match:
+        return f"https://drive.usercontent.google.com/download?id={match.group(1)}&export=download&confirm=t"
+    return url
+
+
+def parse_urls(spec: Optional[str]) -> Dict[str, str]:
+    urls = {}
+    for part in filter(None, (p.strip() for p in (spec or "").split(","))):
+        name, sep, url = part.partition("=")
+        if not sep:
+            raise SystemExit(f"MODEL_URLS entry '{part}' is not name=url")
+        urls[name.strip()] = url.strip()
+    return urls
+
+
 def download(url: str, dest: Path, expected_sha: str) -> None:
     tmp = dest.with_suffix(dest.suffix + ".part")
-    with urllib.request.urlopen(url, timeout=60) as resp, open(tmp, "wb") as out:
+    request = urllib.request.Request(url, headers={"User-Agent": "wasac-download-models"})
+    with urllib.request.urlopen(request, timeout=60) as resp:
+        if "text/html" in (resp.headers.get("Content-Type") or ""):
+            raise SystemExit(
+                f"{dest.name}: the link returned a web page, not the file. For Google Drive, share the "
+                "file as 'Anyone with the link' and use its share link or file id."
+            )
         total = int(resp.headers.get("Content-Length") or 0)
         done = 0
-        while block := resp.read(CHUNK):
-            out.write(block)
-            done += len(block)
-            if total:
-                print(f"\r  {dest.name}: {done * 100 // total}% of {total / 1e6:.1f} MB", end="", flush=True)
+        with open(tmp, "wb") as out:
+            while block := resp.read(CHUNK):
+                out.write(block)
+                done += len(block)
+                if total:
+                    print(f"\r  {dest.name}: {done * 100 // total}% of {total / 1e6:.1f} MB", end="", flush=True)
     print()
     actual = sha256(tmp)
     if actual != expected_sha:
@@ -49,24 +84,32 @@ def download(url: str, dest: Path, expected_sha: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-url", default=os.getenv("MODEL_BASE_URL"), help="Defaults to $MODEL_BASE_URL")
+    parser.add_argument("--urls", default=os.getenv("MODEL_URLS"), help="name=url,... Defaults to $MODEL_URLS")
     parser.add_argument("--dest", type=Path, default=None, help="Defaults to $ML_WEIGHTS_DIR or backend/ml")
     parser.add_argument("--force", action="store_true", help="Download even if a valid file exists")
     args = parser.parse_args()
-    if not args.base_url:
-        sys.exit("Set MODEL_BASE_URL (or pass --base-url) to the folder or release that holds the .pt files.")
+
+    expected = json.loads((ML_CODE_DIR / "weights.sha256.json").read_text())
+    per_file = parse_urls(args.urls)
+    unknown = set(per_file) - set(expected)
+    if unknown:
+        sys.exit(f"MODEL_URLS names unknown files: {', '.join(sorted(unknown))}. Expected: {', '.join(expected)}")
 
     dest_dir = args.dest or weights_dir()
     dest_dir.mkdir(parents=True, exist_ok=True)
-    expected = json.loads((ML_CODE_DIR / "weights.sha256.json").read_text())
-    base = args.base_url.rstrip("/")
-
     for name, info in expected.items():
         dest = dest_dir / name
         if dest.exists() and not args.force and sha256(dest) == info["sha256"]:
             print(f"  {name}: already present and verified")
             continue
-        print(f"  {name}: downloading from {base}/{name}")
-        download(f"{base}/{name}", dest, info["sha256"])
+        if name in per_file:
+            url = direct_url(per_file[name])
+        elif args.base_url:
+            url = f"{args.base_url.rstrip('/')}/{name}"
+        else:
+            sys.exit(f"No URL for {name}: set MODEL_URLS (one link per file) or MODEL_BASE_URL.")
+        print(f"  {name}: downloading")
+        download(url, dest, info["sha256"])
         print(f"  {name}: verified")
     print(f"All model files are in {dest_dir}")
 
