@@ -1,13 +1,15 @@
-import io
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from database import get_db, Customer, Meter, _calculate_bill
-from models.quality_gate import QualityGate
-from models.crnn_model import CRNNReader
 from anomaly.service import notify_household, submit_reading
+from vision.image_io import BadImage
+from vision.models import ModelRegistry, get_registry
+from vision.pipeline import analyze_photo, guide_frame
 from schemas import (
     AnomalyResultSchema,
+    GuideFrameResponse,
     PhotoSubmitResponse,
     ConfirmReadingRequest,
     ConfirmReadingResponse,
@@ -17,33 +19,47 @@ from schemas import (
 
 router = APIRouter()
 
-_quality_gate = QualityGate()
-_crnn_reader = CRNNReader()
+MAX_PHOTO_BYTES = 15 * 1024 * 1024
+MAX_FRAME_BYTES = 2 * 1024 * 1024
+
+
+async def _read_upload(file: UploadFile, limit: int) -> bytes:
+    data = await file.read(limit + 1)
+    if len(data) > limit:
+        raise HTTPException(status_code=413, detail=f"Image larger than {limit // (1024 * 1024)} MB")
+    if not data:
+        raise HTTPException(status_code=422, detail="Empty upload")
+    return data
 
 
 @router.post("/submit-photo", response_model=PhotoSubmitResponse)
-async def submit_photo(file: UploadFile = File(...)):
-    contents = await file.read()
-    status, confidence, guidance = _quality_gate.predict_from_bytes(contents)
-
-    if status == "unreadable":
-        return PhotoSubmitResponse(
-            status="unreadable",
-            quality_gate_score=round(confidence, 3),
-            guidance_message=guidance or (
-                "Unable to read the meter. Please clean the glass, "
-                "move closer, and ensure good lighting."
-            ),
-        )
-
-    reading_str, crnn_conf = _crnn_reader.predict(contents)
-
+async def submit_photo(file: UploadFile = File(...), models: ModelRegistry = Depends(get_registry)):
+    """Read a meter photo. Guidance codes never block; offer_manual_entry means no reading is suggested."""
+    data = await _read_upload(file, MAX_PHOTO_BYTES)
+    try:
+        result = await run_in_threadpool(analyze_photo, data, models, models.guidance_config())
+    except BadImage as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    payload = result.to_dict()
+    payload.pop("measurements")
     return PhotoSubmitResponse(
-        status="readable",
-        predicted_reading=reading_str,
-        confidence=round(crnn_conf, 3),
-        quality_gate_score=round(confidence, 3),
+        status="readable" if result.reading_digits else "unreadable",
+        predicted_reading=result.raw_digits,
+        confidence=result.confidence_min,
+        quality_gate_score=result.quality_score,
+        **payload,
     )
+
+
+@router.post("/guide-frame", response_model=GuideFrameResponse)
+async def guide_frame_route(file: UploadFile = File(...), models: ModelRegistry = Depends(get_registry)):
+    """Live framing hints for a small camera frame (640 px max): YOLO plus brightness/glare/blur."""
+    data = await _read_upload(file, MAX_FRAME_BYTES)
+    try:
+        result = await run_in_threadpool(guide_frame, data, models, models.guidance_config())
+    except BadImage as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return GuideFrameResponse(**result.to_dict())
 
 
 @router.post("/confirm-reading", response_model=ConfirmReadingResponse)
