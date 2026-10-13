@@ -147,6 +147,7 @@ class HealthResponse(BaseModel):
     yolo_model: str
     photo_reading: str                        # "ready" or "manual_entry_only"
     anomaly_detector: str
+    memory_peak_mb: Optional[int] = None      # peak resident memory of the API process
     timestamp: datetime
 
 

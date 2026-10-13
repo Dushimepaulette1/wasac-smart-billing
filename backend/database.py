@@ -10,7 +10,8 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://wasac_user:wasac_pass@localhost:5432/wasac_db")
 
-engine = create_engine(DATABASE_URL, echo=False)
+# pool_pre_ping: Neon closes idle connections; check before use instead of failing a request.
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -100,7 +101,10 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    seed_data()
+    # The three sample customers are for local development. Deployments set SEED_SAMPLE_DATA=0
+    # and load clearly marked DEMO- households with scripts/demo/generate_demo_households.py.
+    if os.getenv("SEED_SAMPLE_DATA", "1") != "0":
+        seed_data()
 
 
 def seed_data():

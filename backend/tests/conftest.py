@@ -32,6 +32,16 @@ def make_history(dailies, days=30, start_m3=500.0, start=T0):
 
 
 @pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    """Rate limits are per process; reset them so tests do not throttle each other."""
+    import ratelimit
+
+    ratelimit.reset_limits()
+    yield
+    ratelimit.reset_limits()
+
+
+@pytest.fixture(autouse=True)
 def isolated_model_path(tmp_path, monkeypatch):
     """No test ever touches a real model file; each starts in rules-only mode."""
     monkeypatch.setenv("ANOMALY_MODEL_PATH", str(tmp_path / "model.joblib"))

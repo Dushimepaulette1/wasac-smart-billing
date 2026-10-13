@@ -1,4 +1,5 @@
 import os
+import resource
 from datetime import datetime
 from contextlib import asynccontextmanager
 
@@ -13,6 +14,7 @@ from routes.anomaly import router as anomaly_router
 from auth.routes import router as auth_router
 from anomaly.config import AnomalyConfig
 from anomaly.model import load_model_if_available
+from ratelimit import upload_guard
 from schemas import HealthResponse
 from vision.models import registry as model_registry
 
@@ -35,9 +37,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+def _cors_origins() -> list:
+    """CORS_ORIGINS: comma-separated origins, e.g. "https://wasac.vercel.app". Local dev by default."""
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
+
+
+# Added before CORS, so CORS wraps it (the last middleware added is the outermost): a refused
+# upload never reaches the routes or has its body read, and its 413/429 still carries CORS
+# headers, so the browser can read the message.
+app.middleware("http")(upload_guard)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_cors_origins(),
+    # Optional, e.g. for Vercel preview URLs: ^https://wasac-[a-z0-9-]+\.vercel\.app$
+    allow_origin_regex=os.getenv("CORS_ORIGIN_REGEX") or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +87,7 @@ async def health_check():
             if load_model_if_available(AnomalyConfig.from_env())
             else "rules_only_model_not_trained"
         ),
+        memory_peak_mb=round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024),  # Linux: KB
         timestamp=datetime.utcnow(),
     )
 
