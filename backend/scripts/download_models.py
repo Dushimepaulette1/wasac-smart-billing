@@ -24,7 +24,11 @@ from pathlib import Path
 from typing import Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dotenv import load_dotenv  # noqa: E402
+
 from vision.config import ML_CODE_DIR, weights_dir  # noqa: E402
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")  # the Drive links live in backend/.env
 
 CHUNK = 1 << 20
 _DRIVE_ID = re.compile(r"drive\.google\.com/(?:file/d/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]+)")
@@ -52,7 +56,8 @@ def parse_urls(spec: Optional[str]) -> Dict[str, str]:
         name, sep, url = part.partition("=")
         if not sep:
             raise SystemExit(f"MODEL_URLS entry '{part}' is not name=url")
-        urls[name.strip()] = url.strip()
+        if url.strip():  # "best.pt=" (as in .env.example) means not set yet
+            urls[name.strip()] = url.strip()
     return urls
 
 
