@@ -367,3 +367,52 @@ reading, approved before any screen is built** → API client and i18n → house
 flags, household detail). One screen per commit, each with screenshots at 360px and desktop width,
 and one decorative element removed before it is called done. The branch is not merged into
 `rebuilt-main`; it is reviewed by the product owner.
+
+## 9. Photo guidance on the camera screen (13/10/2026)
+
+Live tips while the camera is open, using the calibrated backend codes (see
+`docs/calibration/guidance_calibration.md`).
+
+```
++--------------------------------+
+| Step 1 of 3                    |
+| Read your meter          (serif)|
+| Fit the numbers inside the box |
+| +----------------------------+ |
+| |  camera                    | |
+| |   +--------------------+   | |   guide box: where the number window goes
+| |   |                    |   | |
+| |   +--------------------+   | |
+| | [Try moving a little     ] | |   one tip, light panel ON the camera,
+| | [closer to the meter.    ] | |   aria-live="polite"
+| +----------------------------+ |
+| [ ] Save mobile data           |
+|   No live tips. ...            |
+| [ (camera) Take photo        ] |   primary, thumb reach
+|   Upload a photo instead       |
++--------------------------------+
+```
+
+- **One tip at a time:** the most important code, on a light panel over the bottom of the camera,
+  below the guide box. It is visible while aiming on any screen height, and readable in sunlight.
+- **Requests:** at most one live request at a time; checks pause when the tab is hidden and stop
+  after 30 s. The shutter button always works.
+- **Auto-capture:** two OK frames in a row show "Hold still…" for 0.7 s, then take the photo.
+- **Save mobile data** (remembered on the device): no live tips; the photo is checked after it is
+  taken.
+- **After the photo, nothing blocks:**
+  - NO_METER offers "Retake" (primary) or "Type the numbers instead";
+  - TOO_FAR / CUT_OFF / TOO_DARK / GLARE / HARD_TO_READ offer "Retake" (primary) or "Use this
+    photo anyway";
+  - CHECK_NUMBERS goes to the confirm screen with "Please check the numbers.";
+  - BLURRY is off and has no message.
+- **Confirm screen:** shows the number window cut from the photo above the counter. The full photo
+  is not repeated beside it.
+- **Wording:** the four provisional checks say "Try …"; they are hints, not verdicts.
+- **Not drawn: the detected window box.** The camera view uses `object-fit: cover`, so a box in
+  frame coordinates would sit in the wrong place on many phones, and the tip already says what to
+  do.
+- **Removed as decoration:** the drop shadow on the tip panel over the camera image.
+
+Screenshots: `docs/design/screenshots/10-photo-guidance/` (360 px phone viewport and desktop). The
+camera there is Chrome's fake device, and the crop thumbnail is synthetic; no household photos.
