@@ -62,7 +62,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3b. Download the model weights (not kept in git; see "Meter reading models" below)
-MODEL_BASE_URL=<release download URL> python scripts/download_models.py
+MODEL_URLS="best.pt=<link>,meter_reader.pt=<link>,quality_gate.pt=<link>" python scripts/download_models.py
 
 # 4. Create a .env file
 cat > .env << 'ENVEOF'
@@ -122,11 +122,22 @@ gate on the crop (`quality_gate.pt`) → **ResNet18 + BiGRU (CTC)** reads the 8 
 | Loading, photo pipeline, guidance checks | `backend/vision/` |
 | Every guidance threshold | `backend/vision/guidance_config.json` |
 
-**Weights.** The `.pt` files (34 MB) are not in git. They are published as release assets, and
-`scripts/download_models.py` fetches them from `MODEL_BASE_URL` into `backend/ml/` (or
-`ML_WEIGHTS_DIR`) and checks each file's SHA-256 against `weights.sha256.json`. If a file is missing,
-the API still starts: `/health` reports it, and `/submit-photo` answers with
+**Weights.** The three `.pt` files (34 MB) are not in git and are not published anywhere public.
+`scripts/download_models.py` downloads them into `backend/ml/` (or `ML_WEIGHTS_DIR`) and saves a
+file only if its SHA-256 matches `backend/ml/weights.sha256.json`.
+
+| Option | How |
+|---|---|
+| **Now: private Google Drive** | Share each file as "Anyone with the link", then set `MODEL_URLS="best.pt=<link>,meter_reader.pt=<link>,quality_gate.pt=<link>"`. Drive share links are converted to direct downloads. Keep the links in `backend/.env`, never in git. A plain folder link does not work, because each Drive file has its own id. |
+| **Later: public release** | Only if Benax gives permission to redistribute `best.pt`. Attach the three files to a GitHub release and set `MODEL_BASE_URL=https://github.com/<owner>/<repo>/releases/download/<tag>`. |
+
+If a file is missing, the API still starts: `/health` reports it, and `/submit-photo` answers with
 `offer_manual_entry: true`, so the app asks the household to type the numbers.
+
+**Usage limits on the weights:**
+- `best.pt` belongs to Benax. Do not redistribute it without their permission.
+- `meter_reader.pt` and `quality_gate.pt` are for **non-commercial academic use only**, because they
+  were trained partly on the Yandex meter dataset (CC BY-NC-ND 4.0).
 
 **Held-out test results** (from `model_config.json`): 55.7% of readings exactly right on 79 photos
 of 34 meters (95% CI 42–69%), and 70.9% within one digit. That is why every reading is shown to the
@@ -151,9 +162,24 @@ blocks a submission.**
 the brightness, glare and blur checks only, and returns the codes and the window's box in 0–1
 coordinates.
 
-Calibrate the thresholds on real photos with
-`python scripts/calibrate_guidance.py --meters <folder> --non-meters <folder> --csv out.csv`. Measure
+The thresholds were calibrated on labelled WASAC photos; see
+[docs/calibration/guidance_calibration.md](docs/calibration/guidance_calibration.md). To re-run the
+calibration, use `scripts/calibrate_guidance.py measure`, then `... report` (see the script's help).
+Calibration photos live in `calibration/`, which is gitignored and must never be committed. Measure
 speed and memory with `python scripts/benchmark_vision.py [--photos <folder>]`.
+
+> **OpenCV:** `ultralytics` installs `opencv-python` next to the `opencv-python-headless` we
+> require. Both are version 4.11.0.86 and provide the same `cv2`, so nothing breaks, but a server
+> install carries both packages. Left as is for now.
+
+### Licences of third-party components
+
+| Component | Licence | What it means here |
+|---|---|---|
+| Ultralytics / YOLOv8 (`ultralytics` package) | AGPL-3.0 | Offering the service over a network can oblige you to publish its source under the AGPL, unless you have an Ultralytics commercial licence |
+| torchvision ImageNet pretrained weights (ResNet18, MobileNetV2 backbones) | BSD-3-Clause | Keep the copyright notice |
+| Yandex water-meter dataset (used in training) | CC BY-NC-ND 4.0 | Models trained on it: non-commercial academic use only |
+| `best.pt` (YOLOv8 window detector) | Benax, no redistribution licence granted | Ask Benax before sharing it |
 
 ---
 
