@@ -1,24 +1,30 @@
 /**
  * @file router/index.tsx
- * @description Picks the site this build serves: the household app, or the
- * staff portal when built with VITE_APP=staff. The check is written out on
- * import.meta.env so the build drops the other site's code entirely.
+ * @description One site: household pages, and the staff area under /staff.
+ * Staff pages are a separate chunk, loaded only when /staff is opened.
  */
 
 import { lazy, Suspense } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import HouseholdRoutes from './HouseholdRoutes';
 
-const Site =
-  import.meta.env.VITE_APP === 'staff'
-    ? lazy(() => import('./StaffRoutes'))
-    : lazy(() => import('./HouseholdRoutes'));
+const StaffRoutes = lazy(() => import('./StaffRoutes'));
 
 function AppRouter() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Suspense fallback={null}>
-        <Site />
-      </Suspense>
+      <Routes>
+        <Route
+          path="/staff/*"
+          element={
+            <Suspense fallback={null}>
+              <StaffRoutes />
+            </Suspense>
+          }
+        />
+        <Route path="/officer/*" element={<Navigate to="/staff" replace />} />
+        <Route path="*" element={<HouseholdRoutes />} />
+      </Routes>
     </BrowserRouter>
   );
 }

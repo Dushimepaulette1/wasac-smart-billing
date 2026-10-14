@@ -1,8 +1,6 @@
 /**
  * @file HouseholdRoutes.tsx
- * @description The household app's pages. Public: the household is set by
- * config until household sign-in exists. No staff pages here; they are a
- * separate site (StaffRoutes, built with VITE_APP=staff).
+ * @description The household pages. The staff area is StaffRoutes, under /staff.
  */
 
 import { Routes, Route, Navigate } from 'react-router-dom';

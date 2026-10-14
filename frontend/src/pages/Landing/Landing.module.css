@@ -61,6 +61,12 @@
   font-size: var(--size-small);
 }
 
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-6);
+}
+
 .account:hover {
   color: var(--stage-strong);
 }

@@ -84,24 +84,19 @@ Swagger docs at **http://localhost:8000/docs**
 
 ### Frontend
 
-React + TypeScript (strict), built with Vite. One code base builds two separate sites:
-
-- **Household app** (default): read the meter, bills, payment, messages. No staff pages or links.
-- **Staff portal** (`VITE_APP=staff`): review queue, households, activity log, staff accounts.
+React + TypeScript (strict), built with Vite. One site: the household pages, and the staff area
+under `/staff` (review queue, households, activity log, staff accounts). The staff pages are a
+separate chunk, loaded only when `/staff` is opened; households see one small "WASAC staff? Sign in"
+link at the foot of the start page.
 
 ```bash
 cd wasac-platform/frontend
 npm install
-npm start              # household app on http://localhost:3000 (backend proxied to :8000)
-npm run dev:staff      # staff portal on http://localhost:3001
-npm test               # Vitest + React Testing Library
-npm run typecheck      # tsc --noEmit
-npm run build          # household app into build/
-npm run build:staff    # staff portal into build-staff/
+npm start          # http://localhost:3000 (staff: /staff); backend routes proxied to :8000
+npm test           # Vitest + React Testing Library
+npm run typecheck  # tsc --noEmit
+npm run build      # type-check, then production build into build/
 ```
-
-Deployed, each site is its own Vercel project from this repository (root directory `frontend`);
-the staff project sets the environment variable `VITE_APP=staff`. Both use `frontend/vercel.json`.
 
 Optional environment variables (in `frontend/.env`):
 
@@ -110,7 +105,6 @@ Optional environment variables (in `frontend/.env`):
 | `VITE_API_URL` | empty (use the dev proxy) | Backend base URL for a deployed build |
 | `VITE_CUSTOMER_ID` | `CUST001` | Household shown until sign-in exists |
 | `VITE_METER_ID` | `MTR001` | That household's meter |
-| `VITE_APP` | empty (household app) | `staff` builds the staff portal |
 
 ---
 
@@ -254,7 +248,7 @@ wasac-platform/
 │       ├── household/       # Household data loaders and submission state
 │       ├── i18n/            # Kinyarwanda (default) / English strings
 │       ├── pages/           # One folder per screen
-│       ├── router/          # HouseholdRoutes and StaffRoutes (one per site)
+│       ├── router/          # HouseholdRoutes, and StaffRoutes under /staff
 │       └── styles/          # Design tokens, fonts, base typography
 ├── notebooks/
 │   └── wasac_meter_reading_pipeline.ipynb
@@ -267,7 +261,7 @@ wasac-platform/
 
 There are no built-in staff passwords. Create the first admin with the script (it asks for the
 password twice and never prints it); that admin then adds everyone else under **Staff accounts**
-in the portal, where each new or reset account gets a one-time temporary password.
+in the staff area, where each new or reset account gets a one-time temporary password.
 
 ```bash
 cd backend
