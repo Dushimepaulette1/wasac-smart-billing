@@ -53,3 +53,26 @@
   height: 2px;
   background: var(--stage-strong);
 }
+
+/* New messages: a small count on the Messages icon (also read out as "2 new"). */
+.iconWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-action);
+  color: var(--color-on-action);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

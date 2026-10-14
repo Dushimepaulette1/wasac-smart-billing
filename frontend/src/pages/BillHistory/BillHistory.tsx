@@ -13,6 +13,7 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
 import { CUSTOMER_ID } from '../../config';
 import type { BillSummary } from '../../api/types';
+import { readingIsWaiting, useHouseholdFlags } from '../../household/status';
 import styles from './BillHistory.module.css';
 
 function BillHistory() {
@@ -22,6 +23,8 @@ function BillHistory() {
 
   const list: BillSummary[] = bills.status === 'success' ? bills.data : [];
   const empty = bills.status === 'success' && list.length === 0;
+  // A reading is waiting for an officer: say so instead of asking for another one.
+  const waiting = readingIsWaiting(useHouseholdFlags());
 
   // Normally one bill a month; if two share a month, name them by date.
   const label = (bill: BillSummary) => {
@@ -35,7 +38,7 @@ function BillHistory() {
       title={t('history.title')}
       nav
       action={
-        empty ? (
+        empty && !waiting ? (
           <Button fullWidth icon="camera" onClick={() => navigate('/submit/camera')}>
             {t('home.read')}
           </Button>
@@ -46,7 +49,7 @@ function BillHistory() {
         <RequestState status={bills.status} error={bills.error} onRetry={bills.retry} />
       )}
 
-      {empty && <p className="measure">{t('history.empty')}</p>}
+      {empty && <p className="measure">{waiting ? t('history.checking') : t('history.empty')}</p>}
 
       {list.length > 0 && (
         <ul className={`panel ${styles.list}`}>

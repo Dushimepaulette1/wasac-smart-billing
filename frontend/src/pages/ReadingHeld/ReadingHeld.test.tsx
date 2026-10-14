@@ -23,7 +23,9 @@ describe('ReadingHeld', () => {
     renderAt({ cells: normalizeReading('00000444').cells, at: '2026-10-09' });
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent("We're checking this reading");
-    expect(status).toHaveTextContent("You don't need to do anything. We'll text you within 24 hours.");
+    expect(status).toHaveTextContent('A WASAC officer is checking this reading.');
+    expect(status).toHaveTextContent('the result will appear in Messages');
+    expect(status).not.toHaveTextContent(/text you|24 hours/i);
     expect(screen.getByText('Meter reading: 0.444 cubic metres')).toBeInTheDocument();
     expect(screen.getByText('Sent on 09/10/2026')).toBeInTheDocument();
     expect(screen.queryByText(/anomaly|suspicious|error/i)).not.toBeInTheDocument();

@@ -47,16 +47,46 @@ describe('Messages', () => {
     const message = articleFor(await screen.findByRole('heading', { name: 'Much more water than usual' }));
     expect(message).toHaveTextContent('On 09/10/2026, your meter showed much more water');
     expect(within(message).getAllByRole('listitem')).toHaveLength(3);
-    expect(message).toHaveTextContent("We're checking this reading. You don't need to do anything.");
+    expect(message).toHaveTextContent("A WASAC officer is checking this reading. You don't need to do anything.");
+    expect(message).not.toHaveTextContent(/text you|SMS|hours/i);
     expect(screen.queryByText(/backend English text/)).not.toBeInTheDocument();
   });
 
-  it('describes a finished check without guessing the outcome or still saying "checking"', async () => {
+  it('says a checked reading was confirmed, with a way to the bill', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(2, 'MISREAD_SUSPECTED', { status: 'resolved', reading_status: 'valid' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'A reading lower than the last one' }));
+    expect(message).toHaveTextContent('Checked and confirmed. Your bill is ready.');
+    expect(within(message).getByRole('link', { name: 'See your bills' })).toHaveAttribute('href', '/history');
+    expect(message).not.toHaveTextContent(/checking/i);
+  });
+
+  it('asks to read the meter again when a checked reading was not confirmed', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(2, 'SPIKE', { status: 'resolved', reading_status: 'rejected' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'Much more water than usual' }));
+    expect(message).toHaveTextContent('We could not confirm this reading. Please read your meter again.');
+    expect(within(message).getByRole('button', { name: 'Read your meter' })).toBeInTheDocument();
+  });
+
+  it('describes a finished check neutrally when the outcome is not known', async () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag(2, 'MISREAD_SUSPECTED', { status: 'resolved' })]);
     renderMessages();
     const message = articleFor(await screen.findByRole('heading', { name: 'A reading lower than the last one' }));
-    expect(message).toHaveTextContent("Checked. If we need a new photo, we'll text you.");
+    expect(message).toHaveTextContent('Checked by a WASAC officer.');
     expect(message).not.toHaveTextContent(/checking/i);
+  });
+
+  it('marks messages as seen when Messages is opened', async () => {
+    window.localStorage.removeItem('wasac.messagesSeenAt');
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag(3, 'SPIKE')]);
+    renderMessages();
+    await screen.findByRole('heading', { name: 'Much more water than usual' });
+    expect(Number(window.localStorage.getItem('wasac.messagesSeenAt'))).toBeGreaterThan(0);
   });
 
   it('leaves out flags a household has nothing to do with', async () => {

@@ -261,6 +261,8 @@ export interface AnomalyFlag {
   status: FlagStatus;
   created_at: IsoDateTime;
   resolved_at: IsoDateTime | null;
+  /** The flagged reading's status: 'pending_review', 'valid' (accepted), 'rejected', 'anomaly_flagged'. */
+  reading_status?: string | null;
 }
 
 /** schemas.ResolveFlagRequest */

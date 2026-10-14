@@ -98,3 +98,19 @@
     display: block;
   }
 }
+
+/* New messages: a small count after "Messages" (also read out as "2 new"). */
+.badge {
+  min-width: 18px;
+  height: 18px;
+  margin-left: var(--space-2);
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-action);
+  color: var(--color-on-action);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

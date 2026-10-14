@@ -9,6 +9,7 @@ import { Link, NavLink } from 'react-router-dom';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
+import { unreadCount, useHouseholdFlags } from '../../household/status';
 import styles from './SiteHeader.module.css';
 
 export const HOUSEHOLD_LINKS = [
@@ -22,6 +23,33 @@ interface SiteHeaderProps {
   links?: boolean;
 }
 
+/** Household links; Messages shows how many are new. Only rendered (and loaded) for households. */
+function HeaderLinks() {
+  const { t } = useI18n();
+  const unread = unreadCount(useHouseholdFlags());
+  return (
+    <nav className={styles.nav} aria-label={t('nav.label')}>
+      <ul className={styles.links}>
+        {HOUSEHOLD_LINKS.map((item) => (
+          <li key={item.to}>
+            <NavLink to={item.to} className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}>
+              {t(item.label)}
+              {item.to === '/messages' && unread > 0 && (
+                <>
+                  <span className={styles.badge} aria-hidden="true">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                  <span className="visually-hidden">{t('nav.unread', { count: unread })}</span>
+                </>
+              )}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 function SiteHeader({ links = true }: SiteHeaderProps) {
   const { t } = useI18n();
   return (
@@ -32,22 +60,7 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
           <span className={styles.tagline}>{t('brand.tagline')}</span>
         </Link>
 
-        {links && (
-          <nav className={styles.nav} aria-label={t('nav.label')}>
-            <ul className={styles.links}>
-              {HOUSEHOLD_LINKS.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-                  >
-                    {t(item.label)}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
+        {links && <HeaderLinks />}
 
         <div className={styles.end}>
           <LanguageSwitcher />

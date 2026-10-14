@@ -21,6 +21,7 @@ import useCounterLabels from '../../i18n/useCounterLabels';
 import { localDateIso } from '../../i18n/format';
 import type { HeldState } from '../ReadingHeld/ReadingHeld';
 import { useSubmission } from '../../household/submission';
+import { refreshHouseholdFlags } from '../../household/status';
 import { isComplete } from '../../utils/reading';
 import { api } from '../../api/client';
 import { CUSTOMER_ID, METER_ID } from '../../config';
@@ -76,6 +77,7 @@ function ConfirmReading() {
     setError(null);
     try {
       const result = await api.confirmReading({ customerId: CUSTOMER_ID, meterId: METER_ID, cells });
+      refreshHouseholdFlags(); // a new message or a waiting reading may follow
       if (result.bill_id) {
         leaving.current = true;
         navigate(`/bill?id=${result.bill_id}`);
