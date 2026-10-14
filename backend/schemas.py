@@ -102,6 +102,9 @@ class AnomalyFlagOut(BaseModel):
     status: str
     created_at: datetime
     resolved_at: Optional[datetime] = None
+    # The flagged reading's status: pending_review, valid (accepted), rejected, anomaly_flagged.
+    # Lets the household see the outcome of a check ("confirmed" or "please read again").
+    reading_status: Optional[str] = None
 
 
 class ResolveFlagRequest(BaseModel):

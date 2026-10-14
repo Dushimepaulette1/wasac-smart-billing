@@ -143,3 +143,14 @@ def test_imported_meter_without_history_still_holds_lower_reading(client, db):
     assert body["validation_status"] == "pending_review"
     assert body["anomaly"]["anomaly_type"] == "MISREAD_SUSPECTED" and body["anomaly"]["flag_id"]
     assert db.get(Meter, METER).last_reading == 800.0
+
+
+def test_household_flags_carry_the_reading_outcome(client, db, household):
+    customer_id, last = household
+    flag_id = confirm(client, customer_id, last + 200)["anomaly"]["flag_id"]
+    flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
+    assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["pending_review"]
+
+    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"})
+    flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
+    assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["rejected"]
