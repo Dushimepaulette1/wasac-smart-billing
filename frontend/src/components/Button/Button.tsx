@@ -54,9 +54,14 @@ function classesFor({ variant = 'primary', fullWidth = false, className }: Commo
 
 function Button(props: ButtonProps) {
   const [kind, classes] = classesFor(props);
+  // Busy: a small turning arc replaces the icon; the label already says what is happening.
   const content = (
     <>
-      {props.icon && <Icon name={props.icon} size={22} />}
+      {props.loading ? (
+        <span className={styles.spinner} aria-hidden="true" />
+      ) : (
+        props.icon && <Icon name={props.icon} size={22} />
+      )}
       <span>{props.children}</span>
     </>
   );
