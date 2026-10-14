@@ -18,7 +18,7 @@ import { CUSTOMER_ID, METER_ID } from '../../config';
 import styles from './CustomerHome.module.css';
 
 function CustomerHome() {
-  const { t, locale, rwf, date, month } = useI18n();
+  const { t, rwf, date, month } = useI18n();
   const navigate = useNavigate();
   const home = useRequest(loadHome, { immediate: true, args: [CUSTOMER_ID, METER_ID] });
 
@@ -107,7 +107,7 @@ function CustomerHome() {
           <div className={styles.fact}>
             <dt>{t('home.lastReading')}</dt>
             <dd className="num">
-              {formatReading(cellsFromCubicMetres(customer.last_reading), locale)} {t('counter.cubicMetres')}
+              {formatReading(cellsFromCubicMetres(customer.last_reading))} {t('counter.cubicMetres')}
             </dd>
           </div>
           {customer.last_reading_date && (

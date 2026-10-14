@@ -6,6 +6,8 @@
  * (blank, only while the household is typing).
  */
 
+import { NUMBER_LOCALE } from '../i18n/format';
+
 export const READING_LENGTH = 8;
 export const LITRE_DIGITS = 3;
 export const CUBIC_METRE_DIGITS = READING_LENGTH - LITRE_DIGITS;
@@ -70,15 +72,14 @@ export function cellsToDigits(cells: Cells): string {
 }
 
 /**
- * A complete reading as plain text in the given locale, without the unit:
- * "2,813.450" (en), "2 813,450" (fr). Returns '' while cells are blank.
- *
+ * A complete reading as plain text, without the unit: "2,813.450", the same
+ * in every language (see i18n/format.ts). Returns '' while cells are blank.
  */
-export function formatReading(cells: Cells, locale = 'en'): string {
+export function formatReading(cells: Cells): string {
   if (!isComplete(cells)) return '';
   const whole = Number(cells.slice(0, CUBIC_METRE_DIGITS).join(''));
   const litres = cells.slice(CUBIC_METRE_DIGITS).join('');
-  const format = new Intl.NumberFormat(locale);
+  const format = new Intl.NumberFormat(NUMBER_LOCALE);
   const decimal = format.formatToParts(1.1).find((p) => p.type === 'decimal')?.value ?? '.';
   return `${format.format(whole)}${decimal}${litres}`;
 }

@@ -43,7 +43,7 @@ function withBold(template: string, name: string, value: string): ReactNode {
 }
 
 function ConfirmReading() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const submission = useSubmission();
   const labels = useCounterLabels();
@@ -145,7 +145,6 @@ function ConfirmReading() {
           labels={labels}
           mode="edit"
           showValue
-          locale={locale}
           autoFocus={manual || needsCheck}
           onChange={submission.setCells}
           describedBy={helpId}
