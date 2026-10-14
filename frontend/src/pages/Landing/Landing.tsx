@@ -1,7 +1,8 @@
 /**
  * @file Landing.tsx
  * @description The public page: what the service is and start a reading.
- * Staff have their own site (the staff portal), so there is no way in here. A centred hero on the gradient (the one
+ * WASAC staff get one small link at the foot of the page, not a button
+ * beside the household's actions. A centred hero on the gradient (the one
  * orchestrated moment in the app), then the three real steps.
  */
 
@@ -58,6 +59,12 @@ function Landing() {
             ))}
           </ol>
         </section>
+
+        <footer className={styles.footer}>
+          <Link to="/staff/sign-in" className={styles.account}>
+            {t('landing.staffLink')}
+          </Link>
+        </footer>
       </main>
     </div>
   );

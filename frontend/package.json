@@ -6,12 +6,9 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "dev:staff": "VITE_APP=staff vite",
     "build": "tsc --noEmit && vite build",
-    "build:staff": "tsc --noEmit && VITE_APP=staff vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "preview:staff": "VITE_APP=staff vite preview",
     "test": "vitest",
     "i18n:sync": "node scripts/i18n-sync.cjs",
     "i18n:review": "node scripts/i18n-review.cjs"
