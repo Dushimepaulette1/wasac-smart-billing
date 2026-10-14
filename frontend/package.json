@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest",
-    "i18n:sync": "node scripts/i18n-sync.cjs"
+    "i18n:sync": "node scripts/i18n-sync.cjs",
+    "i18n:review": "node scripts/i18n-review.cjs"
   },
   "dependencies": {
     "react": "^18.3.1",
