@@ -5,28 +5,71 @@
  * type, never from the backend's English text. Leak alerts say what was
  * noticed, what to check, and what happens next.
  *
- * The API does not say whether a checked reading was accepted or rejected,
- * so a finished check is described neutrally.
+ * A checked reading says how the check ended: confirmed (the bill is ready)
+ * or not confirmed (read the meter again). Opening Messages marks them read.
  */
 
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Icon from '../../components/Icon/Icon';
+import Button from '../../components/Button/Button';
 import RequestState from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
 import { HIGH_USE_TYPES } from '../../household/loadHome';
 import { METER_ID } from '../../config';
-import type { AnomalyFlag, AnomalyType } from '../../api/types';
+import { markMessagesSeen, shownMessages } from '../../household/status';
+import type { AnomalyFlag } from '../../api/types';
 import styles from './Messages.module.css';
 
-/** Types a household gets a message for; NORMAL and BASELINE need none. */
-export const SHOWN_TYPES: readonly AnomalyType[] = ['SPIKE', 'SUSTAINED_HIGH', 'MISREAD_SUSPECTED', 'METER_STUCK', 'UNUSUAL'];
+export { SHOWN_TYPES } from '../../household/status';
+
+/** How a check by a WASAC officer ended, from the flagged reading's status. */
+function CheckStatus({ flag }: { flag: AnomalyFlag }) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  if (flag.status === 'open') {
+    return (
+      <p className={`${styles.status} ${styles.checking}`}>
+        <Icon name="clock" size={20} />
+        <span>{t('msg.status.open')}</span>
+      </p>
+    );
+  }
+  if (flag.reading_status === 'rejected') {
+    return (
+      <div className={styles.outcome}>
+        <p className={styles.status}>
+          <Icon name="alert" size={20} />
+          <span>{t('msg.status.rejected')}</span>
+        </p>
+        <Button icon="camera" onClick={() => navigate('/submit/camera')}>
+          {t('home.read')}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <p className={styles.status}>
+      <Icon name="check" size={20} />
+      <span>
+        {flag.reading_status === 'valid' ? (
+          <>
+            {t('msg.status.accepted')} <Link to="/history">{t('msg.seeBills')}</Link>
+          </>
+        ) : (
+          t('msg.status.resolved')
+        )}
+      </span>
+    </p>
+  );
+}
 
 function Message({ flag }: { flag: AnomalyFlag }) {
   const { t, date } = useI18n();
   const type = flag.anomaly_type;
-  const open = flag.status === 'open';
   const when = date(flag.created_at);
   const leak = HIGH_USE_TYPES.includes(type);
 
@@ -48,12 +91,7 @@ function Message({ flag }: { flag: AnomalyFlag }) {
         </>
       )}
 
-      {flag.requires_staff_review && (
-        <p className={`${styles.status} ${open ? styles.checking : ''}`}>
-          <Icon name={open ? 'clock' : 'check'} size={20} />
-          <span>{open ? t('msg.status.open') : t('msg.status.resolved')}</span>
-        </p>
-      )}
+      {flag.requires_staff_review && <CheckStatus flag={flag} />}
     </article>
   );
 }
@@ -61,7 +99,12 @@ function Message({ flag }: { flag: AnomalyFlag }) {
 function Messages() {
   const { t } = useI18n();
   const flags = useRequest(api.getHouseholdFlags, { immediate: true, args: [METER_ID] });
-  const shown = flags.status === 'success' ? flags.data.filter((f) => SHOWN_TYPES.includes(f.anomaly_type)) : [];
+  const shown = flags.status === 'success' ? shownMessages(flags.data) : [];
+
+  // Everything on screen has now been seen on this device.
+  useEffect(() => {
+    if (flags.status === 'success') markMessagesSeen();
+  }, [flags.status]);
 
   return (
     <Screen title={t('messages.title')} nav>

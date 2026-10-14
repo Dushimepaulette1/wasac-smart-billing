@@ -48,3 +48,10 @@
   color: var(--brass);
   font-weight: var(--weight-bold);
 }
+
+/* "Not confirmed": the reason, then the one thing to do. */
+.outcome {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}

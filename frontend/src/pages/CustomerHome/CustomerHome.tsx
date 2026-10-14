@@ -34,38 +34,46 @@ function CustomerHome() {
   const due = newestBill && newestBill.payment_status !== 'paid' ? newestBill : null;
   const readMeter = () => navigate('/submit/camera');
 
+  // While a reading waits for an officer, a new one is not asked for: the household waits.
+  const readButton = checking ? null : (
+    <Button variant={due ? 'text' : undefined} fullWidth={!due} icon="camera" onClick={readMeter}>
+      {t('home.read')}
+    </Button>
+  );
   const action = due ? (
     <>
-      <Button variant="text" icon="camera" onClick={readMeter}>
-        {t('home.read')}
-      </Button>
+      {readButton}
       <Button fullWidth onClick={() => navigate(`/payment?bill=${due.bill_id}`)}>
         {t('pay.action', { amount: rwf(due.amount_due) })}
       </Button>
     </>
   ) : (
-    <Button fullWidth icon="camera" onClick={readMeter}>
-      {t('home.read')}
-    </Button>
+    readButton
   );
+
+  let title = t('home.readPrompt');
+  if (due) title = t('home.billDue', { month: month(due.created_at), amount: rwf(due.amount_due) });
+  else if (checking) title = t('home.checkingTitle');
 
   return (
     <Screen
       step={customer.name}
-      title={due ? t('home.billDue', { month: month(due.created_at), amount: rwf(due.amount_due) }) : t('home.readPrompt')}
+      title={title}
       lede={
         due ? (
           <Link to={`/bill?id=${due.bill_id}`} className={styles.link}>
             {t('home.seeBill')}
           </Link>
+        ) : checking ? (
+          <p>{t('home.checkingBody')}</p>
         ) : null
       }
       nav
       action={action}
     >
-      {(checking || highUse) && (
+      {((checking && due) || highUse) && (
         <div className={styles.notices}>
-          {checking && (
+          {checking && due && (
             <Notice tone="held" title={t('home.checkingTitle')}>
               {t('home.checkingBody')}
             </Notice>
