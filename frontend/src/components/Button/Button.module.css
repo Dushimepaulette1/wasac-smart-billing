@@ -67,3 +67,34 @@
     transition: none;
   }
 }
+
+/* Busy: a thin arc in the text colour, turning calmly. Reduced motion: a still ring. */
+.spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: turn 0.9s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-right-color: currentColor;
+    opacity: 0.6;
+  }
+}
+
+/* A busy button keeps its full colour (not the faded disabled look), so it reads as working. */
+.button[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
+}

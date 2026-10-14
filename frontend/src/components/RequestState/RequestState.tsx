@@ -6,6 +6,7 @@
 
 import Button from '../Button/Button';
 import Notice from '../Notice/Notice';
+import Progress from '../Progress/Progress';
 import { useI18n, type Translate } from '../../i18n/I18nProvider';
 import { ApiError } from '../../api/client';
 import type { RequestStatus } from '../../api/useRequest';
@@ -40,11 +41,7 @@ function RequestState({ status, error, onRetry, loadingText }: RequestStateProps
       </Notice>
     );
   }
-  return (
-    <p role="status" className="text-secondary">
-      {loadingText || t('status.loading')}
-    </p>
-  );
+  return <Progress label={loadingText || t('status.loading')} />;
 }
 
 export default RequestState;
