@@ -5,10 +5,12 @@
  * One request at a time: the next frame is only sent after the previous
  * answer arrives. Pauses while the tab is hidden, gives up after a time limit
  * or a network error (the shutter button always works), and reports "ready"
- * after enough OK answers in a row so the screen can take the photo itself.
+ * after enough answers in a row with the number window framed, so the screen
+ * can take the photo itself.
  */
 
 import type { GuideFrameResponse } from '../api/types';
+import { isFramed } from './guidance';
 
 export const LIVE_CHECK_LIMIT_MS = 30_000;
 export const OK_IN_A_ROW = 2;
@@ -22,7 +24,7 @@ export interface LoopDeps {
   grab: () => Promise<Blob | null>;
   send: (frame: Blob) => Promise<GuideFrameResponse>;
   onResult: (result: GuideFrameResponse) => void;
-  /** OK_IN_A_ROW good frames: take the photo. The loop has stopped. */
+  /** OK_IN_A_ROW framed answers: take the photo. The loop has stopped. */
   onReady: () => void;
   /** Live checks are over for this camera session; the shutter still works. */
   onEnd: (reason: LoopEnd) => void;
@@ -106,7 +108,7 @@ export class GuidanceLoop {
           return;
         }
         this.deps.onResult(result);
-        this.okStreak = result.guidance[0] === 'OK' ? this.okStreak + 1 : 0;
+        this.okStreak = isFramed(result.guidance) ? this.okStreak + 1 : 0;
         if (this.okStreak >= OK_IN_A_ROW) {
           this.running = false;
           this.deps.onReady();

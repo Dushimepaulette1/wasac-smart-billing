@@ -25,12 +25,27 @@ export function messageKey(code: GuidanceCode): string | null {
   return MESSAGE_KEYS[code] ?? null;
 }
 
+/** Codes that mean the number window is not properly in the picture. */
+const NOT_FRAMED: ReadonlySet<GuidanceCode> = new Set(['NO_METER', 'CUT_OFF', 'TOO_FAR']);
+
 /**
- * The one live hint to show for a /guide-frame answer: the first code with a
- * message, "hold still" when the frame is good, or null (nothing to say).
+ * The number window is found and fully in the picture. Lighting hints (dark,
+ * glare) do not stop an automatic photo; they are checked again after it.
+ */
+export function isFramed(codes: readonly GuidanceCode[]): boolean {
+  return codes.length > 0 && !codes.some((code) => NOT_FRAMED.has(code));
+}
+
+/** Shown before the first steady answer, so the screen never opens with a warning. */
+export const AIM_HINT = 'guidance.aim';
+
+/**
+ * The one live hint to show for a /guide-frame answer: "hold still" when the
+ * window is framed (the photo is about to be taken), else the first code with
+ * a message, or null (nothing to say).
  */
 export function liveHint(codes: readonly GuidanceCode[]): string | null {
-  if (codes[0] === 'OK') return 'guidance.holdStill';
+  if (isFramed(codes)) return 'guidance.holdStill';
   for (const code of codes) {
     const key = messageKey(code);
     if (key && code !== 'CHECK_NUMBERS') return key;

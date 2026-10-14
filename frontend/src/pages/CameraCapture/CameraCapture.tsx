@@ -11,16 +11,17 @@
  * typing the numbers is always possible, and the photo is kept if sending fails.
  */
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
+import Progress from '../../components/Progress/Progress';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSubmission } from '../../household/submission';
 import { frameToBlob, frameToDataUrl, fileToDataUrl, dataUrlToBlob } from '../../household/photo';
-import { liveHint, messageKey, photoOutcome, thumbnailUrl, type PhotoOutcome } from '../../household/guidance';
+import { AIM_HINT, liveHint, messageKey, photoOutcome, thumbnailUrl, type PhotoOutcome } from '../../household/guidance';
 import { GuidanceLoop } from '../../household/guidanceLoop';
 import { useSaveData } from '../../household/saveData';
 import type { PhotoSubmitResponse } from '../../api/types';
@@ -36,6 +37,43 @@ type LiveState = 'checking' | 'ended' | 'quiet';
 /** The "Hold still" moment before an automatic photo. */
 export const HOLD_STILL_MS = 700;
 
+const PHONE = '(max-width: 767px)';
+const MIN_CAMERA_PX = 200;
+
+/**
+ * Phones: make the camera exactly as tall as the space between its top and the pinned buttons,
+ * measured on this phone, so the tip on it is never under the buttons whatever the screen height,
+ * language or message above it. Wider screens keep the CSS aspect ratio.
+ */
+function useFitAbovePinnedAction(ref: RefObject<HTMLDivElement>, deps: unknown[]) {
+  useLayoutEffect(() => {
+    const frame = ref.current;
+    if (!frame || !window.matchMedia?.(PHONE).matches) return undefined;
+    const fit = () => {
+      const action = document.querySelector('[data-screen-action]');
+      if (!action) return;
+      // Leave room for what follows the camera (the "Save mobile data" switch), plus the gaps.
+      const gap = parseFloat(getComputedStyle(frame.parentElement ?? frame).rowGap) || 0;
+      let below = 0;
+      for (let el = frame.nextElementSibling; el; el = el.nextElementSibling) {
+        const height = el.getBoundingClientRect().height;
+        if (height > 2) below += height + gap; // skips the visually hidden file input
+      }
+      const room = action.getBoundingClientRect().top - frame.getBoundingClientRect().top - below - 12;
+      frame.style.height = `${Math.round(Math.max(MIN_CAMERA_PX, room))}px`;
+    };
+    fit();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    observer?.observe(document.body);
+    window.addEventListener('resize', fit);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', fit);
+      frame.style.height = '';
+    };
+  }, deps); // re-measured when the layout above the camera changes
+}
+
 function CameraCapture() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -45,6 +83,7 @@ function CameraCapture() {
   const fileRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<PhotoSubmitResponse | null>(null);
   const takePhotoRef = useRef<() => void>(() => undefined);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const [camera, setCamera] = useState<CameraState>('starting');
   const [send, setSend] = useState<SendState>(submission.photo && !submission.cells ? 'saved' : 'idle');
@@ -54,7 +93,9 @@ function CameraCapture() {
   const [notImage, setNotImage] = useState(false);
   const [saveData, setSaveData] = useSaveData();
   const [live, setLive] = useState<LiveState>('checking');
-  const [hint, setHint] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(AIM_HINT);
+  // The last answer's tip; a tip is only shown once two answers in a row agree, so it does not flicker.
+  const lastTipRef = useRef<string | null>(null);
 
   const showPreview = submission.photo && send !== 'idle';
 
@@ -94,11 +135,16 @@ function CameraCapture() {
     if (camera !== 'live' || send !== 'idle' || saveData) return undefined;
     let holdTimer: ReturnType<typeof setTimeout> | undefined;
     setLive('checking');
-    setHint(null);
+    setHint(AIM_HINT);
+    lastTipRef.current = null;
     const loop = new GuidanceLoop({
       grab: () => (videoRef.current ? frameToBlob(videoRef.current) : Promise.resolve(null)),
       send: (frame) => api.guideFrame(frame),
-      onResult: (result) => setHint(liveHint(result.guidance)),
+      onResult: (result) => {
+        const tip = liveHint(result.guidance);
+        if (tip && tip === lastTipRef.current) setHint(tip);
+        lastTipRef.current = tip;
+      },
       onReady: () => {
         setHint('guidance.holdStill');
         holdTimer = setTimeout(() => takePhotoRef.current(), HOLD_STILL_MS);
@@ -259,6 +305,8 @@ function CameraCapture() {
     );
   }
 
+  useFitAbovePinnedAction(frameRef, [camera, send, outcome, error]);
+
   const softKey = outcome?.kind === 'soft' ? messageKey(outcome.code) : null;
   const cameraOpen = send === 'idle' && camera !== 'unavailable';
 
@@ -271,8 +319,8 @@ function CameraCapture() {
     <Screen
       title={t('camera.title')}
       step={t('flow.step', { current: 1, total: 3 })}
-      lede={cameraOpen ? <p>{t('camera.hint')}</p> : undefined}
       back="/home"
+      immersive
       action={action}
     >
       {/* Messages first: when something went wrong, that matters more than the photo. */}
@@ -304,9 +352,12 @@ function CameraCapture() {
       {send === 'saved' && <Notice tone="info">{t('camera.saved')}</Notice>}
 
       {showPreview ? (
-        <img className={styles.frame} src={submission.photo ?? undefined} alt={t('camera.photoAlt')} />
+        <div ref={frameRef} className={styles.frame}>
+          <img className={styles.video} src={submission.photo ?? undefined} alt={t('camera.photoAlt')} />
+          {send === 'sending' && <Progress overlay label={t('camera.sending')} />}
+        </div>
       ) : camera !== 'unavailable' && (
-        <div className={styles.frame}>
+        <div ref={frameRef} className={styles.frame}>
           <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
           {camera === 'live' && <div className={styles.guide} aria-hidden="true" />}
           {/* On the camera itself, so the tip is visible while aiming on any screen height.
@@ -333,10 +384,7 @@ function CameraCapture() {
               checked={saveData}
               onChange={(event) => setSaveData(event.target.checked)}
             />
-            <span>
-              <span className={styles.saveDataLabel}>{t('camera.saveData')}</span>
-              <span className="text-small text-secondary">{t('camera.saveDataHint')}</span>
-            </span>
+            <span className={styles.saveDataLabel}>{t('camera.saveData')}</span>
           </label>
         </>
       )}

@@ -30,10 +30,12 @@ interface ScreenProps {
   action?: ReactNode;
   /** Show the household navigation (header links; bottom bar on phones). */
   nav?: boolean;
+  /** Camera-style page: no site header, so the content gets the whole screen height. */
+  immersive?: boolean;
   children: ReactNode;
 }
 
-function Screen({ title, step, lede, back, action, nav = false, children }: ScreenProps) {
+function Screen({ title, step, lede, back, action, nav = false, immersive = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -55,7 +57,7 @@ function Screen({ title, step, lede, back, action, nav = false, children }: Scre
 
   return (
     <div className={classes}>
-      <SiteHeader links={nav} />
+      {!immersive && <SiteHeader links={nav} />}
 
       <main className={styles.main}>
         <div className={styles.head}>
@@ -71,7 +73,11 @@ function Screen({ title, step, lede, back, action, nav = false, children }: Scre
             {title}
           </h1>
           {lede && <div className={`${styles.lede} text-lead`}>{lede}</div>}
-          {action && <div className={styles.action}>{action}</div>}
+          {action && (
+            <div className={styles.action} data-screen-action="">
+              {action}
+            </div>
+          )}
         </div>
 
         <div className={styles.body}>{children}</div>

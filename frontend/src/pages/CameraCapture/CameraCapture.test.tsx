@@ -87,9 +87,10 @@ afterEach(() => {
 });
 
 describe('CameraCapture live tips', () => {
-  it('shows one tip at a time in a polite live region', async () => {
-    mockBackend([['TOO_FAR', 'GLARE']]);
+  it('starts with a neutral tip, then shows one steady tip at a time in a polite live region', async () => {
+    mockBackend([['TOO_FAR', 'GLARE'], ['TOO_FAR']]);
     renderCamera();
+    await waitFor(() => expect(tip()).toHaveTextContent("Point the camera at the meter's numbers"), LONG);
     await waitFor(() => expect(tip()).toHaveTextContent('Try moving a little closer to the meter.'), LONG);
     expect(tip()).toHaveAttribute('role', 'status');
     expect(tip()).not.toHaveTextContent('reflection');
@@ -102,6 +103,21 @@ describe('CameraCapture live tips', () => {
     await waitFor(() => expect(stats.photo).toBe(1), LONG);
     expect(await screen.findByText('Do these numbers match your meter?')).toBeInTheDocument();
     expect(stats.guide).toBe(2);
+  });
+
+  it('does not change the tip for a single different answer (no flicker)', async () => {
+    mockBackend([['NO_METER'], ['TOO_FAR']]);
+    renderCamera();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 1200));
+    });
+    expect(tip()).toHaveTextContent("Point the camera at the meter's numbers");
+  });
+
+  it('takes the photo by itself when the window is framed twice, even with a lighting hint', async () => {
+    const stats = mockBackend([['GLARE'], ['TOO_DARK']]);
+    renderCamera();
+    await waitFor(() => expect(stats.photo).toBe(1), LONG);
   });
 
   it('never has more than one live check in flight', async () => {

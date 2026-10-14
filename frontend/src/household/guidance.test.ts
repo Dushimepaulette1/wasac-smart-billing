@@ -1,4 +1,4 @@
-import { liveHint, photoOutcome, thumbnailUrl } from './guidance';
+import { isFramed, liveHint, photoOutcome, thumbnailUrl } from './guidance';
 import { makeNoMeterResponse, makePhotoResponse } from '../test/fixtures';
 
 describe('liveHint', () => {
@@ -11,10 +11,28 @@ describe('liveHint', () => {
     expect(liveHint(['TOO_FAR', 'CUT_OFF', 'GLARE'])).toBe('guidance.tooFar');
   });
 
-  it('skips codes without a message (BLURRY is off) and reading-only codes', () => {
-    expect(liveHint(['BLURRY', 'GLARE'])).toBe('guidance.glare');
-    expect(liveHint(['CHECK_NUMBERS'])).toBeNull();
+  it('says "hold still" once the window is framed, even with a lighting hint', () => {
+    expect(liveHint(['GLARE'])).toBe('guidance.holdStill');
+    expect(liveHint(['TOO_DARK', 'GLARE'])).toBe('guidance.holdStill');
+  });
+
+  it('skips codes without a message (BLURRY is off)', () => {
+    expect(liveHint(['BLURRY', 'TOO_FAR'])).toBe('guidance.tooFar');
     expect(liveHint([])).toBeNull();
+  });
+});
+
+describe('isFramed', () => {
+  it('is true when the window is found and fully in the picture', () => {
+    expect(isFramed(['OK'])).toBe(true);
+    expect(isFramed(['GLARE', 'TOO_DARK'])).toBe(true);
+  });
+
+  it('is false when the meter is missing, too far or cut off', () => {
+    expect(isFramed(['NO_METER'])).toBe(false);
+    expect(isFramed(['TOO_FAR'])).toBe(false);
+    expect(isFramed(['GLARE', 'CUT_OFF'])).toBe(false);
+    expect(isFramed([])).toBe(false);
   });
 });
 
