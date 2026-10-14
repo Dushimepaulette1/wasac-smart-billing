@@ -19,9 +19,11 @@ WORKDIR /home/user/app
 
 COPY --chown=user requirements.txt .
 # CPU-only torch first (the default CUDA wheels are several GB), then the rest; requirements'
-# torch==2.3.0 is satisfied by 2.3.0+cpu. Ultralytics pulls in GUI opencv-python, which needs X11
-# libraries: remove it and keep only opencv-python-headless (same version, same cv2).
-RUN pip install torch==2.3.0 torchvision==0.18.0 --index-url https://download.pytorch.org/whl/cpu \
+# torch==2.3.0 is satisfied by 2.3.0+cpu. PyPI stays the main index and the PyTorch index is only
+# an extra one for the "+cpu" builds: its copies of torch's dependencies are not all installable.
+# Ultralytics pulls in GUI opencv-python, which needs X11 libraries: remove it and keep only
+# opencv-python-headless (same version, same cv2).
+RUN pip install torch==2.3.0+cpu torchvision==0.18.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu \
  && pip install -r requirements.txt \
  && pip uninstall -y opencv-python \
  && pip install --force-reinstall --no-deps opencv-python-headless==4.11.0.86
