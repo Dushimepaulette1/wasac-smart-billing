@@ -13,6 +13,7 @@ const BACKEND = 'http://localhost:8000';
 const API_PATHS = [
   '/auth',
   '/submit-photo',
+  '/guide-frame',
   '/confirm-reading',
   '/calculate-bill',
   '/customers',
@@ -22,6 +23,10 @@ const API_PATHS = [
   '/api/',
 ];
 
+const proxy = Object.fromEntries(API_PATHS.map((path) => [path, { target: BACKEND, changeOrigin: true }]));
+// Testing on a phone through a Cloudflare quick tunnel (see tools/phone_test.sh).
+const allowedHosts = ['.trycloudflare.com'];
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -29,8 +34,11 @@ export default defineConfig({
     // The project lives on the Windows drive under WSL (/mnt/c), where file
     // change events never arrive; poll so edits show up without a restart.
     watch: { usePolling: true, interval: 300 },
-    proxy: Object.fromEntries(API_PATHS.map((path) => [path, { target: BACKEND, changeOrigin: true }])),
+    proxy,
+    allowedHosts,
   },
+  // `vite preview` serves the production build the same way: same proxy, same tunnel hosts.
+  preview: { port: 3000, strictPort: true, proxy, allowedHosts },
   build: {
     outDir: 'build',
     // Low-cost Android phones may run older Chrome versions.
