@@ -13,6 +13,15 @@
   object-fit: cover;
 }
 
+/* Phones: the height is set from the measured space above the pinned buttons (see
+   useFitAbovePinnedAction), so the aspect ratio is not used there. */
+@media (max-width: 767px) {
+  .frame {
+    aspect-ratio: auto;
+    min-height: 200px;
+  }
+}
+
 .video {
   width: 100%;
   height: 100%;

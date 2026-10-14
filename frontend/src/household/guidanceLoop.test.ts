@@ -62,15 +62,24 @@ describe('GuidanceLoop', () => {
     expect(deps.send).toHaveBeenCalledTimes(2);
   });
 
-  it('needs the two OK answers to be in a row', async () => {
+  it('needs the two framed answers to be in a row', async () => {
     const { loop, deps, answer } = setup();
     loop.start();
     await flush();
     await answer(makeGuideFrame(['OK']));
-    await answer(makeGuideFrame(['GLARE']));
+    await answer(makeGuideFrame(['TOO_FAR']));
     await answer(makeGuideFrame(['OK']));
     expect(deps.onReady).not.toHaveBeenCalled();
     await answer(makeGuideFrame(['OK']));
+    expect(deps.onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts a framed window with a lighting hint towards the automatic photo', async () => {
+    const { loop, deps, answer } = setup();
+    loop.start();
+    await flush();
+    await answer(makeGuideFrame(['GLARE']));
+    await answer(makeGuideFrame(['TOO_DARK']));
     expect(deps.onReady).toHaveBeenCalledTimes(1);
   });
 
