@@ -99,7 +99,7 @@ def add_household(db, meter_id, points, phone="+250788000111"):
     return customer_id
 
 
-def add_officer(db, username="officer1", password="correct horse", full_name="Test Officer", active=True):
+def add_officer(db, username="officer1", password="correct horse", full_name="Test Officer", active=True, role="officer"):
     from auth.models import StaffUser
     from auth.security import hash_password
 
@@ -108,6 +108,7 @@ def add_officer(db, username="officer1", password="correct horse", full_name="Te
         full_name=full_name,
         password_hash=hash_password(password, iterations=1000),  # fast in tests
         is_active=active,
+        role=role,
     )
     db.add(user)
     db.commit()
@@ -139,6 +140,13 @@ def client(db):
         yield test_client
     finally:
         app.dependency_overrides.clear()
+
+
+def signed_in_client(db, username):
+    """A client signed in as an existing staff user; the caller clears app.dependency_overrides."""
+    from auth.security import make_token
+
+    return _test_client(db, {"Authorization": f"Bearer {make_token(username)[0]}"})
 
 
 @pytest.fixture

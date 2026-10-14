@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_CUSTOMER_ID?: string;
   /** That household's meter. Default MTR001. */
   readonly VITE_METER_ID?: string;
+  /** "staff" builds the staff portal; anything else, the household app. */
+  readonly VITE_APP?: string;
 }
 
 interface ImportMeta {

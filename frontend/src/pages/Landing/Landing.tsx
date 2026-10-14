@@ -1,7 +1,7 @@
 /**
  * @file Landing.tsx
- * @description The public page: what the service is, start a reading, and
- * the way in for WASAC staff. A centred hero on the gradient (the one
+ * @description The public page: what the service is and start a reading.
+ * Staff have their own site (the staff portal), so there is no way in here. A centred hero on the gradient (the one
  * orchestrated moment in the app), then the three real steps.
  */
 
@@ -36,9 +36,6 @@ function Landing() {
           <div className={styles.actions}>
             <Button icon="camera" onClick={() => navigate('/submit/camera')}>
               {t('home.read')}
-            </Button>
-            <Button variant="secondary" onClick={() => navigate('/staff')}>
-              {t('landing.staff')}
             </Button>
           </div>
           <Link to="/home" className={styles.account}>

@@ -1,7 +1,8 @@
 /**
  * @file StaffLayout.tsx
  * @description The staff dashboard frame: a sidebar (Overview, Review
- * queue, Households, the signed-in person, sign out) and a top bar (menu
+ * queue, Households, Activity, Staff accounts for admins, the signed-in
+ * person with My account, sign out) and a top bar (menu
  * button, page title, language, theme).
  *
  * Wide screens (1024px+): the sidebar is always there and can be collapsed
@@ -16,7 +17,8 @@ import Icon, { type IconName } from '../Icon/Icon';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useAuth } from '../../staff/auth';
+import { hasRole, useAuth } from '../../staff/auth';
+import type { StaffRole } from '../../api/types';
 import { api } from '../../api/client';
 import useRequest from '../../api/useRequest';
 import styles from './StaffLayout.module.css';
@@ -29,12 +31,16 @@ interface NavItem {
   icon: IconName;
   label: string;
   end?: boolean;
+  /** Shown only to this role and higher ones. */
+  role?: StaffRole;
 }
 
 const NAV: NavItem[] = [
   { to: '/staff', icon: 'overview', label: 'staff.nav.overview', end: true },
   { to: '/staff/review', icon: 'queue', label: 'staff.nav.review' },
   { to: '/staff/households', icon: 'households', label: 'staff.nav.households' },
+  { to: '/staff/activity', icon: 'activity', label: 'staff.nav.activity' },
+  { to: '/staff/accounts', icon: 'user', label: 'staff.nav.accounts', role: 'admin' },
 ];
 
 function useMedia(query: string): boolean {
@@ -142,7 +148,7 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
 
         <nav className={styles.nav} aria-label={t('staff.sidebar')}>
           <ul>
-            {NAV.map((item, i) => (
+            {NAV.filter((item) => !item.role || hasRole(user, item.role)).map((item, i) => (
               <li key={item.to}>
                 <NavLink
                   ref={i === 0 ? firstLinkRef : undefined}
@@ -173,10 +179,18 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
               </span>
               <span className={styles.personText}>
                 <span className={styles.personName}>{user.full_name}</span>
-                <span className="text-small">{user.username}</span>
+                <span className="text-small">{t(`staff.role.${user.role}`)}</span>
               </span>
             </div>
           )}
+          <NavLink
+            to="/staff/account"
+            className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+            title={isCollapsed ? t('staff.nav.account') : undefined}
+          >
+            <Icon name="lock" size={22} />
+            <span className={isCollapsed ? 'visually-hidden' : styles.linkLabel}>{t('staff.nav.account')}</span>
+          </NavLink>
           <button type="button" className={styles.link} onClick={signOut} title={isCollapsed ? t('staff.signOut') : undefined}>
             <Icon name="logout" size={22} />
             <span className={isCollapsed ? 'visually-hidden' : styles.linkLabel}>{t('staff.signOut')}</span>

@@ -9,7 +9,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { api, setStaffToken } from '../api/client';
-import type { LoginResponse, StaffUser } from '../api/types';
+import type { LoginResponse, StaffRole, StaffUser } from '../api/types';
 
 const SESSION_KEY = 'wasac.staff';
 
@@ -84,13 +84,23 @@ export function useAuth(): AuthValue {
   return ctx;
 }
 
-/** Staff pages: send anyone not signed in to the sign-in page, then back. */
-export function RequireStaff({ children }: { children: ReactNode }) {
+const ROLE_ORDER: StaffRole[] = ['officer', 'supervisor', 'admin'];
+
+/** officer < supervisor < admin; mirrors role_at_least in backend/auth/routes.py. */
+export function hasRole(user: StaffUser | null, role: StaffRole): boolean {
+  if (!user) return false;
+  return Math.max(0, ROLE_ORDER.indexOf(user.role as StaffRole)) >= ROLE_ORDER.indexOf(role);
+}
+
+/** Staff pages: send anyone not signed in to the sign-in page, then back.
+ * With `role`, someone without it goes to the overview (the server refuses them anyway). */
+export function RequireStaff({ children, role }: { children: ReactNode; role?: StaffRole }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) {
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/staff/sign-in?next=${next}`} replace />;
   }
+  if (role && !hasRole(user, role)) return <Navigate to="/staff" replace />;
   return <>{children}</>;
 }

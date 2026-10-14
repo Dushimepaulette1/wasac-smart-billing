@@ -8,6 +8,7 @@ env/
 *.egg-info/
 dist/
 build/
+build-staff/
 .pytest_cache/
 
 # Environment
@@ -30,6 +31,7 @@ backend/scripts/demo/output/
 # Node
 node_modules/
 frontend/build/
+frontend/build-staff/
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local

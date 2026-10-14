@@ -84,18 +84,24 @@ Swagger docs at **http://localhost:8000/docs**
 
 ### Frontend
 
-React + TypeScript (strict), built with Vite.
+React + TypeScript (strict), built with Vite. One code base builds two separate sites:
+
+- **Household app** (default): read the meter, bills, payment, messages. No staff pages or links.
+- **Staff portal** (`VITE_APP=staff`): review queue, households, activity log, staff accounts.
 
 ```bash
 cd wasac-platform/frontend
 npm install
-npm start          # dev server; backend routes are proxied to :8000
-npm test           # Vitest + React Testing Library
-npm run typecheck  # tsc --noEmit
-npm run build      # type-check, then production build into build/
+npm start              # household app on http://localhost:3000 (backend proxied to :8000)
+npm run dev:staff      # staff portal on http://localhost:3001
+npm test               # Vitest + React Testing Library
+npm run typecheck      # tsc --noEmit
+npm run build          # household app into build/
+npm run build:staff    # staff portal into build-staff/
 ```
 
-The app will be available at **http://localhost:3000**
+Deployed, each site is its own Vercel project from this repository (root directory `frontend`);
+the staff project sets the environment variable `VITE_APP=staff`. Both use `frontend/vercel.json`.
 
 Optional environment variables (in `frontend/.env`):
 
@@ -104,6 +110,7 @@ Optional environment variables (in `frontend/.env`):
 | `VITE_API_URL` | empty (use the dev proxy) | Backend base URL for a deployed build |
 | `VITE_CUSTOMER_ID` | `CUST001` | Household shown until sign-in exists |
 | `VITE_METER_ID` | `MTR001` | That household's meter |
+| `VITE_APP` | empty (household app) | `staff` builds the staff portal |
 
 ---
 
@@ -229,7 +236,7 @@ wasac-platform/
 │   ├── ml/                  # model code + config shared with training; .pt weights downloaded
 │   ├── vision/              # model loading, photo pipeline, guidance checks and thresholds
 │   ├── anomaly/             # Stage 3: rules + Isolation Forest, pending review
-│   ├── auth/                # staff sign-in
+│   ├── auth/                # staff sign-in, roles, audit log, staff accounts
 │   ├── routes/
 │   │   ├── reading.py       # /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
 │   │   ├── billing.py       # /customers, /bills
@@ -245,9 +252,9 @@ wasac-platform/
 │       ├── api/             # Typed API client and FastAPI response models
 │       ├── components/      # MeterCounter, Screen, Button, Notice, ...
 │       ├── household/       # Household data loaders and submission state
-│       ├── i18n/            # Kinyarwanda / English / French strings
+│       ├── i18n/            # Kinyarwanda (default) / English strings
 │       ├── pages/           # One folder per screen
-│       ├── router/          # Routes
+│       ├── router/          # HouseholdRoutes and StaffRoutes (one per site)
 │       └── styles/          # Design tokens, fonts, base typography
 ├── notebooks/
 │   └── wasac_meter_reading_pipeline.ipynb
@@ -256,13 +263,29 @@ wasac-platform/
 
 ---
 
-## Demo Credentials
+## Staff accounts
 
-| Role | Username | Password |
-|------|----------|----------|
-| Field Officer | `officer` | `wasac2024` |
+There are no built-in staff passwords. Create the first admin with the script (it asks for the
+password twice and never prints it); that admin then adds everyone else under **Staff accounts**
+in the portal, where each new or reset account gets a one-time temporary password.
 
-Demo customer: **CUST001** — Uwimana Jean Pierre, Kacyiru sector
+```bash
+cd backend
+python scripts/create_officer.py <username> --name "Full Name" --role admin
+# Forgotten password: run it again for the same username to set a new one.
+```
+
+| Role | Can |
+|---|---|
+| `officer` | Review held readings, see households, see their own activity |
+| `supervisor` | As officer, plus everyone's activity |
+| `admin` | As supervisor, plus add accounts, change roles, turn accounts off, reset passwords |
+
+Every sign-in (and failed attempt), review decision and account change is recorded in the
+`staff_actions` table and shown under **Activity**.
+
+Demo household (deployments): **DEMO-CUST-001** / meter **DEMO-MTR-001**, loaded by
+`scripts/demo/generate_demo_households.py`; the app shows a "Demo data" label for it.
 
 ---
 

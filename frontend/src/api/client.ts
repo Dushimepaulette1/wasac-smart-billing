@@ -20,7 +20,11 @@ import type {
   PhotoSubmitResponse,
   ResolveFlagResponse,
   ReviewItem,
+  StaffAccount,
+  StaffAction,
+  StaffRole,
   StaffUser,
+  TemporaryPassword,
 } from './types';
 
 /** A live tip that arrives late is useless; give up quickly and keep the shutter usable. */
@@ -33,6 +37,8 @@ export type ApiErrorKind =
   | 'server'
   | 'invalid'
   | 'unauthorized'
+  /** Signed in, but the role does not allow it. */
+  | 'forbidden'
   | 'locked'
   | 'conflict'
   /** Too many requests in a short time (photo endpoints). */
@@ -115,12 +121,15 @@ async function request<T>(
     }
     // 429 means a sign-in lockout on /auth, and a rate limit on the photo endpoints.
     if (response.status === 429) throw new ApiError(path.startsWith('/auth') ? 'locked' : 'tooMany', 429, text);
+    if (response.status === 403) throw new ApiError('forbidden', 403, text);
+    if (response.status === 400) throw new ApiError('invalid', 400, text);
     if (response.status === 413) throw new ApiError('tooLarge', 413, text);
     if (response.status === 409) throw new ApiError('conflict', 409, text);
     if (response.status === 404) throw new ApiError('notFound', 404, text);
     if (response.status === 422) throw new ApiError('invalid', 422, text);
     throw new ApiError('server', response.status, text);
   }
+  if (response.status === 204) return undefined as T;
   if (data === null) throw new ApiError('server', response.status, 'Response was not JSON');
   // Trust point: our own backend's JSON matches the models in ./types.
   return data as T;
@@ -205,6 +214,45 @@ export const api = {
   /** GET /auth/me: check a saved session is still valid. */
   me(): Promise<StaffUser> {
     return request('/auth/me');
+  },
+
+  /** POST /auth/password: change your own password. */
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return request('/auth/password', {
+      method: 'POST',
+      json: { current_password: currentPassword, new_password: newPassword },
+    });
+  },
+
+  /** GET /auth/activity: newest first; officers get only their own rows. */
+  activity(filters: { username?: string; action?: string } = {}): Promise<StaffAction[]> {
+    const params = new URLSearchParams({ limit: '200' });
+    if (filters.username) params.set('username', filters.username);
+    if (filters.action) params.set('action', filters.action);
+    return request(`/auth/activity?${params.toString()}`);
+  },
+
+  /** GET /auth/staff (admin) */
+  staffAccounts(): Promise<StaffAccount[]> {
+    return request('/auth/staff');
+  },
+
+  /** POST /auth/staff (admin): the new account and its temporary password. */
+  createStaffAccount(account: { username: string; full_name: string; role: StaffRole }): Promise<TemporaryPassword> {
+    return request('/auth/staff', { method: 'POST', json: account });
+  },
+
+  /** PATCH /auth/staff/{username} (admin) */
+  updateStaffAccount(
+    username: string,
+    changes: { full_name?: string; role?: StaffRole; is_active?: boolean },
+  ): Promise<StaffAccount> {
+    return request(`/auth/staff/${encodeURIComponent(username)}`, { method: 'PATCH', json: changes });
+  },
+
+  /** POST /auth/staff/{username}/reset-password (admin) */
+  resetStaffPassword(username: string): Promise<TemporaryPassword> {
+    return request(`/auth/staff/${encodeURIComponent(username)}/reset-password`, { method: 'POST' });
   },
 
   /** GET /customers: every household. */

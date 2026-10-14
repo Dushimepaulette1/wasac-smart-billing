@@ -2,8 +2,12 @@
 /**
  * Kinyarwanda review sheet (CSV, opens in Excel / Google Sheets).
  *
- *   npm run i18n:review            write docs/i18n/kinyarwanda_review.csv from en.json + rw.json
- *   npm run i18n:review -- apply   copy every filled "correction" cell into rw.json
+ *   npm run i18n:review                    write docs/i18n/kinyarwanda_review.csv from en.json + rw.json
+ *   npm run i18n:review -- new <name> <keys...|prefix.*>
+ *                                          write docs/i18n/kinyarwanda_review_<name>.csv with only those
+ *                                          strings (added later, so the main sheet is not overwritten)
+ *   npm run i18n:review -- apply           copy every filled "correction" cell, from every
+ *                                          docs/i18n/kinyarwanda_review*.csv, into rw.json
  *
  * Columns: key, screen, english, kinyarwanda (current), correction (empty: fill in to change),
  * placeholders. A correction must keep the same {placeholders} as the English text, or it is refused.
@@ -13,7 +17,8 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const localeDir = path.join(root, 'src', 'i18n', 'locales');
-const sheet = path.join(root, '..', 'docs', 'i18n', 'kinyarwanda_review.csv');
+const sheetDir = path.join(root, '..', 'docs', 'i18n');
+const sheet = path.join(sheetDir, 'kinyarwanda_review.csv');
 const read = (name) => JSON.parse(fs.readFileSync(path.join(localeDir, `${name}.json`), 'utf8'));
 
 const SCREENS = {
@@ -50,8 +55,27 @@ function parseCsv(text) {
 const en = read('en');
 const rw = read('rw');
 
+function writeSheet(file, keys) {
+  const lines = [['key', 'screen', 'english', 'kinyarwanda', 'correction', 'placeholders'].join(',')];
+  for (const key of keys) {
+    const english = en[key];
+    const screen = SCREENS[key.split('.')[0]] || '';
+    lines.push([key, screen, english, rw[key] || '', '', placeholders(english)].map(cell).join(','));
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `﻿${lines.join('\n')}\n`); // BOM so Excel reads UTF-8
+  console.log(`Wrote ${lines.length - 1} strings to ${path.relative(path.join(root, '..'), file)}`);
+}
+
 if (process.argv[2] === 'apply') {
-  const [header, ...rows] = parseCsv(fs.readFileSync(sheet, 'utf8').replace(/^﻿/, ''));
+  const sheets = fs.readdirSync(sheetDir).filter((f) => /^kinyarwanda_review.*\.csv$/.test(f));
+  const rows = [];
+  let header = [];
+  for (const f of sheets) {
+    const [h, ...r] = parseCsv(fs.readFileSync(path.join(sheetDir, f), 'utf8').replace(/^﻿/, ''));
+    header = h;
+    rows.push(...r);
+  }
   const col = (name) => header.indexOf(name);
   let changed = 0;
   const refused = [];
@@ -65,13 +89,14 @@ if (process.argv[2] === 'apply') {
   fs.writeFileSync(path.join(localeDir, 'rw.json'), `${JSON.stringify(rw, null, 2)}\n`);
   console.log(`${changed} corrections applied to rw.json.`);
   if (refused.length) console.log(`Refused (placeholders differ from English): ${refused.join(', ')}`);
-} else {
-  const lines = [['key', 'screen', 'english', 'kinyarwanda', 'correction', 'placeholders'].join(',')];
-  for (const [key, english] of Object.entries(en)) {
-    const screen = SCREENS[key.split('.')[0]] || '';
-    lines.push([key, screen, english, rw[key] || '', '', placeholders(english)].map(cell).join(','));
+} else if (process.argv[2] === 'new') {
+  const [name, ...patterns] = process.argv.slice(3);
+  if (!name || !/^[a-z0-9_-]+$/.test(name) || patterns.length === 0) {
+    console.error('Usage: npm run i18n:review -- new <name> <key|prefix.*> ...');
+    process.exit(1);
   }
-  fs.mkdirSync(path.dirname(sheet), { recursive: true });
-  fs.writeFileSync(sheet, `﻿${lines.join('\n')}\n`); // BOM so Excel reads UTF-8 (ŕ, ö, …)
-  console.log(`Wrote ${lines.length - 1} strings to ${path.relative(path.join(root, '..'), sheet)}`);
+  const wanted = (key) => patterns.some((p) => (p.endsWith('*') ? key.startsWith(p.slice(0, -1)) : key === p));
+  writeSheet(path.join(sheetDir, `kinyarwanda_review_${name}.csv`), Object.keys(en).filter(wanted));
+} else {
+  writeSheet(sheet, Object.keys(en));
 }

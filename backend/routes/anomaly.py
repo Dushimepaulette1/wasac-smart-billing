@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from anomaly.db_models import FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, AnomalyFlag
 from anomaly.review import ReviewError, resolve_flag
 from anomaly.service import notify_household, score_submission
+from auth.audit import record
 from auth.models import StaffUser
 from auth.routes import require_staff
 from database import Customer, Reading, get_db
@@ -67,9 +68,10 @@ async def list_flags(
 @router.patch("/flags/{flag_id}/resolve", response_model=ResolveFlagResponse)
 async def resolve(
     flag_id: int,
+    request: Request,
     body: Optional[ResolveFlagRequest] = None,
     db: Session = Depends(get_db),
-    _staff: StaffUser = Depends(require_staff),
+    staff: StaffUser = Depends(require_staff),
 ):
     """Close a flag. For a pending reading send {"outcome": "accept"} or {"outcome": "reject"}."""
     flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == flag_id).first()
@@ -80,6 +82,8 @@ async def resolve(
     except ReviewError as e:
         db.rollback()
         raise HTTPException(status_code=e.status_code, detail=e.detail)
+    record(db, staff.username, result.outcome or "close", target=f"flag {flag.id}",
+           detail=f"{flag.household_id} {flag.anomaly_type}", request=request)
     db.refresh(flag)
     return ResolveFlagResponse(
         **AnomalyFlagOut.model_validate(flag).model_dump(exclude={"reading_status"}),
