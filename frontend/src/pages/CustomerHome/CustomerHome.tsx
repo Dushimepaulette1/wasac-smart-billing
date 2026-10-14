@@ -14,13 +14,18 @@ import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadHome from '../../household/loadHome';
-import { CUSTOMER_ID, METER_ID } from '../../config';
+import { useAccount, useHousehold } from '../../household/session';
+import { formatRwandanPhone } from '../../utils/phone';
 import styles from './CustomerHome.module.css';
 
 function CustomerHome() {
+  const account = useAccount();
+  const household = useHousehold();
+  const customerId = account.customer_id;
+  const meterId = account.meter_id ?? '';
   const { t, rwf, date, month } = useI18n();
   const navigate = useNavigate();
-  const home = useRequest(loadHome, { immediate: true, args: [CUSTOMER_ID, METER_ID] });
+  const home = useRequest(loadHome, { immediate: true, args: [customerId, meterId] });
 
   if (home.status !== 'success') {
     return (
@@ -117,6 +122,22 @@ function CustomerHome() {
             </div>
           )}
         </dl>
+      </section>
+
+      <section className={`panel ${styles.signedIn}`} aria-label={t('home.signedInTitle')}>
+        <p className="text-small">
+          {t('home.signedInAs', { phone: formatRwandanPhone(household.phone) })}
+        </p>
+        <div className={styles.signedInActions}>
+          {household.accounts.length > 1 && (
+            <Button variant="text" onClick={() => navigate('/sign-in?switch=1')}>
+              {t('home.switchMeter')}
+            </Button>
+          )}
+          <Button variant="text" onClick={household.signOut}>
+            {t('home.signOut')}
+          </Button>
+        </div>
       </section>
     </Screen>
   );

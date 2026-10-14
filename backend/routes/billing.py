@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from auth.household import Access, household_access
 from auth.models import StaffUser
 from auth.routes import require_staff
 from database import get_db, Customer, Bill, Reading, Meter
@@ -52,8 +53,9 @@ async def list_customers(db: Session = Depends(get_db), _staff: StaffUser = Depe
 
 
 @router.get("/customers/{customer_id}", response_model=CustomerInfo)
-async def get_customer(customer_id: str, db: Session = Depends(get_db)):
-    """One household, for the household app (which no longer needs the full list)."""
+async def get_customer(customer_id: str, db: Session = Depends(get_db), access: Access = Depends(household_access)):
+    """One household: its own account, or any for staff."""
+    access.require_customer(customer_id)
     customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -61,7 +63,8 @@ async def get_customer(customer_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/customers/{customer_id}/bills")
-async def customer_bills(customer_id: str, db: Session = Depends(get_db)):
+async def customer_bills(customer_id: str, db: Session = Depends(get_db), access: Access = Depends(household_access)):
+    access.require_customer(customer_id)
     customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -86,9 +89,9 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/bills/{bill_id}/pay")
-async def pay_bill(bill_id: int, db: Session = Depends(get_db)):
+async def pay_bill(bill_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
     bill = db.query(Bill).filter(Bill.bill_id == bill_id).first()
-    if not bill:
+    if not bill or not access.owns_customer(bill.customer_id):
         raise HTTPException(status_code=404, detail="Bill not found")
     if bill.payment_status == "paid":
         return {"message": "Bill already paid", "bill_id": bill_id}

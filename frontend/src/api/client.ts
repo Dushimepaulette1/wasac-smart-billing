@@ -20,6 +20,10 @@ import type {
   PhotoSubmitResponse,
   ResolveFlagResponse,
   ReviewItem,
+  CodeSent,
+  HouseholdAccount,
+  HouseholdSession,
+  PhotoEvidence,
   StaffAccount,
   StaffAction,
   StaffRole,
@@ -46,14 +50,27 @@ export type ApiErrorKind =
   /** Upload over the size limit. */
   | 'tooLarge';
 
-/** Staff session token, sent on every request while signed in. */
-let staffToken: string | null = null;
-/** Called when the backend rejects the token (expired or revoked). */
-let onUnauthorized: (() => void) | null = null;
+/** Who a request is made as: the household signed in on this phone, or a staff member. */
+type Auth = 'household' | 'staff';
+
+interface Session {
+  token: string | null;
+  /** Called when the backend rejects the token (expired or revoked). */
+  onExpired: (() => void) | null;
+}
+
+/** One token per kind of session: a staff member may use the same browser as a household. */
+const sessions: Record<Auth, Session> = {
+  household: { token: null, onExpired: null },
+  staff: { token: null, onExpired: null },
+};
 
 export function setStaffToken(token: string | null, onExpired?: () => void): void {
-  staffToken = token;
-  onUnauthorized = onExpired ?? null;
+  sessions.staff = { token, onExpired: onExpired ?? null };
+}
+
+export function setHouseholdToken(token: string | null, onExpired?: () => void): void {
+  sessions.household = { token, onExpired: onExpired ?? null };
 }
 
 export class ApiError extends Error {
@@ -76,16 +93,19 @@ interface RequestOptions {
   json?: unknown;
   body?: BodyInit;
   timeout?: number;
+  /** Which session's token to send; household unless the endpoint is staff only. */
+  auth?: Auth;
 }
 
 async function request<T>(
   path: string,
-  { method = 'GET', json, body, timeout = REQUEST_TIMEOUT_MS }: RequestOptions = {},
+  { method = 'GET', json, body, timeout = REQUEST_TIMEOUT_MS, auth = 'household' }: RequestOptions = {},
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   const headers: Record<string, string> = {};
-  if (staffToken) headers.Authorization = `Bearer ${staffToken}`;
+  const session = sessions[auth];
+  if (session.token) headers.Authorization = `Bearer ${session.token}`;
   const init: RequestInit = { method, signal: controller.signal, headers };
   if (json !== undefined) {
     headers['Content-Type'] = 'application/json';
@@ -116,7 +136,7 @@ async function request<T>(
     const detail = (data as ApiErrorBody | null)?.detail;
     const text = typeof detail === 'string' ? detail : undefined;
     if (response.status === 401) {
-      if (staffToken) onUnauthorized?.();
+      if (session.token) session.onExpired?.();
       throw new ApiError('unauthorized', 401, text);
     }
     // 429 means a sign-in lockout on /auth, and a rate limit on the photo endpoints.
@@ -164,10 +184,13 @@ export const api = {
     customerId,
     meterId,
     cells,
+    evidence,
   }: {
     customerId: string;
     meterId: string;
     cells: Cells;
+    /** Where and how the photo was taken, for the location check. */
+    evidence?: PhotoEvidence;
   }): Promise<ConfirmReadingResponse> {
     return request('/confirm-reading', {
       method: 'POST',
@@ -175,8 +198,29 @@ export const api = {
         customer_id: customerId,
         meter_id: meterId,
         confirmed_reading: cellsToCubicMetreString(cells),
+        photo_source: evidence?.photoSource ?? 'camera',
+        location: evidence?.location
+          ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
+          : null,
       },
     });
+  },
+
+  // ---- Household sign-in --------------------------------------------------
+
+  /** POST /household/request-code: the same answer whether or not the number is registered. */
+  requestCode(phone: string): Promise<CodeSent> {
+    return request('/household/request-code', { method: 'POST', json: { phone } });
+  },
+
+  /** POST /household/verify */
+  verifyCode(phone: string, code: string): Promise<HouseholdSession> {
+    return request('/household/verify', { method: 'POST', json: { phone, code } });
+  },
+
+  /** GET /household/me: check a saved session; the accounts on this phone. */
+  householdMe(): Promise<HouseholdAccount[]> {
+    return request('/household/me');
   },
 
   /** POST /calculate-bill: tariff breakdown for a volume. */
@@ -208,18 +252,19 @@ export const api = {
 
   /** POST /auth/login */
   login(username: string, password: string): Promise<LoginResponse> {
-    return request('/auth/login', { method: 'POST', json: { username, password } });
+    return request('/auth/login', { method: 'POST', json: { username, password }, auth: 'staff' });
   },
 
   /** GET /auth/me: check a saved session is still valid. */
   me(): Promise<StaffUser> {
-    return request('/auth/me');
+    return request('/auth/me', { auth: 'staff' });
   },
 
   /** POST /auth/password: change your own password. */
   changePassword(currentPassword: string, newPassword: string): Promise<void> {
     return request('/auth/password', {
       method: 'POST',
+      auth: 'staff',
       json: { current_password: currentPassword, new_password: newPassword },
     });
   },
@@ -229,17 +274,17 @@ export const api = {
     const params = new URLSearchParams({ limit: '200' });
     if (filters.username) params.set('username', filters.username);
     if (filters.action) params.set('action', filters.action);
-    return request(`/auth/activity?${params.toString()}`);
+    return request(`/auth/activity?${params.toString()}`, { auth: 'staff' });
   },
 
   /** GET /auth/staff (admin) */
   staffAccounts(): Promise<StaffAccount[]> {
-    return request('/auth/staff');
+    return request('/auth/staff', { auth: 'staff' });
   },
 
   /** POST /auth/staff (admin): the new account and its temporary password. */
   createStaffAccount(account: { username: string; full_name: string; role: StaffRole }): Promise<TemporaryPassword> {
-    return request('/auth/staff', { method: 'POST', json: account });
+    return request('/auth/staff', { method: 'POST', json: account, auth: 'staff' });
   },
 
   /** PATCH /auth/staff/{username} (admin) */
@@ -247,33 +292,34 @@ export const api = {
     username: string,
     changes: { full_name?: string; role?: StaffRole; is_active?: boolean },
   ): Promise<StaffAccount> {
-    return request(`/auth/staff/${encodeURIComponent(username)}`, { method: 'PATCH', json: changes });
+    return request(`/auth/staff/${encodeURIComponent(username)}`, { method: 'PATCH', json: changes, auth: 'staff' });
   },
 
   /** POST /auth/staff/{username}/reset-password (admin) */
   resetStaffPassword(username: string): Promise<TemporaryPassword> {
-    return request(`/auth/staff/${encodeURIComponent(username)}/reset-password`, { method: 'POST' });
+    return request(`/auth/staff/${encodeURIComponent(username)}/reset-password`, { method: 'POST', auth: 'staff' });
   },
 
   /** GET /customers: every household. */
   listCustomers(): Promise<CustomerInfo[]> {
-    return request('/customers');
+    return request('/customers', { auth: 'staff' });
   },
 
   /** GET /api/anomaly/flags: every household's flags. */
   listFlags(status?: 'open' | 'resolved'): Promise<AnomalyFlag[]> {
-    return request(`/api/anomaly/flags${status ? `?status=${status}` : ''}`);
+    return request(`/api/anomaly/flags${status ? `?status=${status}` : ''}`, { auth: 'staff' });
   },
 
   /** GET /api/anomaly/review-queue: held readings with their context. */
   reviewQueue(): Promise<ReviewItem[]> {
-    return request('/api/anomaly/review-queue');
+    return request('/api/anomaly/review-queue', { auth: 'staff' });
   },
 
   /** PATCH /api/anomaly/flags/{id}/resolve */
   resolveFlag(flagId: number, outcome: 'accept' | 'reject'): Promise<ResolveFlagResponse> {
     return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
       method: 'PATCH',
+      auth: 'staff',
       json: { outcome },
     });
   },

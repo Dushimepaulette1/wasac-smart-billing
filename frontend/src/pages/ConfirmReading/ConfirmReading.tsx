@@ -24,7 +24,7 @@ import { useSubmission } from '../../household/submission';
 import { refreshHouseholdFlags } from '../../household/status';
 import { isComplete } from '../../utils/reading';
 import { api } from '../../api/client';
-import { CUSTOMER_ID, METER_ID } from '../../config';
+import { useAccount } from '../../household/session';
 import styles from './ConfirmReading.module.css';
 
 /**
@@ -43,6 +43,9 @@ function withBold(template: string, name: string, value: string): ReactNode {
 }
 
 function ConfirmReading() {
+  const account = useAccount();
+  const customerId = account.customer_id;
+  const meterId = account.meter_id ?? '';
   const { t } = useI18n();
   const navigate = useNavigate();
   const submission = useSubmission();
@@ -76,7 +79,7 @@ function ConfirmReading() {
     setState('sending');
     setError(null);
     try {
-      const result = await api.confirmReading({ customerId: CUSTOMER_ID, meterId: METER_ID, cells });
+      const result = await api.confirmReading({ customerId, meterId, cells, evidence: submission.evidence ?? undefined });
       refreshHouseholdFlags(); // a new message or a waiting reading may follow
       if (result.bill_id) {
         leaving.current = true;

@@ -10,10 +10,17 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { AnomalyFlag, AnomalyType } from '../api/types';
-import { METER_ID } from '../config';
+import { currentAccount } from './session';
 
 /** Types a household gets a message for; NORMAL and BASELINE need none. */
-export const SHOWN_TYPES: readonly AnomalyType[] = ['SPIKE', 'SUSTAINED_HIGH', 'MISREAD_SUSPECTED', 'METER_STUCK', 'UNUSUAL'];
+export const SHOWN_TYPES: readonly AnomalyType[] = [
+  'SPIKE',
+  'SUSTAINED_HIGH',
+  'MISREAD_SUSPECTED',
+  'METER_STUCK',
+  'UNUSUAL',
+  'LOCATION_CHECK',
+];
 
 const SEEN_KEY = 'wasac.messagesSeenAt';
 
@@ -58,11 +65,13 @@ export function unreadCount(flags: readonly AnomalyFlag[], since = seenAt()): nu
 
 /** One request shared by the header and the bottom bar, reused for a short while. */
 const SHARE_MS = 15_000;
-let shared: { at: number; request: Promise<AnomalyFlag[]> } | null = null;
+let shared: { at: number; meterId: string; request: Promise<AnomalyFlag[]> } | null = null;
 
 function loadFlags(): Promise<AnomalyFlag[]> {
-  if (!shared || Date.now() - shared.at > SHARE_MS) {
-    shared = { at: Date.now(), request: api.getHouseholdFlags(METER_ID) };
+  const meterId = currentAccount()?.meter_id;
+  if (!meterId) return Promise.resolve([]); // signed out: nothing to count
+  if (!shared || shared.meterId !== meterId || Date.now() - shared.at > SHARE_MS) {
+    shared = { at: Date.now(), meterId, request: api.getHouseholdFlags(meterId) };
     shared.request.catch(() => {
       shared = null; // a failure is not reused
     });

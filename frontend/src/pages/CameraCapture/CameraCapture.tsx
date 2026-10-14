@@ -19,6 +19,7 @@ import Notice from '../../components/Notice/Notice';
 import Progress from '../../components/Progress/Progress';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { useI18n } from '../../i18n/I18nProvider';
+import { usePosition } from '../../household/position';
 import { useSubmission } from '../../household/submission';
 import { frameToBlob, frameToDataUrl, fileToDataUrl, dataUrlToBlob } from '../../household/photo';
 import { AIM_HINT, liveHint, messageKey, photoOutcome, thumbnailUrl, type PhotoOutcome } from '../../household/guidance';
@@ -98,6 +99,7 @@ function CameraCapture() {
   const lastTipRef = useRef<string | null>(null);
 
   const showPreview = submission.photo && send !== 'idle';
+  const { position, status: positionStatus } = usePosition(!showPreview);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -199,7 +201,7 @@ function CameraCapture() {
     const video = videoRef.current;
     const photo = video ? frameToDataUrl(video) : null;
     if (!photo) return;
-    submission.setPhoto(photo);
+    submission.setPhoto(photo, { photoSource: 'camera', location: position });
     stopCamera();
     sendPhoto(photo);
   };
@@ -211,7 +213,7 @@ function CameraCapture() {
     if (!file) return;
     try {
       const photo = await fileToDataUrl(file);
-      submission.setPhoto(photo);
+      submission.setPhoto(photo, { photoSource: 'upload', location: position });
       stopCamera();
       sendPhoto(photo);
     } catch {
@@ -386,6 +388,7 @@ function CameraCapture() {
             />
             <span className={styles.saveDataLabel}>{t('camera.saveData')}</span>
           </label>
+          {positionStatus === 'off' && <p className={`${styles.locationOff} text-small`}>{t('camera.locationOff')}</p>}
         </>
       )}
 

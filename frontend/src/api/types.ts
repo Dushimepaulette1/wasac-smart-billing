@@ -22,7 +22,9 @@ export type AnomalyType =
   | 'SPIKE'
   | 'SUSTAINED_HIGH'
   | 'METER_STUCK'
-  | 'UNUSUAL';
+  | 'UNUSUAL'
+  /** The photo's location or source needs an officer's look (anomaly/location.py). */
+  | 'LOCATION_CHECK';
 
 /** anomaly/db_models.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';
@@ -308,6 +310,44 @@ export interface StaffUser {
   username: string;
   full_name: string;
   role: string;
+}
+
+// ---------------------------------------------------------------------------
+// Household sign-in (auth/household.py)
+// ---------------------------------------------------------------------------
+
+/** CodeSent */
+export interface CodeSent {
+  /** The number as the backend reads it: +2507XXXXXXXX. */
+  phone: string;
+  expires_in: number;
+  resend_after: number;
+  /** Only for DEMO- households while SMS is not wired: the code, to show on screen. */
+  demo_code: string | null;
+}
+
+/** HouseholdAccount: one account registered to the signed-in phone. */
+export interface HouseholdAccount {
+  customer_id: string;
+  name: string;
+  meter_id: string | null;
+  sector: string | null;
+  is_demo: boolean;
+}
+
+/** HouseholdSession */
+export interface HouseholdSession {
+  access_token: string;
+  /** Unix seconds. */
+  expires_at: number;
+  phone: string;
+  accounts: HouseholdAccount[];
+}
+
+/** Where and how the meter photo was taken (anomaly/location.py). */
+export interface PhotoEvidence {
+  photoSource: 'camera' | 'upload';
+  location: { lat: number; lng: number; accuracyM: number | null } | null;
 }
 
 export type StaffRole = 'officer' | 'supervisor' | 'admin';

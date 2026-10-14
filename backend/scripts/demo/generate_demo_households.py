@@ -2,6 +2,12 @@
 
     python scripts/demo/generate_demo_households.py                # writes the demo CSV
     python scripts/demo/generate_demo_households.py --load-db      # also inserts DEMO- rows into the DB
+    python scripts/demo/generate_demo_households.py --update-contacts   # phones/locations of existing DEMO- rows
+
+Sign-in: DEMO-MTR-001 uses phone 0700 000 001, DEMO-MTR-002 uses 0700 000 002, and so on;
+the last two meters share one number, to show choosing between meters. The 07000000xx numbers
+are not real Rwandan mobiles, and demo sign-in codes are shown on screen instead of sent.
+DEMO-MTR-002 has a location on file (Kacyiru, Kigali), so its readings show the location check.
 
 Everything produced here is synthetic and prefixed "DEMO-". Do not report results computed on it.
 """
@@ -16,6 +22,37 @@ from _data import DEMO_BANNER  # noqa: E402
 from anomaly.demo_data import generate_demo_histories  # noqa: E402
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "output" / "DEMO_households.csv"
+DEMO_GPS = {"DEMO-MTR-002": (-1.9441, 30.0619)}
+
+
+def demo_phone(hid: str, households: int) -> str:
+    n = int(hid[-3:])
+    if households >= 2 and n == households:
+        n -= 1  # the last two meters share a number
+    return f"+250700000{n:03d}"
+
+
+def update_contacts(histories) -> int:
+    """Set the sign-in phone and location of DEMO- rows already in the database. Touches nothing else."""
+    from database import Customer, Meter, SessionLocal
+
+    db = SessionLocal()
+    updated = 0
+    try:
+        for hid in histories:
+            if not hid.startswith("DEMO-"):
+                continue
+            customer = db.query(Customer).filter(Customer.meter_id == hid).first()
+            meter = db.query(Meter).filter(Meter.meter_id == hid).first()
+            if not customer or not meter or not customer.customer_id.startswith("DEMO-"):
+                continue
+            customer.phone = demo_phone(hid, len(histories))
+            meter.gps_lat, meter.gps_lng = DEMO_GPS.get(hid, (None, None))
+            updated += 1
+        db.commit()
+    finally:
+        db.close()
+    return updated
 
 
 def write_csv(histories, path: Path) -> None:
@@ -41,11 +78,13 @@ def load_into_db(histories) -> int:
                 continue
             customer_id = hid.replace("MTR", "CUST")
             # meters and customers reference each other, so link them after both rows exist.
-            meter = Meter(meter_id=hid, last_reading=points[-1].reading_m3, last_reading_date=points[-1].date)
+            lat, lng = DEMO_GPS.get(hid, (None, None))
+            meter = Meter(meter_id=hid, last_reading=points[-1].reading_m3, last_reading_date=points[-1].date,
+                          gps_lat=lat, gps_lng=lng)
             db.add(meter)
             db.flush()
             db.add(Customer(customer_id=customer_id, name=f"DEMO Household {hid[-3:]}",
-                            phone="+250700000000", meter_id=hid, sector="DEMO"))
+                            phone=demo_phone(hid, len(histories)), meter_id=hid, sector="DEMO"))
             db.flush()
             meter.customer_id = customer_id
             prev = None
@@ -69,6 +108,8 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--load-db", action="store_true", help="Also insert DEMO- meters/readings into DATABASE_URL")
+    parser.add_argument("--update-contacts", action="store_true",
+                        help="Set sign-in phones and locations on DEMO- rows already in DATABASE_URL")
     args = parser.parse_args()
 
     print(DEMO_BANNER)
@@ -77,6 +118,8 @@ def main() -> None:
     print(f"Wrote {len(histories)} DEMO households x {args.readings} readings to {args.out}")
     if args.load_db:
         print(f"Inserted {load_into_db(histories)} DEMO households into the database (existing ones skipped).")
+    if args.update_contacts:
+        print(f"Updated the phone and location of {update_contacts(histories)} DEMO households.")
 
 
 if __name__ == "__main__":

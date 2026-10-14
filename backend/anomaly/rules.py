@@ -14,6 +14,9 @@ class AnomalyType(str, Enum):
     SUSTAINED_HIGH = "SUSTAINED_HIGH"
     METER_STUCK = "METER_STUCK"
     UNUSUAL = "UNUSUAL"
+    # Not from the rules or the model: the photo's location or source needs a person to check it
+    # (anomaly/location.py).
+    LOCATION_CHECK = "LOCATION_CHECK"
 
 
 def apply_rules(features: Optional[SubmissionFeatures], config: AnomalyConfig) -> Optional[AnomalyType]:

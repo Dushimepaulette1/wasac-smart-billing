@@ -15,7 +15,7 @@ import Icon from '../Icon/Icon';
 import SiteHeader from '../SiteHeader/SiteHeader';
 import HouseholdNav from '../HouseholdNav/HouseholdNav';
 import { useI18n } from '../../i18n/I18nProvider';
-import { IS_DEMO_HOUSEHOLD } from '../../config';
+import { useHousehold } from '../../household/session';
 import styles from './Screen.module.css';
 
 interface ScreenProps {
@@ -38,6 +38,7 @@ interface ScreenProps {
 function Screen({ title, step, lede, back, action, nav = false, immersive = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const isDemo = useHousehold().account?.is_demo ?? false;
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Move focus to the new page's title so screen readers announce it,
@@ -61,7 +62,7 @@ function Screen({ title, step, lede, back, action, nav = false, immersive = fals
 
       <main className={styles.main}>
         <div className={styles.head}>
-          {IS_DEMO_HOUSEHOLD && <p className={`${styles.demo} text-small`}>{t('demo.label')}</p>}
+          {isDemo && <p className={`${styles.demo} text-small`}>{t('demo.label')}</p>}
           {back && (
             <button type="button" className={styles.back} onClick={goBack}>
               <Icon name="back" size={20} />

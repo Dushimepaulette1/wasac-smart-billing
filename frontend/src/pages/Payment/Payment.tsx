@@ -22,7 +22,7 @@ import type { BillSummary } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
 import { localDateIso } from '../../i18n/format';
 import { formatRwandanPhone } from '../../utils/phone';
-import { CUSTOMER_ID } from '../../config';
+import { useAccount } from '../../household/session';
 import styles from './Payment.module.css';
 
 interface PaymentView {
@@ -45,6 +45,8 @@ async function loadPayment(customerId: string, billId: number): Promise<PaymentV
 }
 
 function Payment() {
+  const account = useAccount();
+  const customerId = account.customer_id;
   const { t, rwf, month, date } = useI18n();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -56,7 +58,7 @@ function Payment() {
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
-    run(CUSTOMER_ID, billId);
+    run(customerId, billId);
   }, [run, billId]);
 
   if (load.status !== 'success') {

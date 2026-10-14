@@ -9,6 +9,7 @@ from anomaly.review import ReviewError, resolve_flag
 from anomaly.service import notify_household, score_submission
 from auth.audit import record
 from auth.models import StaffUser
+from auth.household import household_access
 from auth.routes import require_staff
 from database import Customer, Reading, get_db
 from schemas import (
@@ -25,7 +26,9 @@ router = APIRouter(prefix="/api/anomaly")
 
 
 @router.post("/score", response_model=AnomalyResultSchema)
-async def score(body: AnomalyScoreRequest, db: Session = Depends(get_db)):
+async def score(
+    body: AnomalyScoreRequest, db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)
+):
     try:
         result = score_submission(
             db, body.household_id, body.reading_digits, body.reading_date or datetime.utcnow()
@@ -45,7 +48,9 @@ async def list_flags(
     db: Session = Depends(get_db),
 ):
     # A household reads its own flags; listing every household's is staff only.
-    if not household_id:
+    if household_id:
+        household_access(authorization, db).require_meter(household_id)
+    else:
         require_staff(authorization, db)
     query = db.query(AnomalyFlag)
     if household_id:

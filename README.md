@@ -103,8 +103,6 @@ Optional environment variables (in `frontend/.env`):
 | Variable | Default | Meaning |
 |---|---|---|
 | `VITE_API_URL` | empty (use the dev proxy) | Backend base URL for a deployed build |
-| `VITE_CUSTOMER_ID` | `CUST001` | Household shown until sign-in exists |
-| `VITE_METER_ID` | `MTR001` | That household's meter |
 
 ---
 
@@ -278,8 +276,35 @@ python scripts/create_officer.py <username> --name "Full Name" --role admin
 Every sign-in (and failed attempt), review decision and account change is recorded in the
 `staff_actions` table and shown under **Activity**.
 
-Demo household (deployments): **DEMO-CUST-001** / meter **DEMO-MTR-001**, loaded by
-`scripts/demo/generate_demo_households.py`; the app shows a "Demo data" label for it.
+## Household sign-in and the location check
+
+Households sign in with the phone number on their WASAC account and a 6-digit code sent by SMS
+(no password). The session lasts 30 days on that phone. A household sees only the accounts on
+its own number; staff see all. Codes are stored only as a keyed hash, work once, for 10 minutes
+and 5 tries; requests are limited per number and per IP, and the answer is the same whether or
+not a number is registered.
+
+When a household confirms a reading, the app sends where the phone was when the photo was taken
+and whether it came from the camera or the gallery. Compared with the meter's location on file
+(`backend/anomaly/location.py`), a photo more than 150 m away (allowing for the phone's
+accuracy), with no location, with a very rough location, or chosen from the gallery is **held
+for an officer** (type `LOCATION_CHECK`), who sees why in the review queue and can accept it.
+Readings are never rejected for this alone; location can be faked, so it decides who gets a
+second look, nothing more. Meters with no location on file are not checked.
+
+| Setting (`backend/.env`) | Default | Meaning |
+|---|---|---|
+| `WASAC_AUTH_SECRET` | random at start-up | Signs sessions and code hashes; set it, or everyone is signed out on restart |
+| `OTP_SHOW_DEMO_CODES` | `1` | Show sign-in codes on screen for DEMO- households (SMS not wired yet) |
+| `LOCATION_MAX_M` | `150` | How far from the meter a photo may be taken |
+| `LOCATION_MAX_ACCURACY_M` | `500` | Rougher phone positions count as "unclear" |
+
+**Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
+"Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for
+DEMO-MTR-002, and so on to 0700 000 018; **0700 000 019** has two meters (019 and 020), to show
+choosing a meter. These are not real numbers; the code is shown on screen. DEMO-MTR-002 has a
+location on file (Kacyiru), so its readings show the location check. `--update-contacts` sets the
+phones and location on DEMO- rows already in the database.
 
 ---
 

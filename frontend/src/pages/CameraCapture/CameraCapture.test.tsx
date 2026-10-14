@@ -3,6 +3,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import CameraCapture from './CameraCapture';
 import ConfirmReading from '../ConfirmReading/ConfirmReading';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import { SubmissionProvider } from '../../household/submission';
 import { SAVE_DATA_KEY } from '../../household/saveData';
 import { jsonResponse, makeGuideFrame, makeNoMeterResponse, makePhotoResponse } from '../../test/fixtures';
@@ -62,6 +63,7 @@ function mockBackend(frames: GuidanceCode[][], photo: PhotoSubmitResponse = make
 function renderCamera() {
   return render(
     <I18nProvider locale="en">
+<TestHousehold>
       <SubmissionProvider>
         <MemoryRouter initialEntries={['/submit/camera']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
@@ -71,7 +73,8 @@ function renderCamera() {
           </Routes>
         </MemoryRouter>
       </SubmissionProvider>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 }
 

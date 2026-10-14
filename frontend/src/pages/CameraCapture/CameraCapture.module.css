@@ -87,6 +87,12 @@
   font-weight: var(--weight-bold);
 }
 
+.locationOff {
+  max-width: 760px;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
 .overlayText {
   position: absolute;
   inset: 0;

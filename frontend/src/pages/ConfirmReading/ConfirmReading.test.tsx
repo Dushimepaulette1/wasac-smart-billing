@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ConfirmReading from './ConfirmReading';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import { SubmissionProvider, type Submission } from '../../household/submission';
 import { jsonResponse, makeAnomalyResult, makeConfirmResponse } from '../../test/fixtures';
 import { normalizeReading } from '../../utils/reading';
@@ -17,10 +18,12 @@ function renderWith(fromReader: string, extra: Partial<Submission> = {}) {
     manual: false,
     crop: null,
     checkNumbers: false,
+    evidence: null,
     ...extra,
   };
   return render(
     <I18nProvider locale="en">
+<TestHousehold>
       <SubmissionProvider initial={initial}>
         <MemoryRouter
           initialEntries={['/submit/confirm']}
@@ -33,7 +36,8 @@ function renderWith(fromReader: string, extra: Partial<Submission> = {}) {
           </Routes>
         </MemoryRouter>
       </SubmissionProvider>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 }
 

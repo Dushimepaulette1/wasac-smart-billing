@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BillHistory from './BillHistory';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import { api } from '../../api/client';
 import { makeBill } from '../../test/fixtures';
 
@@ -13,10 +14,12 @@ vi.mock('../../api/client', async (importOriginal) => {
 const renderHistory = () =>
   render(
     <I18nProvider locale="en">
+<TestHousehold>
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <BillHistory />
       </MemoryRouter>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 
 describe('BillHistory', () => {

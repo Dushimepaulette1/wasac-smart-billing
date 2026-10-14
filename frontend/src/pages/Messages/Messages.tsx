@@ -19,7 +19,8 @@ import useRequest from '../../api/useRequest';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
 import { HIGH_USE_TYPES } from '../../household/loadHome';
-import { METER_ID } from '../../config';
+import { locationFinding } from '../../utils/location';
+import { useAccount } from '../../household/session';
 import { markMessagesSeen, shownMessages } from '../../household/status';
 import type { AnomalyFlag } from '../../api/types';
 import styles from './Messages.module.css';
@@ -67,6 +68,13 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
   );
 }
 
+/** What was noticed; for a location check, which reason (camera photo far away, no location, gallery photo). */
+function noticedKey(flag: AnomalyFlag): string {
+  if (flag.anomaly_type !== 'LOCATION_CHECK') return `msg.${flag.anomaly_type}.noticed`;
+  const reason = locationFinding(flag.features)?.reason ?? 'no_location';
+  return `msg.LOCATION_CHECK.${reason}`;
+}
+
 function Message({ flag }: { flag: AnomalyFlag }) {
   const { t, date } = useI18n();
   const type = flag.anomaly_type;
@@ -77,7 +85,7 @@ function Message({ flag }: { flag: AnomalyFlag }) {
     <article className={`panel ${styles.message}`}>
       <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
 
-      <p>{t(`msg.${type}.noticed`, { date: when })}</p>
+      <p>{t(noticedKey(flag), { date: when })}</p>
 
       {leak && (
         <>
@@ -97,8 +105,10 @@ function Message({ flag }: { flag: AnomalyFlag }) {
 }
 
 function Messages() {
+  const account = useAccount();
+  const meterId = account.meter_id ?? '';
   const { t } = useI18n();
-  const flags = useRequest(api.getHouseholdFlags, { immediate: true, args: [METER_ID] });
+  const flags = useRequest(api.getHouseholdFlags, { immediate: true, args: [meterId] });
   const shown = flags.status === 'success' ? shownMessages(flags.data) : [];
 
   // Everything on screen has now been seen on this device.

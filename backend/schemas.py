@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, List, Literal, Optional
 from datetime import datetime
 
@@ -41,10 +41,20 @@ class GuideFrameResponse(BaseModel):
     elapsed_ms: float
 
 
+class GeoPoint(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+    accuracy_m: Optional[float] = Field(default=None, ge=0)
+
+
 class ConfirmReadingRequest(BaseModel):
     customer_id: str
     meter_id: str
     confirmed_reading: str
+    # Where the phone was when the photo was taken; None if the household refused or there was no fix.
+    location: Optional[GeoPoint] = None
+    # "upload": chosen from the gallery, so it may be old or from elsewhere.
+    photo_source: Literal["camera", "upload"] = "camera"
 
 
 class TariffBreakdown(BaseModel):

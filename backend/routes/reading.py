@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
+from auth.household import Access, household_access, meter_for
+from anomaly.location import PhotoEvidence
 from database import get_db, Customer, Meter, _calculate_bill
 from ratelimit import MAX_UPLOAD_BYTES
 from anomaly.service import notify_household, submit_reading
@@ -34,7 +36,11 @@ async def _read_upload(file: UploadFile, limit: int) -> bytes:
 
 
 @router.post("/submit-photo", response_model=PhotoSubmitResponse)
-async def submit_photo(file: UploadFile = File(...), models: ModelRegistry = Depends(get_registry)):
+async def submit_photo(
+    file: UploadFile = File(...),
+    models: ModelRegistry = Depends(get_registry),
+    _access: Access = Depends(household_access),
+):
     """Read a meter photo. Guidance codes never block; offer_manual_entry means no reading is suggested."""
     data = await _read_upload(file, MAX_PHOTO_BYTES)
     try:
@@ -53,7 +59,11 @@ async def submit_photo(file: UploadFile = File(...), models: ModelRegistry = Dep
 
 
 @router.post("/guide-frame", response_model=GuideFrameResponse)
-async def guide_frame_route(file: UploadFile = File(...), models: ModelRegistry = Depends(get_registry)):
+async def guide_frame_route(
+    file: UploadFile = File(...),
+    models: ModelRegistry = Depends(get_registry),
+    _access: Access = Depends(household_access),
+):
     """Live framing hints for a small camera frame (640 px max): YOLO plus brightness/glare/blur."""
     data = await _read_upload(file, MAX_FRAME_BYTES)
     try:
@@ -64,9 +74,17 @@ async def guide_frame_route(file: UploadFile = File(...), models: ModelRegistry 
 
 
 @router.post("/confirm-reading", response_model=ConfirmReadingResponse)
-async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get_db)):
-    meter = db.query(Meter).filter(Meter.meter_id == body.meter_id).first()
-    if not meter:
+async def confirm_reading(
+    body: ConfirmReadingRequest,
+    db: Session = Depends(get_db),
+    access: Access = Depends(household_access),
+):
+    """A household confirms its reading (or staff enter one). A household's photo location is
+    checked against the meter's (anomaly/location.py); staff readings are not."""
+    meter = meter_for(db, access, body.meter_id)
+    access.require_customer(body.customer_id)
+    customer = db.query(Customer).filter(Customer.customer_id == body.customer_id).first()
+    if not customer or customer.meter_id != meter.meter_id:
         raise HTTPException(status_code=404, detail="Meter not found")
 
     try:
@@ -74,7 +92,16 @@ async def confirm_reading(body: ConfirmReadingRequest, db: Session = Depends(get
     except ValueError:
         raise HTTPException(status_code=422, detail="Reading must be a number")
 
-    sub = submit_reading(db, meter, body.customer_id, submitted, method="camera")
+    evidence = None
+    if access.staff is None:
+        where = body.location
+        evidence = PhotoEvidence(
+            photo_source=body.photo_source,
+            lat=where.lat if where else None,
+            lng=where.lng if where else None,
+            accuracy_m=where.accuracy_m if where else None,
+        )
+    sub = submit_reading(db, meter, body.customer_id, submitted, method="camera", evidence=evidence)
     actions = notify_household(db, sub.anomaly)
     anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
 

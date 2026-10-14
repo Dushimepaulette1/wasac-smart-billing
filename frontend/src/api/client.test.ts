@@ -33,7 +33,22 @@ describe('api', () => {
       customer_id: 'CUST001',
       meter_id: 'MTR001',
       confirmed_reading: '00464.500',
+      photo_source: 'camera',
+      location: null,
     });
+  });
+
+  it('sends where and how the photo was taken', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, { success: true }));
+    await api.confirmReading({
+      customerId: 'CUST001',
+      meterId: 'MTR001',
+      cells: normalizeReading('00464500').cells,
+      evidence: { photoSource: 'upload', location: { lat: -1.94, lng: 30.06, accuracyM: 12 } },
+    });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.photo_source).toBe('upload');
+    expect(body.location).toEqual({ lat: -1.94, lng: 30.06, accuracy_m: 12 });
   });
 
   it('reports a dropped connection as offline', async () => {
