@@ -75,21 +75,17 @@ describe('formatReading', () => {
   const cells = normalizeReading('02813450').cells;
 
   it('formats in English', () => {
-    expect(formatReading(cells, 'en')).toBe('2,813.450');
+    expect(formatReading(cells)).toBe('2,813.450');
   });
 
   it('drops leading zeros of the cubic metres but keeps all litre digits', () => {
-    expect(formatReading(normalizeReading('565846').cells, 'en')).toBe('565.846');
-    expect(formatReading(normalizeReading('00000045').cells, 'en')).toBe('0.045');
-  });
-
-  it('formats in French', () => {
-    expect(formatReading(cells, 'fr').replace(/\s/g, ' ')).toBe('2 813,450');
+    expect(formatReading(normalizeReading('565846').cells)).toBe('565.846');
+    expect(formatReading(normalizeReading('00000045').cells)).toBe('0.045');
   });
 
   it('is empty while a cell is blank', () => {
     const partial = [...cells];
     partial[3] = '';
-    expect(formatReading(partial, 'en')).toBe('');
+    expect(formatReading(partial)).toBe('');
   });
 });

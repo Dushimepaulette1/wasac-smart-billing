@@ -1,20 +1,17 @@
 import en from './locales/en.json';
 import rw from './locales/rw.json';
-import fr from './locales/fr.json';
-import { translate, TODO_MARK } from './I18nProvider';
+import { lookup, translate, TODO_MARK } from './I18nProvider';
 import { makeFormatters } from './format';
 
 describe('locale files', () => {
   it.each([
     ['rw', rw],
-    ['fr', fr],
   ])('%s has exactly the English keys (run npm run i18n:sync)', (_, messages) => {
     expect(Object.keys(messages).sort()).toEqual(Object.keys(en).sort());
   });
 
   it.each([
     ['rw', rw],
-    ['fr', fr],
   ])('%s values are a translation or the TODO mark, never empty', (_, messages) => {
     for (const value of Object.values(messages)) {
       expect(typeof value).toBe('string');
@@ -28,8 +25,13 @@ describe('locale files', () => {
 });
 
 describe('translate', () => {
-  it('falls back to English for a key still marked TODO', () => {
-    expect(translate('rw', 'action.retry')).toBe(en['action.retry']);
+  it('uses Kinyarwanda when the string is translated', () => {
+    expect(translate('rw', 'action.retry')).toBe('Ongera ugerageze');
+  });
+
+  it('falls back to English for a key still marked TODO or missing', () => {
+    expect(lookup({ 'action.retry': TODO_MARK }, 'action.retry')).toBe(en['action.retry']);
+    expect(lookup({}, 'action.retry')).toBe(en['action.retry']);
   });
 
   it('shows the key itself when it is missing everywhere', () => {
@@ -46,7 +48,7 @@ describe('translate', () => {
 });
 
 describe('formatters', () => {
-  const f = makeFormatters('en', (key) => translate('en', key));
+  const f = makeFormatters((key) => translate('en', key));
 
   it('writes money as RWF with no decimals', () => {
     expect(f.rwf(4500)).toBe('RWF 4,500');
@@ -67,8 +69,10 @@ describe('formatters', () => {
     expect(f.monthYear('2026-09-14T10:00:00')).toBe('September 2026');
   });
 
-  it('groups digits by locale for French', () => {
-    const fFr = makeFormatters('fr', (key) => translate('fr', key));
-    expect(fFr.rwf(4500).replace(/\s/g, ' ')).toBe('RWF 4 500');
+  it('writes numbers the same way in Kinyarwanda, as on WASAC bills', () => {
+    // Kinyarwanda's own convention would print "4.500" and make 565.846 m³ look like 565 thousand.
+    const fRw = makeFormatters((key) => translate('rw', key));
+    expect(fRw.rwf(4500)).toBe('RWF 4,500');
+    expect(fRw.volume(12.44)).toBe('12.4 m³');
   });
 });

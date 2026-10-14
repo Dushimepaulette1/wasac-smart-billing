@@ -48,7 +48,7 @@ function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: 
 }
 
 function BillDisplay() {
-  const { t, locale, rwf, volume, date, month } = useI18n();
+  const { t, rwf, volume, date, month } = useI18n();
   const navigate = useNavigate();
   const labels = useCounterLabels();
   const [params] = useSearchParams();
@@ -104,11 +104,11 @@ function BillDisplay() {
           <h2 id="reading-title" className="panel-title">
             {t('bill.thisReading')}
           </h2>
-          <MeterCounter cells={reading.cells} labels={labels} locale={locale} />
+          <MeterCounter cells={reading.cells} labels={labels} />
           <p className={styles.previous}>
             <span className="text-secondary">{t('bill.lastReading')}</span>
             <span className="num">
-              {formatReading(cellsFromCubicMetres(reading.previous), locale)} {labels.cubicMetres}
+              {formatReading(cellsFromCubicMetres(reading.previous))} {labels.cubicMetres}
             </span>
           </p>
         </section>

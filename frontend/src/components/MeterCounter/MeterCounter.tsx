@@ -54,7 +54,6 @@ export interface MeterCounterProps {
   autoFocus?: boolean;
   /** Show the reading as text under the counter. */
   showValue?: boolean;
-  locale?: string;
   /** Id of help text for the input. */
   describedBy?: string;
 }
@@ -67,7 +66,6 @@ function MeterCounter({
   onChange,
   autoFocus = false,
   showValue = false,
-  locale = 'en',
   describedBy,
 }: MeterCounterProps) {
   const isEdit = mode === 'edit';
@@ -83,7 +81,7 @@ function MeterCounter({
   const [focused, setFocused] = useState(false);
   const [edited, setEdited] = useState(false);
 
-  const value = formatReading(cells, locale);
+  const value = formatReading(cells);
   const spokenValue = value ? `${value} ${labels.cubicMetresLong}` : '';
 
   useEffect(() => {

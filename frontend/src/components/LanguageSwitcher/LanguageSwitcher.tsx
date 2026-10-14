@@ -1,6 +1,6 @@
 /**
  * @file LanguageSwitcher.tsx
- * @description Choose Ikinyarwanda, English or Français. Each language is
+ * @description Choose Ikinyarwanda or English. Each language is
  * named in itself, so anyone can find theirs. The choice is remembered on
  * the device by the I18nProvider.
  */

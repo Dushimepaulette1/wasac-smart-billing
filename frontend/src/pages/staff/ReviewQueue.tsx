@@ -35,7 +35,7 @@ interface Pending {
 }
 
 function DecisionPane({ item }: { item: ReviewItem }) {
-  const { t, locale, volume, date } = useI18n();
+  const { t, volume, date } = useI18n();
   const labels = useCounterLabels();
   const previous = previousReading(item.history);
   const usual = usualUse(item.history);
@@ -67,14 +67,14 @@ function DecisionPane({ item }: { item: ReviewItem }) {
             {t('staff.review.read')}
           </h3>
           {item.reading_m3 !== null ? (
-            <MeterCounter cells={cellsFromCubicMetres(item.reading_m3)} labels={labels} size="small" locale={locale} />
+            <MeterCounter cells={cellsFromCubicMetres(item.reading_m3)} labels={labels} size="small" />
           ) : (
             <p className="text-secondary">{t('staff.review.noReading')}</p>
           )}
           <dl className={styles.facts}>
             <div>
               <dt>{t('staff.review.previous')}</dt>
-              <dd>{previous !== null ? `${formatReading(cellsFromCubicMetres(previous), locale)} m³` : '–'}</dd>
+              <dd>{previous !== null ? `${formatReading(cellsFromCubicMetres(previous))} m³` : '–'}</dd>
             </div>
             <div>
               <dt>{t('staff.review.used')}</dt>

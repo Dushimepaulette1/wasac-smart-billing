@@ -17,7 +17,7 @@ interface HouseholdTableProps {
 }
 
 function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
-  const { t, rwf, volume, date, locale } = useI18n();
+  const { t, rwf, volume, date } = useI18n();
   if (households.length === 0) return <p className={styles.empty}>{t('staff.households.none')}</p>;
   return (
     <div className={styles.tableWrap}>
@@ -55,7 +55,7 @@ function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
               )}
               <td data-label={t('staff.col.lastReading')} className={styles.right}>
                 <span>
-                  {formatReading(cellsFromCubicMetres(h.last_reading), locale)} m³
+                  {formatReading(cellsFromCubicMetres(h.last_reading))} m³
                   {h.last_reading_date && <span className={styles.cellSub}>{date(h.last_reading_date)}</span>}
                 </span>
               </td>

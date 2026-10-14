@@ -2,11 +2,17 @@
  * @file format.ts
  * @description Money, volume and date formats from the design brief:
  * "RWF 4,500" (no decimals), "12.4 m³", dates DD/MM/YYYY.
- * Digit grouping and the decimal sign follow the locale; month names come
- * from the translation files so they are reviewed with everything else.
+ * Numbers look the same in every language, as on WASAC bills: comma for
+ * thousands, point for decimals. Kinyarwanda's own convention ("4.500",
+ * "565,846") would make a reading of 565.846 m³ look like 565 thousand.
+ * Month names come from the translation files so they are reviewed with
+ * everything else.
  */
 
 import type { Translate } from './I18nProvider';
+
+/** The one number format used in every language (see above). */
+export const NUMBER_LOCALE = 'en';
 
 export interface Formatters {
   /** RWF, no decimals: "RWF 4,500". */
@@ -30,9 +36,9 @@ function dateParts(iso: string | null | undefined): { y: string; m: string; d: s
   return { y, m, d };
 }
 
-export function makeFormatters(locale: string, t: Translate): Formatters {
-  const whole = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
-  const oneDecimal = new Intl.NumberFormat(locale, {
+export function makeFormatters(t: Translate): Formatters {
+  const whole = new Intl.NumberFormat(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+  const oneDecimal = new Intl.NumberFormat(NUMBER_LOCALE, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });

@@ -1,22 +1,20 @@
 /**
  * @file I18nProvider.tsx
- * @description Translation for Kinyarwanda, English and French without a
- * library. Strings live in ./locales/{rw,en,fr}.json as flat keys.
+ * @description Translation for Kinyarwanda (the default) and English, without
+ * a library. Strings live in ./locales/{rw,en}.json as flat keys.
  *
- * Kinyarwanda and French strings are "TODO: translate" until reviewed by a
- * person (no machine translation). Until then those keys fall back to
- * English, so the app stays usable. `npm run i18n:sync` adds new English
- * keys to the other files.
+ * A Kinyarwanda string marked "TODO: translate" falls back to English, so the
+ * app stays usable while a new string waits for its translation.
+ * `npm run i18n:sync` adds new English keys to rw.json with that mark.
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import en from './locales/en.json';
 import rw from './locales/rw.json';
-import fr from './locales/fr.json';
 import { makeFormatters, type Formatters } from './format';
 
 export const TODO_MARK = 'TODO: translate';
-export const LOCALES = ['rw', 'en', 'fr'] as const;
+export const LOCALES = ['rw', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 /** Values for {placeholders} in a string. */
@@ -24,24 +22,26 @@ export type TranslateVars = Record<string, string | number>;
 export type Translate = (key: string, vars?: TranslateVars) => string;
 
 /** Each language's own name; the same in every locale, so not translated. */
-export const LANGUAGE_NAMES: Record<Locale, string> = { rw: 'Ikinyarwanda', en: 'English', fr: 'Français' };
+export const LANGUAGE_NAMES: Record<Locale, string> = { rw: 'Ikinyarwanda', en: 'English' };
 
-const MESSAGES: Record<Locale, Record<string, string>> = { en, rw, fr };
+const MESSAGES: Record<Locale, Record<string, string>> = { en, rw };
 const STORAGE_KEY = 'wasac.locale';
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
 
+/** Kinyarwanda unless this device chose otherwise (a saved "fr" from before is ignored). */
+export const DEFAULT_LOCALE: Locale = 'rw';
+
 function initialLocale(): Locale {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (isLocale(saved)) return saved;
   } catch {
-    // Storage blocked: fall through to the browser language.
+    // Storage blocked: use the default.
   }
-  const browser = (navigator.language || 'en').slice(0, 2).toLowerCase();
-  return isLocale(browser) ? browser : 'en';
+  return DEFAULT_LOCALE;
 }
 
 /**
@@ -50,7 +50,12 @@ function initialLocale(): Locale {
  * is missing too (so a gap is visible, not blank).
  */
 export function translate(locale: Locale, key: string, vars?: TranslateVars): string {
-  const own = MESSAGES[locale][key];
+  return lookup(MESSAGES[locale], key, vars);
+}
+
+/** translate() for a given string table (exported for tests). */
+export function lookup(messages: Record<string, string>, key: string, vars?: TranslateVars): string {
+  const own = messages[key];
   // en.json's inferred type lists its keys; look up any key and allow a miss.
   const text = own && !own.startsWith(TODO_MARK) ? own : (en as Record<string, string>)[key] ?? key;
   if (!vars) return text;
@@ -84,7 +89,7 @@ export function I18nProvider({ children, locale: fixedLocale }: { children: Reac
 
   const value = useMemo<I18nValue>(() => {
     const t: Translate = (key, vars) => translate(locale, key, vars);
-    return { locale, setLocale, t, ...makeFormatters(locale, t) };
+    return { locale, setLocale, t, ...makeFormatters(t) };
   }, [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

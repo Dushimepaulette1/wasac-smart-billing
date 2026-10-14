@@ -30,7 +30,7 @@ function readHeldState(state: unknown): HeldState | null {
 }
 
 function ReadingHeld() {
-  const { t, locale, date } = useI18n();
+  const { t, date } = useI18n();
   const navigate = useNavigate();
   const labels = useCounterLabels();
   // Present when arriving from the confirm screen; after a reload the
@@ -54,7 +54,7 @@ function ReadingHeld() {
       {held && (
         <section className={`panel ${styles.reading}`}>
           <h2 className="text-body">{t('held.yourReading')}</h2>
-          <MeterCounter cells={held.cells} labels={labels} locale={locale} />
+          <MeterCounter cells={held.cells} labels={labels} />
           {held.at && <p className="text-small text-secondary">{t('held.sentOn', { date: date(held.at) })}</p>}
         </section>
       )}

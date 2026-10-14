@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Keep src/i18n/locales/{rw,fr}.json in step with en.json.
+ * Keep src/i18n/locales/rw.json in step with en.json.
  * - Keys new in English are added as "TODO: translate" (never machine-translated).
  * - Keys no longer in English are removed and listed.
  * - Keys follow the English order, so files diff cleanly.
@@ -18,7 +18,7 @@ const read = (name) => {
 
 const en = read('en');
 
-for (const locale of ['rw', 'fr']) {
+for (const locale of ['rw']) {
   const current = read(locale);
   const next = {};
   let added = 0;
