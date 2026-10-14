@@ -5,8 +5,10 @@
  * a brass bezel. See docs/design/DESIGN_PLAN.md, section 4.
  *
  * Display mode is static. Edit mode overlays one real text input, so
- * typing, paste, voice input and screen readers all work; tapping a cell
- * moves the cursor there and typing overwrites that digit.
+ * typing, paste, voice input and screen readers all work. Taps land on that
+ * input itself, so phones open the number keyboard (a focus() call from a
+ * cell's handler does not open it on iOS); the tapped cell is worked out from
+ * the tap's position and becomes where typing writes.
  */
 
 import {
@@ -72,6 +74,7 @@ function MeterCounter({
   const inputId = useId();
   const valueId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cellRefs = useRef<Array<HTMLSpanElement | null>>([]);
   // Caret position 0..8, like a text cursor: typing writes the cell after it,
   // Backspace clears the cell before it. The highlighted cell is the one
   // that typing will write next.
@@ -169,11 +172,15 @@ function MeterCounter({
     }
   };
 
-  const handleCellPointer = (index: number) => (e: PointerEvent<HTMLSpanElement>) => {
-    if (!isEdit) return;
-    e.preventDefault(); // keep focus on the input, don't let the cell take it
-    moveCaret(index);
-    inputRef.current?.focus();
+  // The tap is on the input (above the cells): find the cell under it. Default behaviour is kept,
+  // so the browser focuses the input and opens the keyboard.
+  const handleTap = (e: PointerEvent<HTMLInputElement>) => {
+    const index = cellRefs.current.findIndex((cell) => {
+      if (!cell) return false;
+      const { left, right } = cell.getBoundingClientRect();
+      return e.clientX >= left && e.clientX <= right;
+    });
+    if (index >= 0) moveCaret(index);
   };
 
   const rootClass = [styles.root, styles[size], isEdit ? styles.edit : '']
@@ -192,7 +199,7 @@ function MeterCounter({
       .join(' ');
 
     return (
-      <span key={index} className={cellClass} onPointerDown={handleCellPointer(index)}>
+      <span key={index} ref={(el) => (cellRefs.current[index] = el)} className={cellClass}>
         {digit !== '' && (
           <span key={edited ? digit : 'static'} className={edited ? styles.settle : undefined}>
             {digit}
@@ -233,6 +240,7 @@ function MeterCounter({
             onChange={handleChange}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
+            onPointerDown={handleTap}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
           />
