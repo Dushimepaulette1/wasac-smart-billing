@@ -12,6 +12,7 @@ const BACKEND = 'http://localhost:8000';
 // Backend paths only; the app's own routes (/bill, /payment, ...) are not proxied.
 const API_PATHS = [
   '/auth',
+  '/household',
   '/submit-photo',
   '/guide-frame',
   '/confirm-reading',

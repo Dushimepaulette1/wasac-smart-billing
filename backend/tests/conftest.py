@@ -10,7 +10,8 @@ from sqlalchemy.pool import StaticPool
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import anomaly.db_models  # noqa: E402,F401  registers anomaly_flags on Base
-import auth.models  # noqa: E402,F401  registers staff_users on Base
+import anomaly.location  # noqa: E402,F401  registers reading_evidence on Base
+import auth.models  # noqa: E402,F401  registers staff_users, household_codes on Base
 from anomaly.config import AnomalyConfig  # noqa: E402
 from anomaly.demo_data import generate_demo_histories  # noqa: E402
 from anomaly.features import ReadingPoint  # noqa: E402
@@ -35,10 +36,13 @@ def make_history(dailies, days=30, start_m3=500.0, start=T0):
 def fresh_rate_limits():
     """Rate limits are per process; reset them so tests do not throttle each other."""
     import ratelimit
+    from auth.household import reset_household_limits
 
     ratelimit.reset_limits()
+    reset_household_limits()
     yield
     ratelimit.reset_limits()
+    reset_household_limits()
 
 
 @pytest.fixture(autouse=True)
@@ -147,6 +151,23 @@ def signed_in_client(db, username):
     from auth.security import make_token
 
     return _test_client(db, {"Authorization": f"Bearer {make_token(username)[0]}"})
+
+
+def household_token(phone="+250788000111"):
+    from auth.household import SESSION_TTL, SUBJECT_PREFIX
+    from auth.security import make_token
+
+    return make_token(SUBJECT_PREFIX + phone, ttl=SESSION_TTL)[0]
+
+
+@pytest.fixture
+def household_client(db):
+    """Signed in as the household whose phone is +250788000111 (add_household's default)."""
+    app, test_client = _test_client(db, {"Authorization": f"Bearer {household_token()}"})
+    try:
+        yield test_client
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture

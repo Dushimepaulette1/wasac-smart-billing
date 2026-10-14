@@ -283,12 +283,18 @@ def test_registry_reports_missing_files(tmp_path):
 # --- API ----------------------------------------------------------------------
 
 @pytest.fixture
-def photo_client(anon_client, cfg):
+def photo_client(client, cfg):
+    """Signed in (the photo endpoints need a household or staff sign-in)."""
     from main import app
 
     holder = {"reg": registry(cfg)}
     app.dependency_overrides[get_registry] = lambda: holder["reg"]
-    yield anon_client, holder
+    yield client, holder
+
+
+def test_photo_endpoints_need_a_sign_in(anon_client):
+    assert anon_client.post("/submit-photo", files={"file": ("m.jpg", b"x", "image/jpeg")}).status_code == 401
+    assert anon_client.post("/guide-frame", files={"file": ("m.jpg", b"x", "image/jpeg")}).status_code == 401
 
 
 def test_submit_photo_endpoint(photo_client):

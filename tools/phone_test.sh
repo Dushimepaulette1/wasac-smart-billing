@@ -46,7 +46,7 @@ wait_for http://127.0.0.1:8000/health 150 "The backend"
 
 echo "Building the app..."
 cd "$ROOT/frontend"
-VITE_CUSTOMER_ID=DEMO-CUST-001 VITE_METER_ID=DEMO-MTR-001 npm run -s build >"$LOGS/build.log" 2>&1
+npm run -s build >"$LOGS/build.log" 2>&1
 npx vite preview --host 127.0.0.1 >"$LOGS/frontend.log" 2>&1 &
 pids+=($!)
 wait_for http://127.0.0.1:3000/ 30 "The app"
@@ -59,6 +59,9 @@ echo
 echo "  Open on your phone:  $url"
 echo "  Staff:               $url/staff"
 echo "  Health:              $url/health"
+echo
+echo "  Demo sign-in: phone 0700 000 001 (DEMO-MTR-001) ... 0700 000 018; 0700 000 019 has two meters."
+echo "  The code appears on screen. DEMO-MTR-002 (0700 000 002) has a location, so its readings are checked."
 echo
 echo "Keep this window open. Ctrl+C stops everything."
 wait

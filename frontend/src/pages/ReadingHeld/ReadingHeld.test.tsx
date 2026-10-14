@@ -2,11 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ReadingHeld from './ReadingHeld';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import { normalizeReading } from '../../utils/reading';
 
 const renderAt = (state: unknown) =>
   render(
     <I18nProvider locale="en">
+<TestHousehold>
       <MemoryRouter
         initialEntries={[{ pathname: '/submit/held', state }]}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -15,7 +17,8 @@ const renderAt = (state: unknown) =>
           <Route path="/submit/held" element={<ReadingHeld />} />
         </Routes>
       </MemoryRouter>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 
 describe('ReadingHeld', () => {

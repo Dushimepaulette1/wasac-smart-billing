@@ -70,6 +70,11 @@ def read_token(token: str, *, now: Optional[float] = None) -> Optional[str]:
     return sub if isinstance(sub, str) else None
 
 
+def hash_code(phone: str, code: str) -> str:
+    """One-time sign-in codes are stored only as this keyed hash, never in plain text."""
+    return _b64(hmac.new(_SECRET, f"code:{phone}:{code}".encode(), hashlib.sha256).digest())
+
+
 def _sign(payload: str) -> str:
     return _b64(hmac.new(_SECRET, payload.encode(), hashlib.sha256).digest())
 

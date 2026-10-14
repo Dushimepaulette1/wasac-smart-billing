@@ -42,32 +42,32 @@ def _frame():
     return cv2.imencode(".jpg", np.full((48, 64, 3), 128, np.uint8))[1].tobytes()
 
 
-def test_guide_frame_allows_three_per_second_then_429(anon_client):
-    codes = [anon_client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}).status_code
+def test_guide_frame_allows_three_per_second_then_429(client):
+    codes = [client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}).status_code
              for _ in range(4)]
     assert codes[:3] == [200, 200, 200] and codes[3] == 429
-    r = anon_client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")})
+    r = client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")})
     assert r.status_code == 429 and "Live tips will pause" in r.json()["detail"]
     assert int(r.headers["retry-after"]) >= 1
 
 
-def test_submit_photo_allows_ten_per_minute(anon_client):
-    codes = [anon_client.post("/submit-photo", files={"file": ("p.jpg", _frame(), "image/jpeg")}).status_code
+def test_submit_photo_allows_ten_per_minute(client):
+    codes = [client.post("/submit-photo", files={"file": ("p.jpg", _frame(), "image/jpeg")}).status_code
              for _ in range(11)]
     assert 429 not in codes[:10] and codes[10] == 429
 
 
-def test_oversized_upload_is_refused_before_it_is_read(anon_client):
+def test_oversized_upload_is_refused_before_it_is_read(client):
     big = b"\xff" * (10 * 1024 * 1024 + 200 * 1024)
-    r = anon_client.post("/submit-photo", files={"file": ("p.jpg", big, "image/jpeg")})
+    r = client.post("/submit-photo", files={"file": ("p.jpg", big, "image/jpeg")})
     assert r.status_code == 413 and "10 MB" in r.json()["detail"]
 
 
-def test_refusals_carry_cors_headers_so_the_app_can_show_them(anon_client):
+def test_refusals_carry_cors_headers_so_the_app_can_show_them(client):
     origin = {"Origin": "http://localhost:3000"}
     for _ in range(3):
-        anon_client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}, headers=origin)
-    r = anon_client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}, headers=origin)
+        client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}, headers=origin)
+    r = client.post("/guide-frame", files={"file": ("f.jpg", _frame(), "image/jpeg")}, headers=origin)
     assert r.status_code == 429
     assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"
 

@@ -11,15 +11,17 @@ import RequestState from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
-import { CUSTOMER_ID } from '../../config';
+import { useAccount } from '../../household/session';
 import type { BillSummary } from '../../api/types';
 import { readingIsWaiting, useHouseholdFlags } from '../../household/status';
 import styles from './BillHistory.module.css';
 
 function BillHistory() {
+  const account = useAccount();
+  const customerId = account.customer_id;
   const { t, rwf, volume, monthYear, date } = useI18n();
   const navigate = useNavigate();
-  const bills = useRequest(api.getBills, { immediate: true, args: [CUSTOMER_ID] });
+  const bills = useRequest(api.getBills, { immediate: true, args: [customerId] });
 
   const list: BillSummary[] = bills.status === 'success' ? bills.data : [];
   const empty = bills.status === 'success' && list.length === 0;

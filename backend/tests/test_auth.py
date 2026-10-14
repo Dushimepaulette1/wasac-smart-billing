@@ -63,10 +63,11 @@ def test_staff_routes_need_a_token(db, anon_client):
     assert anon_client.get("/auth/me", headers={"Authorization": "Bearer forged.token"}).status_code == 401
 
 
-def test_household_routes_stay_open(db, anon_client):
+def test_household_routes_need_a_sign_in(db, anon_client):
     add_household(db, "MTR-H", make_history([1.0] * 3))
-    assert anon_client.get("/api/anomaly/flags", params={"household_id": "MTR-H"}).status_code == 200
-    assert anon_client.get("/customers/NOPE").status_code == 404
+    assert anon_client.get("/api/anomaly/flags", params={"household_id": "MTR-H"}).status_code == 401
+    assert anon_client.get("/customers/CUST-H").status_code == 401
+    assert anon_client.post("/api/anomaly/score", json={"household_id": "MTR-H", "reading_digits": "1"}).status_code == 401
 
 
 def test_review_queue_lists_held_readings_with_context(db, client):

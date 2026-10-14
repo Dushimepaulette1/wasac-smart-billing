@@ -11,15 +11,18 @@ import AppRouter from './router/index';
 import { I18nProvider } from './i18n/I18nProvider';
 import { SubmissionProvider } from './household/submission';
 import { AuthProvider } from './staff/auth';
+import { HouseholdProvider } from './household/session';
 
 
 function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <SubmissionProvider>
-          <AppRouter />
-        </SubmissionProvider>
+        <HouseholdProvider>
+          <SubmissionProvider>
+            <AppRouter />
+          </SubmissionProvider>
+        </HouseholdProvider>
       </AuthProvider>
     </I18nProvider>
   );

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Payment from './Payment';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import { api, ApiError } from '../../api/client';
 import { makeBill, makeCustomer } from '../../test/fixtures';
 
@@ -15,6 +16,7 @@ const BILL = makeBill({ bill_id: 19, amount_due: 12400.5, payment_status: 'unpai
 function renderPayment() {
   return render(
     <I18nProvider locale="en">
+<TestHousehold>
       <MemoryRouter
         initialEntries={['/payment?bill=19']}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -23,7 +25,8 @@ function renderPayment() {
           <Route path="/payment" element={<Payment />} />
         </Routes>
       </MemoryRouter>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 }
 

@@ -8,6 +8,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { normalizeReading, type Cells } from '../utils/reading';
+import type { PhotoEvidence } from '../api/types';
 
 const STORAGE_KEY = 'wasac.submission';
 
@@ -28,6 +29,8 @@ export interface Submission {
   crop: string | null;
   /** The reader was unsure: say "Please check the numbers." */
   checkNumbers: boolean;
+  /** Camera or gallery, and where the phone was, sent with the reading for the location check. */
+  evidence: PhotoEvidence | null;
 }
 
 export interface ReadExtras {
@@ -36,7 +39,7 @@ export interface ReadExtras {
 }
 
 export interface SubmissionValue extends Submission {
-  setPhoto: (photo: string) => void;
+  setPhoto: (photo: string, evidence: PhotoEvidence) => void;
   /** Store a /submit-photo result; pads short readings, flags wrong ones. */
   setReadResult: (predicted: string | null, confidence: number | null, extras?: ReadExtras) => void;
   /** Typing by hand, with or without a photo. */
@@ -54,6 +57,7 @@ const EMPTY: Submission = {
   manual: false,
   crop: null,
   checkNumbers: false,
+  evidence: null,
 };
 
 function load(): Submission {
@@ -79,7 +83,10 @@ export function SubmissionProvider({ children, initial }: { children: ReactNode;
     }
   }, [state]);
 
-  const setPhoto = useCallback((photo: string) => setState({ ...EMPTY, photo }), []);
+  const setPhoto = useCallback(
+    (photo: string, evidence: PhotoEvidence) => setState({ ...EMPTY, photo, evidence }),
+    [],
+  );
 
   const setReadResult = useCallback((predicted: string | null, confidence: number | null, extras: ReadExtras = {}) => {
     const { cells, needsCheck, raw } = normalizeReading(predicted);

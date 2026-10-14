@@ -20,6 +20,7 @@ ACTIONS = {
     AnomalyType.SUSTAINED_HIGH: Action(sms_household=True, staff_review=True),
     AnomalyType.METER_STUCK: Action(sms_household=False, staff_review=True),
     AnomalyType.UNUSUAL: Action(sms_household=False, staff_review=True),
+    AnomalyType.LOCATION_CHECK: Action(sms_household=False, staff_review=True),
 }
 NO_ACTION = Action(sms_household=False, staff_review=False)
 
@@ -41,6 +42,10 @@ MESSAGES = {
     ),
     AnomalyType.METER_STUCK: "Your reading has been recorded. WASAC may contact you to check your meter.",
     AnomalyType.UNUSUAL: "Your reading has been recorded and will be reviewed by WASAC.",
+    AnomalyType.LOCATION_CHECK: (
+        "WASAC: We could not confirm this photo was taken at your meter, so an officer will check "
+        "the reading before billing."
+    ),
 }
 
 
@@ -62,7 +67,8 @@ def message_for(anomaly_type: AnomalyType) -> str:
     return MESSAGES[anomaly_type]
 
 
-def send_sms(phone: str, message: str) -> bool:
+def send_sms(phone: str, message: str, *, sensitive: bool = False) -> bool:
+    """sensitive=True (sign-in codes): the text is never written to the logs."""
     # TODO: wire Africa's Talking once credentials exist. Read AT_USERNAME and AT_API_KEY from the
     # environment, call africastalking.initialize(username, api_key), then
     # africastalking.SMS.send(message, [phone]). Never hard-code the key.
@@ -71,7 +77,7 @@ def send_sms(phone: str, message: str) -> bool:
         "[SMS %s] to=%s message=%r",
         "not sent: Africa's Talking not wired yet" if configured else "not sent: AT_USERNAME/AT_API_KEY unset",
         phone,
-        message,
+        "[hidden: contains a sign-in code]" if sensitive else message,
     )
     return False
 

@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Messages, { SHOWN_TYPES } from './Messages';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TestHousehold } from '../../test/household';
 import en from '../../i18n/locales/en.json';
 import { api } from '../../api/client';
 import type { AnomalyFlag, AnomalyType } from '../../api/types';
@@ -27,18 +28,31 @@ function articleFor(heading: HTMLElement): HTMLElement {
 const renderMessages = () =>
   render(
     <I18nProvider locale="en">
+<TestHousehold>
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Messages />
       </MemoryRouter>
-    </I18nProvider>,
+    </TestHousehold>
+</I18nProvider>,
   );
 
 describe('Messages', () => {
   it('has a title and an explanation for every type it shows', () => {
     for (const type of SHOWN_TYPES) {
       expect(messages[`msg.${type}.title`]).toBeTruthy();
-      expect(messages[`msg.${type}.noticed`]).toBeTruthy();
+      // A location check says which reason; the others have one explanation.
+      const noticed = type === 'LOCATION_CHECK' ? ['far', 'no_location', 'imprecise', 'upload'].map((r) => `msg.${type}.${r}`) : [`msg.${type}.noticed`];
+      for (const key of noticed) expect(messages[key]).toBeTruthy();
     }
+  });
+
+  it('tells a household why a photo is being checked', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(5, 'LOCATION_CHECK', { features: { location_check: 'upload' }, reading_status: 'pending_review' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: "We're checking where the photo was taken" }));
+    expect(message).toHaveTextContent('was chosen from your gallery');
   });
 
   it('tells a household what was noticed, what to check and what happens next', async () => {

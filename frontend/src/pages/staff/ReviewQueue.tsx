@@ -24,6 +24,12 @@ import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import { ISSUE_KEY, previousReading, usualUse } from '../../staff/issues';
+import { locationFinding } from '../../utils/location';
+
+/** 1234 -> "1.2 km", 85 -> "85 m". */
+function formatDistance(m: number): string {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
+}
 import styles from './ReviewQueue.module.css';
 
 const UNDO_MS = 5000;
@@ -39,6 +45,7 @@ function DecisionPane({ item }: { item: ReviewItem }) {
   const labels = useCounterLabels();
   const previous = previousReading(item.history);
   const usual = usualUse(item.history);
+  const where = locationFinding(item.flag.features);
   const used = item.reading_m3 !== null && previous !== null ? item.reading_m3 - previous : null;
   const ratio = used !== null && usual ? used / usual : null;
   const months = [...item.history.slice(-5).map((h) => ({ key: h.date, label: date(h.date), m3: h.consumption_m3 ?? 0, current: false })),
@@ -100,6 +107,17 @@ function DecisionPane({ item }: { item: ReviewItem }) {
               <dt>{t('staff.review.sent')}</dt>
               <dd>{date(item.submitted_at ?? item.flag.created_at)}</dd>
             </div>
+            {where && (
+              <div>
+                <dt>{t('staff.review.where')}</dt>
+                <dd className={styles.strong}>
+                  {t(`staff.review.where.${where.reason}`, {
+                    distance: where.distanceM !== null ? formatDistance(where.distanceM) : '–',
+                    accuracy: where.accuracyM !== null ? formatDistance(where.accuracyM) : '–',
+                  })}
+                </dd>
+              </div>
+            )}
           </dl>
           <p className="text-small text-secondary">{t('staff.review.noPhoto')}</p>
         </section>

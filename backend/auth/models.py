@@ -25,6 +25,22 @@ class StaffUser(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class HouseholdCode(Base):
+    """A one-time sign-in code sent by SMS to a household's phone. Only a keyed
+    hash of the code is stored; a code works once, for a few minutes, and only
+    for a few wrong tries."""
+
+    __tablename__ = "household_codes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    phone = Column(String(20), nullable=False, index=True)
+    code_hash = Column(String(64), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    used_at = Column(DateTime, nullable=True)
+
+
 class StaffAction(Base):
     """Audit log: one row per sign-in, review decision or account change.
     Rows are only ever added, never edited or deleted by the API."""

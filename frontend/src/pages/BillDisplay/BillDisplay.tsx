@@ -18,7 +18,7 @@ import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadBill from '../../household/loadBill';
 import type { BillSummary } from '../../api/types';
-import { CUSTOMER_ID } from '../../config';
+import { useAccount } from '../../household/session';
 import styles from './BillDisplay.module.css';
 
 function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: number }) {
@@ -48,6 +48,8 @@ function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: 
 }
 
 function BillDisplay() {
+  const account = useAccount();
+  const customerId = account.customer_id;
   const { t, rwf, volume, date, month } = useI18n();
   const navigate = useNavigate();
   const labels = useCounterLabels();
@@ -59,7 +61,7 @@ function BillDisplay() {
 
   // Load on arrival and again when moving to another bill on this screen.
   useEffect(() => {
-    run(CUSTOMER_ID, billId);
+    run(customerId, billId);
   }, [run, billId]);
 
   if (request.status !== 'success') {
