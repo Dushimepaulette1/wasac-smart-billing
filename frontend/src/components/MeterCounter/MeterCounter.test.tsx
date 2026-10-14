@@ -32,10 +32,11 @@ const cellElements = (container: HTMLElement) => [...container.querySelectorAll(
 
 const cellsOf = (container: HTMLElement) => cellElements(container).map((c) => c.textContent);
 
-function cellAt(container: HTMLElement, index: number): Element {
-  const cell = cellElements(container)[index];
-  if (!cell) throw new Error(`No counter cell ${index}`);
-  return cell;
+/** Give the cells side-by-side positions (jsdom has no layout): cell i spans x = 10i..10i+9. */
+function placeCells(container: HTMLElement) {
+  cellElements(container).forEach((cell, i) => {
+    cell.getBoundingClientRect = () => ({ left: i * 10, right: i * 10 + 9 }) as DOMRect;
+  });
 }
 
 describe('MeterCounter', () => {
@@ -51,10 +52,19 @@ describe('MeterCounter', () => {
     expect(cellsOf(container).join('')).toBe('00565846');
   });
 
+  it('lets taps reach the real input, so phones open the keyboard', () => {
+    render(<Editable raw="565846" />);
+    const input = screen.getByLabelText<HTMLInputElement>('Meter reading');
+    expect(getComputedStyle(input).pointerEvents).not.toBe('none');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+  });
+
   it('overwrites the tapped digit, and Backspace undoes it', () => {
     const { container } = render(<Editable raw="565846" />);
     const input = screen.getByLabelText<HTMLInputElement>('Meter reading');
-    fireEvent.pointerDown(cellAt(container, 2));
+    // The tap lands on the input (so phones open the keyboard); the cell is found by position.
+    placeCells(container);
+    fireEvent.pointerDown(input, { clientX: 25 });
 
     sendInput(input, 'insertText', '7');
     expect(input.value).toBe('00765846');

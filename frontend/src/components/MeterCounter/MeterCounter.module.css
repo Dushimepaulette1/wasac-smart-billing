@@ -130,7 +130,9 @@
   border: 0;
   padding: 0;
   caret-color: transparent;
-  pointer-events: none;
+  /* Taps must reach this input: only a direct tap opens the phone keyboard. */
+  cursor: text;
+  z-index: 1;
 }
 
 /* The bezel's own focus ring would duplicate the active cell's ring. */
