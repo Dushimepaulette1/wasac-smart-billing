@@ -53,7 +53,15 @@ async def list_flags(
         query = query.filter(AnomalyFlag.status == status)
     if requires_staff_review is not None:
         query = query.filter(AnomalyFlag.requires_staff_review == requires_staff_review)
-    return query.order_by(AnomalyFlag.created_at.desc()).all()
+    flags = query.order_by(AnomalyFlag.created_at.desc()).all()
+    reading_ids = [f.reading_id for f in flags if f.reading_id is not None]
+    statuses = dict(
+        db.query(Reading.reading_id, Reading.validation_status).filter(Reading.reading_id.in_(reading_ids)).all()
+    ) if reading_ids else {}
+    return [
+        AnomalyFlagOut.model_validate(f).model_copy(update={"reading_status": statuses.get(f.reading_id)})
+        for f in flags
+    ]
 
 
 @router.patch("/flags/{flag_id}/resolve", response_model=ResolveFlagResponse)
@@ -74,7 +82,7 @@ async def resolve(
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     db.refresh(flag)
     return ResolveFlagResponse(
-        **AnomalyFlagOut.model_validate(flag).model_dump(),
+        **AnomalyFlagOut.model_validate(flag).model_dump(exclude={"reading_status"}),
         outcome=result.outcome,
         reading_status=result.reading_status,
         bill_id=result.bill.bill_id if result.bill else None,
