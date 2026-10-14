@@ -61,6 +61,7 @@ const PATHS = {
       <path d="M15 9.5l3-2.5 3 2.5M16 9v4" />
     </>
   ),
+  activity: <path d="M3 12h4l3-7 4 14 3-7h4" />,
   logout: <path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10" />,
   user: (
     <>

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Test the app on a phone: run the backend and the built app on this laptop and publish them over
-# HTTPS with a free Cloudflare quick tunnel (no account). Works only while this script runs; the
-# link changes every time. Stop with Ctrl+C.
+# Test on a phone: run the backend, the household app and the staff portal on this laptop and
+# publish both sites over HTTPS with free Cloudflare quick tunnels (no account). Works only while
+# this script runs; the links change every time. Stop with Ctrl+C.
 #
 #   tools/phone_test.sh
 #
@@ -21,6 +21,22 @@ wait_for() {  # wait_for URL SECONDS NAME
   echo "$3 did not start; see $LOGS"; exit 1
 }
 
+start_tunnel() {  # start_tunnel PORT NAME (in this shell, so cleanup can stop it)
+  "$CLOUDFLARED" tunnel --no-autoupdate --url "http://127.0.0.1:$1" >"$LOGS/tunnel-$2.log" 2>&1 &
+  pids+=($!)
+}
+
+tunnel_link() {  # tunnel_link NAME -> prints the https link
+  local url=""
+  for _ in $(seq 1 30); do
+    url="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOGS/tunnel-$1.log" | head -1 || true)"
+    [ -n "$url" ] && break
+    sleep 1
+  done
+  [ -n "$url" ] || { echo "No tunnel link for $1; see $LOGS/tunnel-$1.log" >&2; exit 1; }
+  echo "$url"
+}
+
 echo "Starting the backend (loading the models can take a minute or two)..."
 cd "$ROOT/backend"
 # Never create the sample customers in the shared database; it holds DEMO- households only.
@@ -28,28 +44,27 @@ SEED_SAMPLE_DATA=0 .venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 
 pids+=($!)
 wait_for http://127.0.0.1:8000/health 150 "The backend"
 
-echo "Building the app for the demo household..."
+echo "Building the household app (demo household) and the staff portal..."
 cd "$ROOT/frontend"
 VITE_CUSTOMER_ID=DEMO-CUST-001 VITE_METER_ID=DEMO-MTR-001 npm run -s build >"$LOGS/build.log" 2>&1
+npm run -s build:staff >"$LOGS/build-staff.log" 2>&1
 npx vite preview --host 127.0.0.1 >"$LOGS/frontend.log" 2>&1 &
 pids+=($!)
-wait_for http://127.0.0.1:3000/ 30 "The app"
-
-echo "Opening the tunnel..."
-"$CLOUDFLARED" tunnel --no-autoupdate --url http://127.0.0.1:3000 >"$LOGS/tunnel.log" 2>&1 &
+VITE_APP=staff npx vite preview --host 127.0.0.1 >"$LOGS/staff.log" 2>&1 &
 pids+=($!)
-url=""
-for _ in $(seq 1 30); do
-  url="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOGS/tunnel.log" | head -1 || true)"
-  [ -n "$url" ] && break
-  sleep 1
-done
-[ -n "$url" ] || { echo "No tunnel link; see $LOGS/tunnel.log"; exit 1; }
+wait_for http://127.0.0.1:3000/ 30 "The household app"
+wait_for http://127.0.0.1:3001/ 30 "The staff portal"
+
+echo "Opening the tunnels..."
+start_tunnel 3000 household
+start_tunnel 3001 staff
+household="$(tunnel_link household)"
+staff="$(tunnel_link staff)"
 
 echo
-echo "  Open on your phone:  $url"
-echo "  Staff sign-in:       $url/staff/sign-in"
-echo "  Health:              $url/health"
+echo "  Household app (phone):  $household"
+echo "  Staff portal:           $staff"
+echo "  Health:                 $household/health"
 echo
 echo "Keep this window open. Ctrl+C stops everything."
 wait

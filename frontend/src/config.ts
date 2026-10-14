@@ -19,3 +19,10 @@ export const IS_DEMO_HOUSEHOLD = CUSTOMER_ID.startsWith('DEMO-');
 
 /** A request that takes longer than this fails with a retry option. */
 export const REQUEST_TIMEOUT_MS = 20000;
+
+/**
+ * Which site this build is. The household app and the staff portal are built
+ * from the same code but deployed separately (VITE_APP=staff for the portal),
+ * so the household app has no staff pages or links at all.
+ */
+export const IS_STAFF_SITE = import.meta.env.VITE_APP === 'staff';

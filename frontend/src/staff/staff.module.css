@@ -217,3 +217,92 @@ a.stat:hover .statNote,
   background: #FFFFFF;
   color: var(--ink);
 }
+
+/* ---- Forms and filters ------------------------------------------------- */
+.stack {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 420px;
+  justify-items: start;
+}
+
+.filter {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 200px;
+  font-weight: var(--weight-bold);
+}
+
+.form .filter {
+  width: 100%;
+}
+
+.filter .search {
+  font-weight: var(--weight-regular);
+}
+
+.select {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: 1px solid #B9C6D8;
+  border-radius: var(--radius-field);
+  background: #FFFFFF;
+  color: var(--ink);
+  font-weight: var(--weight-regular);
+}
+
+.select:disabled {
+  opacity: 0.6;
+}
+
+.rowActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.inactive td {
+  color: var(--color-text-secondary);
+}
+
+.you {
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
+  font-weight: var(--weight-regular);
+}
+
+/* The temporary password: big enough to read out, never wrapped mid-way. */
+.secret {
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-text-secondary);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: var(--weight-bold);
+}

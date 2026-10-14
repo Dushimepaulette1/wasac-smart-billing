@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useId, useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import SiteHeader from '../../components/SiteHeader/SiteHeader';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
@@ -127,10 +127,6 @@ function StaffSignIn() {
           <p className="text-small text-secondary">{t('signin.help')}</p>
         </form>
 
-        <Link to="/" className={styles.back}>
-          <Icon name="back" size={18} />
-          {t('signin.backHome')}
-        </Link>
       </main>
     </div>
   );

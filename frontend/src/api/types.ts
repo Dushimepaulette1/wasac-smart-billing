@@ -310,6 +310,32 @@ export interface StaffUser {
   role: string;
 }
 
+export type StaffRole = 'officer' | 'supervisor' | 'admin';
+
+/** schemas.StaffAccountOut (admin only) */
+export interface StaffAccount extends StaffUser {
+  is_active: boolean;
+  created_at: string;
+  last_sign_in: string | null;
+}
+
+/** schemas.TemporaryPasswordResponse: shown once, for the admin to pass on. */
+export interface TemporaryPassword {
+  account: StaffAccount;
+  temporary_password: string;
+}
+
+/** schemas.StaffActionOut: one row of the audit log. */
+export interface StaffAction {
+  id: number;
+  at: string;
+  username: string;
+  /** sign_in, sign_in_failed, accept, reject, close, account_created, account_updated, password_reset, password_changed */
+  action: string;
+  target: string | null;
+  detail: string | null;
+}
+
 /** schemas.LoginResponse */
 export interface LoginResponse {
   access_token: string;
