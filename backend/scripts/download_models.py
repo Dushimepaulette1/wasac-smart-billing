@@ -12,6 +12,9 @@ Google Drive share links (https://drive.google.com/file/d/<id>/view?...) are tur
 downloads. The Drive files must be shared as "Anyone with the link"; keep the links in .env, not git.
 Files already present with the right checksum are skipped (--force fetches them again). Nothing is
 saved unless its checksum matches backend/ml/weights.sha256.json.
+
+MODEL_FORMAT (or --format) picks the files: "pt" (default, PyTorch) or "onnx" (the small deployment,
+made by scripts/export_onnx.py: best.onnx, meter_reader.onnx, quality_gate.onnx).
 """
 import argparse
 import hashlib
@@ -97,11 +100,14 @@ def main() -> None:
     parser.add_argument("--urls", default=os.getenv("MODEL_URLS"), help="name=url,... Defaults to $MODEL_URLS")
     parser.add_argument("--dest", type=Path, default=None, help="Defaults to $ML_WEIGHTS_DIR or backend/ml")
     parser.add_argument("--force", action="store_true", help="Download even if a valid file exists")
+    parser.add_argument("--format", choices=("pt", "onnx"), default=os.getenv("MODEL_FORMAT", "pt"),
+                        help="Which files: pt (default) or onnx. Defaults to $MODEL_FORMAT")
     args = parser.parse_args()
 
-    expected = json.loads((ML_CODE_DIR / "weights.sha256.json").read_text())
+    every = json.loads((ML_CODE_DIR / "weights.sha256.json").read_text())
+    expected = {name: info for name, info in every.items() if name.endswith(f".{args.format}")}
     per_file = parse_urls(args.urls)
-    unknown = set(per_file) - set(expected)
+    unknown = set(per_file) - set(every)
     if unknown:
         # Do not echo the unknown names: a stray link (links contain '=') would be printed here.
         sys.exit(f"MODEL_URLS has {len(unknown)} entry/entries with an unknown file name. "

@@ -1,0 +1,31 @@
+# Render Blueprint for the API (render.com -> New -> Blueprint -> this repository).
+# Values marked sync: false are secrets: Render asks for them when the Blueprint is created and
+# they never live in this file. The frontend is a separate Vercel project (frontend/vercel.json).
+services:
+  - type: web
+    name: wasac-api
+    runtime: docker
+    plan: free
+    # Next to the Neon database (us-east-1): each request makes several database round trips.
+    region: virginia
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL           # Neon connection string (pooled, sslmode=require)
+        sync: false
+      - key: MODEL_URLS             # best.onnx=<link>,meter_reader.onnx=<link>,quality_gate.onnx=<link>
+        sync: false
+      - key: CORS_ORIGINS           # the Vercel address, e.g. https://wasac-smart-billing.vercel.app
+        sync: false
+      - key: AT_USERNAME            # sandbox (or leave empty: SMS are only logged)
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: WASAC_AUTH_SECRET      # signs sessions; generated once by Render
+        generateValue: true
+      - key: TRUSTED_PROXY_HOPS     # Render's proxy adds the caller's address last
+        value: "1"
+      - key: OTP_SHOW_DEMO_CODES
+        value: "1"

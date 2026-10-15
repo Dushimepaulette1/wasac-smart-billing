@@ -1,0 +1,17 @@
+# What the deployed API needs: the models run on ONNX Runtime, so no torch, torchvision or
+# ultralytics (that is what makes it fit a 512 MB free instance). requirements.txt is the full
+# environment for training, the .pt models, tests and scripts/export_onnx.py.
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
+pydantic==2.7.1
+python-dotenv==1.0.1
+pillow==10.3.0
+opencv-python-headless==4.11.0.86
+numpy==1.26.4
+onnxruntime==1.19.2
+scikit-learn==1.5.0
+joblib==1.4.2
+httpx==0.27.0

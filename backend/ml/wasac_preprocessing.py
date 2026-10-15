@@ -9,6 +9,8 @@ DECIMALS = 3
 
 def detect(img_bgr, yolo_model, conf=0.15, imgsz=640, device=None):
     """Run YOLO once. Returns (cls, xyxy, confs) as numpy arrays (empty arrays when nothing is found)."""
+    if hasattr(yolo_model, "detect_numpy"):  # the ONNX cropper (backend vision/onnx_models.py)
+        return yolo_model.detect_numpy(img_bgr, conf, imgsz)
     result = yolo_model.predict(source=img_bgr, imgsz=imgsz, conf=conf, device=device, verbose=False)[0]
     boxes = result.boxes
     if boxes is None or len(boxes) == 0:
