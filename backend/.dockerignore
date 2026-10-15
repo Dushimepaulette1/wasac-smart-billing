@@ -1,6 +1,7 @@
 # Never in the image: weights (downloaded at start), secrets, local data, dev tooling.
 ml/*.pt
 ml/*.pth
+ml/*.onnx
 ml/*.part
 .env
 .env.*

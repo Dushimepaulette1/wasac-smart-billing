@@ -1,5 +1,11 @@
-"""Load the three models once, on CPU. A missing or broken file never stops the API from starting."""
+"""Load the three models once, on CPU. A missing or broken file never stops the API from starting.
+
+Each model runs on ONNX Runtime when its .onnx file is there (vision/onnx_models.py, no PyTorch
+needed: the small deployment), otherwise on PyTorch from the .pt file. VISION_BACKEND=onnx or
+=torch forces one.
+"""
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional
@@ -71,14 +77,29 @@ class ModelRegistry:
         directory = Path(directory or weights_dir())
         self.model_config = load_model_config()
         self.guidance = GuidanceConfig.load(quality_threshold=self.model_config["quality_gate"]["threshold"])
-        self.yolo = self._load("yolo", directory / yolo_weights_name(self.model_config), self._make_yolo)
         reader_cfg = self.model_config["reader"]
+        gate_cfg = self.model_config["quality_gate"]
+        if self._use_onnx(directory):
+            from vision.onnx_models import OnnxQualityGate, OnnxReader, OnnxYolo
+
+            onnx = lambda name: (directory / name).with_suffix(".onnx")  # noqa: E731
+            self.yolo = self._load("yolo", onnx(yolo_weights_name(self.model_config)), OnnxYolo)
+            self.reader = self._load("reader", onnx(reader_cfg["weights"]), lambda p: OnnxReader(p, reader_cfg))
+            self.quality_gate = self._load("quality_gate", onnx(gate_cfg["weights"]),
+                                           lambda p: OnnxQualityGate(p, gate_cfg))
+            return self
+        self.yolo = self._load("yolo", directory / yolo_weights_name(self.model_config), self._make_yolo)
         self.reader = self._load("reader", directory / reader_cfg["weights"],
                                  lambda p: self._make_reader(p, reader_cfg["arch"]))
-        gate_cfg = self.model_config["quality_gate"]
         self.quality_gate = self._load("quality_gate", directory / gate_cfg["weights"],
                                        lambda p: QualityGate(p, gate_cfg))
         return self
+
+    def _use_onnx(self, directory: Path) -> bool:
+        choice = os.getenv("VISION_BACKEND", "auto").lower()
+        if choice in ("onnx", "torch"):
+            return choice == "onnx"
+        return (directory / yolo_weights_name(self.model_config)).with_suffix(".onnx").exists()
 
     def _load(self, name, path: Path, factory):
         if not path.exists():

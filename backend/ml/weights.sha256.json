@@ -10,5 +10,17 @@
   "quality_gate.pt": {
     "sha256": "d5f30182c79276494c0c8b023cbcca2c15d137ec41619d84a487748c23cd05bd",
     "bytes": 9156875
+  },
+  "best.onnx": {
+    "sha256": "ecf36543e1598f0c1928794ec327df814131f472cbb48b205a241f52f48dc5d4",
+    "bytes": 12099544
+  },
+  "meter_reader.onnx": {
+    "sha256": "3d60b06d92dd4ab3750eebcf2e863d4de5015cf92bfb1a1699af0f4a73378512",
+    "bytes": 19050855
+  },
+  "quality_gate.onnx": {
+    "sha256": "1b5fff6148dc7f23872507f2d997b2a31ba63e9e6db41964e2ae604670896fed",
+    "bytes": 8878501
   }
 }
