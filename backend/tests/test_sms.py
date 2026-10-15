@@ -11,10 +11,11 @@ KEY = "atsk_secret_key_for_tests"
 
 
 class FakeResponse:
-    def __init__(self, status_code=201, body=None):
+    def __init__(self, status_code=201, body=None, text=""):
         self.status_code = status_code
         self.is_success = 200 <= status_code < 300
         self._body = body
+        self.text = text
 
     def json(self):
         if self._body is None:
@@ -116,3 +117,21 @@ def test_a_failed_sms_says_so(db, anon_client, sandbox):
     r = anon_client.post("/household/request-code", json={"phone": "0788000111"})
     assert r.status_code == 503
     assert db.query(HouseholdCode).count() == 1  # stored, but the household is told to try again
+
+
+def test_pasted_settings_are_trimmed_and_sandbox_is_case_blind(sandbox, monkeypatch):
+    calls, _ = sandbox
+    monkeypatch.setenv("AT_USERNAME", " Sandbox\n")
+    monkeypatch.setenv("AT_API_KEY", f"  {KEY}\n")
+    assert notifications.send_sms("+250788000111", "hi") is True
+    assert calls[0]["url"] == notifications.SANDBOX_URL
+    assert calls[0]["data"]["username"] == "sandbox" and calls[0]["headers"]["apiKey"] == KEY
+
+
+def test_a_refused_key_logs_africas_talkings_reason(sandbox, caplog):
+    _, answers = sandbox
+    answers[0] = FakeResponse(401, None, text="The supplied authentication is invalid")
+    with caplog.at_level("INFO"):
+        assert notifications.send_sms("+250788000111", "x") is False
+    assert "http=401 service=sandbox reason=The supplied authentication is invalid" in caplog.text
+    assert KEY not in caplog.text
