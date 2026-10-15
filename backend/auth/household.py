@@ -8,10 +8,12 @@ A household token is for a phone number: it opens every account registered to
 that number (a landlord may have several meters). Staff tokens open every
 household. `household_access` is the dependency for household endpoints.
 
-SMS is not wired yet (see anomaly/notifications.py). Until it is, codes for
-DEMO- households are returned in the response and shown on screen, so the
-public demo can be used; codes for real households are never shown or logged.
+Codes go out by SMS through Africa's Talking (anomaly/notifications.py). DEMO-
+households have no real phones, so their codes are also returned in the
+response and shown on screen; codes for real households are never shown or
+logged.
 """
+import logging
 import os
 import re
 import secrets
@@ -20,16 +22,18 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from anomaly.notifications import send_sms
+from anomaly.notifications import send_sms, sms_configured
 from auth.models import HouseholdCode, StaffUser
 from auth.security import hash_code, make_token, read_token
 from database import Customer, Meter, get_db
 from ratelimit import RateLimiter, client_ip
 
 router = APIRouter(prefix="/household")
+logger = logging.getLogger(__name__)
 
 CODE_TTL = timedelta(minutes=10)
 RESEND_AFTER_SECONDS = 60
@@ -149,10 +153,14 @@ async def request_code(body: CodeRequest, request: Request, db: Session = Depend
     db.commit()
     all_demo = all(c.customer_id.startswith(DEMO_PREFIX) for c in customers)
     if all_demo and os.getenv("OTP_SHOW_DEMO_CODES", "1") != "0":
-        answer.demo_code = code
-    else:
-        send_sms(phone, f"WASAC: your sign-in code is {code}. It works for 10 minutes. Never share it.",
-                 sensitive=True)
+        answer.demo_code = code  # demo numbers are not real phones; an SMS is still tried below
+    if sms_configured():
+        text = f"WASAC: your sign-in code is {code}. It works for 10 minutes. Never share it."
+        sent = await run_in_threadpool(send_sms, phone, text, sensitive=True)
+        if not sent and answer.demo_code is None:
+            raise HTTPException(status_code=503, detail="We could not send the SMS just now. Try again in a few minutes.")
+    elif answer.demo_code is None:
+        logger.warning("Sign-in code requested but SMS is not configured (AT_USERNAME/AT_API_KEY): nothing sent.")
     return answer
 
 

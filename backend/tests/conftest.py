@@ -33,6 +33,13 @@ def make_history(dailies, days=30, start_m3=500.0, start=T0):
 
 
 @pytest.fixture(autouse=True)
+def no_real_sms(monkeypatch):
+    """database.py loads backend/.env; tests must never send a real SMS with its keys."""
+    for name in ("AT_USERNAME", "AT_API_KEY", "AT_SENDER_ID"):
+        monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture(autouse=True)
 def fresh_rate_limits():
     """Rate limits are per process; reset them so tests do not throttle each other."""
     import ratelimit

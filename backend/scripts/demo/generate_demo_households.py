@@ -3,6 +3,8 @@
     python scripts/demo/generate_demo_households.py                # writes the demo CSV
     python scripts/demo/generate_demo_households.py --load-db      # also inserts DEMO- rows into the DB
     python scripts/demo/generate_demo_households.py --update-contacts   # phones/locations of existing DEMO- rows
+    python scripts/demo/generate_demo_households.py --set-phone DEMO-MTR-001 0788123456
+                                                    # sign in to that DEMO household with your own phone
 
 Sign-in: DEMO-MTR-001 uses phone 0700 000 001, DEMO-MTR-002 uses 0700 000 002, and so on;
 the last two meters share one number, to show choosing between meters. The 07000000xx numbers
@@ -30,6 +32,25 @@ def demo_phone(hid: str, households: int) -> str:
     if households >= 2 and n == households:
         n -= 1  # the last two meters share a number
     return f"+250700000{n:03d}"
+
+
+def set_phone(meter_id: str, raw_phone: str) -> None:
+    from auth.household import normalize_phone
+    from database import Customer, SessionLocal
+
+    phone = normalize_phone(raw_phone)
+    if not meter_id.startswith("DEMO-") or not phone:
+        sys.exit("Use a DEMO- meter and a Rwandan mobile number, e.g. --set-phone DEMO-MTR-001 0788123456")
+    db = SessionLocal()
+    try:
+        customer = db.query(Customer).filter(Customer.meter_id == meter_id).first()
+        if not customer or not customer.customer_id.startswith("DEMO-"):
+            sys.exit(f"No DEMO household with meter {meter_id}.")
+        customer.phone = phone
+        db.commit()
+    finally:
+        db.close()
+    print(f"{meter_id} now signs in with that number. --update-contacts puts the demo numbers back.")
 
 
 def update_contacts(histories) -> int:
@@ -108,10 +129,15 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--load-db", action="store_true", help="Also insert DEMO- meters/readings into DATABASE_URL")
+    parser.add_argument("--set-phone", nargs=2, metavar=("METER", "PHONE"),
+                        help="Give one DEMO- household this phone number (to test SMS sign-in on your phone)")
     parser.add_argument("--update-contacts", action="store_true",
                         help="Set sign-in phones and locations on DEMO- rows already in DATABASE_URL")
     args = parser.parse_args()
 
+    if args.set_phone:
+        set_phone(*args.set_phone)
+        return
     print(DEMO_BANNER)
     histories = generate_demo_histories(args.households, args.readings, args.seed)
     write_csv(histories, args.out)

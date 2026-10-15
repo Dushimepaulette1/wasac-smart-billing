@@ -129,8 +129,10 @@ Every flagged result is stored in `anomaly_flags` (`status` = `open` / `resolved
 No table changed for this. `validation_status` was already a free-text column, and the outcome can
 be read from the reading's status.
 
-SMS is **log-only for now**. `notifications.send_sms` has a TODO for Africa's Talking, using the
-`AT_USERNAME` and `AT_API_KEY` environment variables. No keys are stored in code.
+SMS go through Africa's Talking (`notifications.send_sms`) when `AT_USERNAME` and `AT_API_KEY`
+are set; otherwise they are only logged. With `AT_USERNAME=sandbox` they appear in the Africa's
+Talking simulator, not on real phones. Numbers are masked in logs; the key and sign-in codes are
+never logged. No keys are stored in code.
 
 ## API
 

@@ -1,5 +1,7 @@
 import logging
 import os
+
+import httpx
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -67,20 +69,59 @@ def message_for(anomaly_type: AnomalyType) -> str:
     return MESSAGES[anomaly_type]
 
 
-def send_sms(phone: str, message: str, *, sensitive: bool = False) -> bool:
-    """sensitive=True (sign-in codes): the text is never written to the logs."""
-    # TODO: wire Africa's Talking once credentials exist. Read AT_USERNAME and AT_API_KEY from the
-    # environment, call africastalking.initialize(username, api_key), then
-    # africastalking.SMS.send(message, [phone]). Never hard-code the key.
-    configured = bool(os.getenv("AT_USERNAME") and os.getenv("AT_API_KEY"))
-    logger.info(
-        "[SMS %s] to=%s message=%r",
-        "not sent: Africa's Talking not wired yet" if configured else "not sent: AT_USERNAME/AT_API_KEY unset",
-        phone,
-        "[hidden: contains a sign-in code]" if sensitive else message,
-    )
-    return False
+SANDBOX_URL = "https://api.sandbox.africastalking.com/version1/messaging"
+LIVE_URL = "https://api.africastalking.com/version1/messaging"
+SMS_TIMEOUT_SECONDS = 10
+_SUCCESS_CODES = {100, 101, 102}  # Processed, Sent, Queued
 
+
+def sms_configured() -> bool:
+    return bool(os.getenv("AT_USERNAME") and os.getenv("AT_API_KEY"))
+
+
+def _masked(phone: str) -> str:
+    """+250788123456 -> +250788***456: enough to tell messages apart in logs."""
+    return phone[:7] + "***" + phone[-3:] if len(phone) > 10 else "***"
+
+
+def send_sms(phone: str, message: str, *, sensitive: bool = False) -> bool:
+    """Send one SMS with Africa's Talking. Returns True if it was accepted.
+
+    AT_USERNAME "sandbox" uses the sandbox: messages appear in the Africa's Talking simulator
+    (https://simulator.africastalking.com), not on real phones, and cost nothing. Any other
+    username is the live service. AT_SENDER_ID is optional (an approved sender name).
+    Without AT_USERNAME/AT_API_KEY nothing is sent and the message is only logged.
+    The API key, and with sensitive=True (sign-in codes) the text, are never logged.
+    """
+    shown = "[hidden: contains a sign-in code]" if sensitive else message
+    if not sms_configured():
+        logger.info("[SMS not sent: AT_USERNAME/AT_API_KEY unset] to=%s message=%r", _masked(phone), shown)
+        return False
+
+    username = os.getenv("AT_USERNAME", "")
+    form = {"username": username, "to": phone, "message": message}
+    if os.getenv("AT_SENDER_ID"):
+        form["from"] = os.getenv("AT_SENDER_ID")
+    try:
+        response = httpx.post(
+            SANDBOX_URL if username == "sandbox" else LIVE_URL,
+            data=form,
+            headers={"apiKey": os.getenv("AT_API_KEY", ""), "Accept": "application/json"},
+            timeout=SMS_TIMEOUT_SECONDS,
+        )
+        recipients = response.json().get("SMSMessageData", {}).get("Recipients", []) if response.is_success else []
+    except (httpx.HTTPError, ValueError) as e:
+        logger.warning("[SMS failed] to=%s (%s)", _masked(phone), type(e).__name__)
+        return False
+    status = recipients[0] if recipients else {}
+    ok = status.get("statusCode") in _SUCCESS_CODES
+    if ok:
+        logger.info("[SMS sent] to=%s message=%r", _masked(phone), shown)
+    else:
+        # Africa's Talking's own words (e.g. InvalidPhoneNumber, InsufficientBalance); never the key.
+        logger.warning("[SMS failed] to=%s http=%s status=%s", _masked(phone), response.status_code,
+                       status.get("status") or "no recipient in answer")
+    return ok
 
 def dispatch(anomaly_type: AnomalyType, phone: Optional[str], message: str) -> List[str]:
     """Perform the actions for this anomaly type. Returns what was done, for logging/response."""

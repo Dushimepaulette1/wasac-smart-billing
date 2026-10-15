@@ -298,11 +298,14 @@ second look, nothing more. Meters with no location on file are not checked.
 | `OTP_SHOW_DEMO_CODES` | `1` | Show sign-in codes on screen for DEMO- households (SMS not wired yet) |
 | `LOCATION_MAX_M` | `150` | How far from the meter a photo may be taken |
 | `LOCATION_MAX_ACCURACY_M` | `500` | Rougher phone positions count as "unclear" |
+| `AT_USERNAME`, `AT_API_KEY` | unset (SMS only logged) | Africa's Talking; `sandbox` sends to the simulator only |
+| `AT_SENDER_ID` | unset | Approved sender name (live only) |
 
 **Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
 "Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for
 DEMO-MTR-002, and so on to 0700 000 018; **0700 000 019** has two meters (019 and 020), to show
-choosing a meter. These are not real numbers; the code is shown on screen. DEMO-MTR-002 has a
+choosing a meter. These are not real numbers; the code is shown on screen. To try SMS sign-in
+with your own phone: `--set-phone DEMO-MTR-001 07XXXXXXXX` (and `--update-contacts` to undo). DEMO-MTR-002 has a
 location on file (Kacyiru), so its readings show the location check. `--update-contacts` sets the
 phones and location on DEMO- rows already in the database.
 
