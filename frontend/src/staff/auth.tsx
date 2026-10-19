@@ -86,7 +86,7 @@ export function useAuth(): AuthValue {
 
 const ROLE_ORDER: StaffRole[] = ['officer', 'supervisor', 'admin'];
 
-/** officer < supervisor < admin; mirrors role_at_least in backend/auth/routes.py. */
+/** officer < supervisor < admin; mirrors role_at_least in backend/app/api/routes/staff_auth.py. */
 export function hasRole(user: StaffUser | null, role: StaffRole): boolean {
   if (!user) return false;
   return Math.max(0, ROLE_ORDER.indexOf(user.role as StaffRole)) >= ROLE_ORDER.indexOf(role);

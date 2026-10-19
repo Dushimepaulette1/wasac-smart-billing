@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytest
 from conftest import add_household, make_history
 
-from database import Bill, Meter, Reading
+from app.models import Bill, Meter, Reading
 
 METER = "MTR900"
 DAILIES = [0.38, 0.42, 0.40, 0.41, 0.39, 0.43, 0.40, 0.37]
@@ -30,7 +30,7 @@ def bills_for(db, reading_id):
 
 
 def reading_for(db, flag_id):
-    from anomaly.db_models import AnomalyFlag
+    from app.models import AnomalyFlag
 
     return db.get(Reading, db.get(AnomalyFlag, flag_id).reading_id)
 
@@ -134,7 +134,7 @@ def test_pending_reading_is_not_used_as_history_for_next_score(client, db, house
 
 
 def test_imported_meter_without_history_still_holds_lower_reading(client, db):
-    from database import Customer
+    from app.models import Customer
 
     db.add(Meter(meter_id=METER, last_reading=800.0))
     db.add(Customer(customer_id="CUST900", name="Imported", phone="+250788000222", meter_id=METER, sector="X"))

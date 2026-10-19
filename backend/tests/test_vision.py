@@ -12,13 +12,24 @@ import numpy as np
 import pytest
 from PIL import Image
 
-import vision  # noqa: F401  puts backend/ml on sys.path
-from vision.config import GuidanceConfig
-from vision.guidance import (BLURRY, CHECK_NUMBERS, CUT_OFF, GLARE, HARD_TO_READ, NO_METER, OK, TOO_DARK,
-                             TOO_FAR, Measurements, guidance_codes)
-from vision.image_io import BadImage, load_bgr
-from vision.models import ModelRegistry, get_registry
-from vision.pipeline import analyze_photo, guide_frame
+import app.vision  # noqa: F401  puts backend/ml on sys.path
+from app.vision.config import GuidanceConfig
+from app.vision.guidance import (
+    BLURRY,
+    CHECK_NUMBERS,
+    CUT_OFF,
+    GLARE,
+    HARD_TO_READ,
+    NO_METER,
+    OK,
+    TOO_DARK,
+    TOO_FAR,
+    Measurements,
+    guidance_codes,
+)
+from app.vision.image_io import BadImage, load_bgr
+from app.vision.models import ModelRegistry, get_registry
+from app.vision.pipeline import analyze_photo, guide_frame
 
 W, H = 1600, 1200
 WINDOW = (400, 500, 1200, 700)  # a clearly visible number window, well inside the frame
@@ -285,10 +296,10 @@ def test_registry_reports_missing_files(tmp_path):
 @pytest.fixture
 def photo_client(client, cfg):
     """Signed in (the photo endpoints need a household or staff sign-in)."""
-    from main import app
+    from app.main import app as fastapi_app
 
     holder = {"reg": registry(cfg)}
-    app.dependency_overrides[get_registry] = lambda: holder["reg"]
+    fastapi_app.dependency_overrides[get_registry] = lambda: holder["reg"]
     yield client, holder
 
 
@@ -335,7 +346,7 @@ def test_guide_frame_endpoint(photo_client):
 
 
 def test_health_reports_model_state(anon_client):
-    from vision.models import registry as live
+    from app.vision.models import registry as live
 
     body = anon_client.get("/health").json()
     assert body["photo_reading"] in ("ready", "manual_entry_only")

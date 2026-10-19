@@ -40,7 +40,7 @@ tunnel_link() {  # tunnel_link NAME -> prints the https link
 echo "Starting the backend (loading the models can take a minute or two)..."
 cd "$ROOT/backend"
 # Never create the sample customers in the shared database; it holds DEMO- households only.
-SEED_SAMPLE_DATA=0 .venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000 >"$LOGS/backend.log" 2>&1 &
+SEED_SAMPLE_DATA=0 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 >"$LOGS/backend.log" 2>&1 &
 pids+=($!)
 wait_for http://127.0.0.1:8000/health 150 "The backend"
 

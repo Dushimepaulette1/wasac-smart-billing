@@ -13,9 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _data import DEMO_BANNER, contains_demo, load_histories_csv, load_histories_db  # noqa: E402
 
-from anomaly.config import AnomalyConfig  # noqa: E402
-from anomaly.demo_data import generate_demo_histories  # noqa: E402
-from anomaly.model import AnomalyModel, build_training_matrix  # noqa: E402
+from app.anomaly.config import AnomalyConfig  # noqa: E402
+from app.anomaly.demo_data import generate_demo_histories  # noqa: E402
+from app.anomaly.model import AnomalyModel, build_training_matrix  # noqa: E402
 
 
 def main() -> None:

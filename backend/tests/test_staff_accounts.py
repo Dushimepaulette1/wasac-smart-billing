@@ -1,10 +1,10 @@
-"""Roles, the audit log and staff accounts (auth/routes.py)."""
+"""Roles, the audit log and staff accounts (app/api/routes/staff_auth.py)."""
 import pytest
 
 from conftest import add_household, add_officer, make_history, signed_in_client
 
-from auth.models import StaffAction
-from auth.routes import temporary_password
+from app.models import StaffAction
+from app.api.routes.staff_auth import temporary_password
 
 
 @pytest.fixture
@@ -15,13 +15,13 @@ def as_role(db):
     def make(role, username=None):
         username = username or role
         add_officer(db, username=username, full_name=role.title(), role=role)
-        app, client = signed_in_client(db, username)
-        apps.append(app)
+        fastapi_app, client = signed_in_client(db, username)
+        apps.append(fastapi_app)
         return client
 
     yield make
-    for app in apps:
-        app.dependency_overrides.clear()
+    for fastapi_app in apps:
+        fastapi_app.dependency_overrides.clear()
 
 
 def actions(db):

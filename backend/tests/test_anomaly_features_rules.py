@@ -4,9 +4,9 @@ from datetime import timedelta
 import pytest
 from conftest import make_history
 
-from anomaly.features import compute_features
-from anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, is_cold_start
-from anomaly.service import assess
+from app.anomaly.features import compute_features
+from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, is_cold_start
+from app.anomaly.service import assess
 
 
 def next_reading(history, daily, days=30):

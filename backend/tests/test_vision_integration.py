@@ -4,11 +4,11 @@ import cv2
 import numpy as np
 import pytest
 
-import vision  # noqa: F401
-from vision.config import load_model_config, weights_dir, yolo_weights_name
-from vision.guidance import NO_METER
-from vision.models import ModelRegistry
-from vision.pipeline import analyze_photo, guide_frame
+import app.vision  # noqa: F401  puts backend/ml on sys.path
+from app.vision.config import load_model_config, weights_dir, yolo_weights_name
+from app.vision.guidance import NO_METER
+from app.vision.models import ModelRegistry
+from app.vision.pipeline import analyze_photo, guide_frame
 
 _cfg = load_model_config()
 _WEIGHTS = [yolo_weights_name(_cfg), _cfg["reader"]["weights"], _cfg["quality_gate"]["weights"]]
@@ -42,7 +42,7 @@ def test_reader_and_gate_run_on_a_crop(real):
     crop = np.full((150, 600, 3), 235, np.uint8)
     for x in range(10, 590, 40):
         crop[30:-30, x:x + 14] = 15
-    from vision.image_io import bgr_to_pil
+    from app.vision.image_io import bgr_to_pil
 
     read = real.reader.read(bgr_to_pil(crop))
     assert set(read) >= {"raw_digits", "reading_digits", "reading_m3", "confidence_min", "confidence_mean"}

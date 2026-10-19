@@ -3,9 +3,9 @@ from statistics import median
 
 from conftest import add_household
 
-from anomaly.features import build_periods
-from anomaly.readings import m3_to_digits
-from database import Bill, Meter, Reading
+from app.anomaly.features import build_periods
+from app.anomaly.readings import m3_to_digits
+from app.models import Bill, Meter, Reading
 
 DEMO_ID = "DEMO-MTR-002"
 

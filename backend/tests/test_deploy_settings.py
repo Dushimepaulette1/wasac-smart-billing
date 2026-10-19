@@ -1,11 +1,10 @@
 """Settings and protections for the public deployment: rate limits, upload size, CORS, seeding."""
-import importlib
 
 import pytest
 from starlette.requests import Request
 
-import ratelimit
-from ratelimit import RateLimiter, client_ip
+from app.core import ratelimit
+from app.core.ratelimit import RateLimiter, client_ip
 
 
 @pytest.fixture(autouse=True)
@@ -73,25 +72,25 @@ def test_refusals_carry_cors_headers_so_the_app_can_show_them(client):
 
 
 def test_cors_origins_come_from_the_environment(monkeypatch):
-    import main
+    from app.core.config import cors_origins
 
     monkeypatch.setenv("CORS_ORIGINS", "https://wasac.vercel.app/, https://example.org")
-    assert main._cors_origins() == ["https://wasac.vercel.app", "https://example.org"]
+    assert cors_origins() == ["https://wasac.vercel.app", "https://example.org"]
     monkeypatch.delenv("CORS_ORIGINS")
-    assert main._cors_origins() == ["http://localhost:3000", "http://127.0.0.1:3000"]
+    assert cors_origins() == ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
 def test_sample_seed_can_be_turned_off(monkeypatch):
-    import database
+    from app.db import init_db, seed, session
 
     calls = []
-    monkeypatch.setattr(database.Base.metadata, "create_all", lambda bind: None)
-    monkeypatch.setattr(database, "seed_data", lambda: calls.append(1))
+    monkeypatch.setattr(session.Base.metadata, "create_all", lambda bind: None)
+    monkeypatch.setattr(seed, "seed_data", lambda: calls.append(1))
     monkeypatch.setenv("SEED_SAMPLE_DATA", "0")
-    database.init_db()
+    init_db.init_db()
     assert calls == []
     monkeypatch.setenv("SEED_SAMPLE_DATA", "1")
-    database.init_db()
+    init_db.init_db()
     assert calls == [1]
 
 

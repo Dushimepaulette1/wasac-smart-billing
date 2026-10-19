@@ -16,7 +16,7 @@ __pycache__/
 *.pyc
 *.db
 *.sqlite3
-anomaly/artifacts/
+app/anomaly/artifacts/
 scripts/demo/output/
 Dockerfile
 .dockerignore

@@ -18,9 +18,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from auth.models import ROLES, StaffUser  # noqa: E402
-from auth.security import hash_password  # noqa: E402
-from database import Base, SessionLocal, engine  # noqa: E402
+from app.models import ROLES, StaffUser  # noqa: E402
+from app.core.security import hash_password  # noqa: E402
+from app.db.session import Base, SessionLocal, engine  # noqa: E402
 
 MIN_LENGTH = 10
 

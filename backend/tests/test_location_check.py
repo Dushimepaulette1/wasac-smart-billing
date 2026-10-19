@@ -5,8 +5,9 @@ import pytest
 
 from conftest import add_household, make_history
 
-from anomaly.location import PhotoEvidence, ReadingEvidence, check_location, distance_m
-from database import Bill, Meter
+from app.anomaly.location import PhotoEvidence, check_location, distance_m
+from app.models import ReadingEvidence
+from app.models import Bill, Meter
 
 METER_LAT, METER_LNG = -1.9441, 30.0619  # Kigali
 

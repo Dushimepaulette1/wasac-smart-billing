@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-import vision  # noqa: F401
-from vision.config import GuidanceConfig, load_model_config
-from vision.guidance import BLURRY, GLARE, OK, TOO_DARK, Measurements, guidance_codes
+from app import vision
+from app.vision.config import GuidanceConfig, load_model_config
+from app.vision.guidance import BLURRY, GLARE, OK, TOO_DARK, Measurements, guidance_codes
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 
@@ -58,7 +58,7 @@ def test_quality_gate_reads_its_class_index_from_model_config(tmp_path):
     import torchvision
     from PIL import Image
 
-    from vision.models import QualityGate
+    from app.vision.models import QualityGate
 
     assert load_model_config()["quality_gate"]["positive_class_index"] == 1
     model = torchvision.models.mobilenet_v2(weights=None)

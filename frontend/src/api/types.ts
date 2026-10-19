@@ -1,7 +1,7 @@
 /**
  * @file types.ts
  * @description Response and request models for the FastAPI backend.
- * Each type mirrors backend/schemas.py (or the dict a route returns, where
+ * Each type mirrors backend/app/schemas/ (or the dict a route returns, where
  * there is no schema). FastAPI sends Optional fields as null, not missing,
  * so they are `T | null`. Datetimes are ISO strings without a time zone
  * (naive UTC), e.g. "2026-10-09T10:26:25.008260".
@@ -14,7 +14,7 @@ export type IsoDateTime = string;
 // Statuses and enums (backend constants)
 // ---------------------------------------------------------------------------
 
-/** anomaly/rules.py AnomalyType */
+/** app/anomaly/rules.py AnomalyType */
 export type AnomalyType =
   | 'NORMAL'
   | 'BASELINE'
@@ -23,16 +23,16 @@ export type AnomalyType =
   | 'SUSTAINED_HIGH'
   | 'METER_STUCK'
   | 'UNUSUAL'
-  /** The photo's location or source needs an officer's look (anomaly/location.py). */
+  /** The photo's location or source needs an officer's look (app/anomaly/location.py). */
   | 'LOCATION_CHECK';
 
-/** anomaly/db_models.py FLAG_STATUS_* */
+/** app/models/anomaly_flag.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';
 
-/** anomaly/statuses.py READING_* */
+/** app/anomaly/statuses.py READING_* */
 export type ReadingStatus = 'valid' | 'anomaly_flagged' | 'pending_review' | 'rejected';
 
-/** database.py Bill.payment_status */
+/** app/models/ Bill.payment_status */
 export type PaymentStatus = 'paid' | 'unpaid';
 
 /**
@@ -183,7 +183,7 @@ export interface CalculatedTier {
   amount: number;
 }
 
-/** routes/reading.py calculate_bill (dict, no schema) */
+/** app/api/routes/readings.py calculate_bill (dict, no schema) */
 export interface CalculateBillResponse {
   consumption_m3: number;
   breakdown: {
@@ -212,7 +212,7 @@ export interface CustomerInfo {
   anomaly_flagged: boolean;
 }
 
-/** routes/billing.py customer_bills (dict per bill, no schema) */
+/** app/api/routes/billing.py customer_bills (dict per bill, no schema) */
 export interface BillSummary {
   bill_id: number;
   consumption_m3: number;
@@ -222,7 +222,7 @@ export interface BillSummary {
   created_at: IsoDateTime;
 }
 
-/** routes/billing.py pay_bill: a new payment. */
+/** app/api/routes/billing.py pay_bill: a new payment. */
 export interface PayBillSuccess {
   success: true;
   bill_id: number;
@@ -231,7 +231,7 @@ export interface PayBillSuccess {
   message: string;
 }
 
-/** routes/billing.py pay_bill: the bill was paid before (no transaction). */
+/** app/api/routes/billing.py pay_bill: the bill was paid before (no transaction). */
 export interface PayBillAlreadyPaid {
   message: 'Bill already paid';
   bill_id: number;
@@ -313,7 +313,7 @@ export interface StaffUser {
 }
 
 // ---------------------------------------------------------------------------
-// Household sign-in (auth/household.py)
+// Household sign-in (app/api/routes/household_auth.py)
 // ---------------------------------------------------------------------------
 
 /** CodeSent */
@@ -344,7 +344,7 @@ export interface HouseholdSession {
   accounts: HouseholdAccount[];
 }
 
-/** Where and how the meter photo was taken (anomaly/location.py). */
+/** Where and how the meter photo was taken (app/anomaly/location.py). */
 export interface PhotoEvidence {
   photoSource: 'camera' | 'upload';
   location: { lat: number; lng: number; accuracyM: number | null } | null;
@@ -406,7 +406,7 @@ export interface UssdRequest {
   session_id?: string | null;
 }
 
-/** routes/ussd.py submit_ussd (dict, no schema) */
+/** app/api/routes/ussd.py submit_ussd (dict, no schema) */
 export interface UssdResponse {
   /** Text for the phone screen, starting "END ". */
   response: string;
