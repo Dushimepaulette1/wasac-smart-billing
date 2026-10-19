@@ -11,4 +11,4 @@ else
   echo "Model weights incomplete: starting anyway. See /health."
 fi
 
-exec uvicorn main:app --host 0.0.0.0 --port "${PORT:-7860}" --workers 1
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-7860}" --workers 1

@@ -4,12 +4,12 @@ from statistics import median
 import pytest
 from conftest import T0, add_household
 
-from anomaly.db_models import AnomalyFlag
-from anomaly.features import build_periods
-from anomaly.readings import m3_to_digits
-from anomaly.rules import AnomalyType
-from anomaly.service import assess, load_history, score_submission
-from database import Reading
+from app.models import AnomalyFlag
+from app.anomaly.features import build_periods
+from app.anomaly.readings import m3_to_digits
+from app.anomaly.rules import AnomalyType
+from app.anomaly.service import assess, load_history, score_submission
+from app.models import Reading
 
 DEMO_ID = "DEMO-MTR-001"
 

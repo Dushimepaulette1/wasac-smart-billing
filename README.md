@@ -75,8 +75,8 @@ ENVEOF
 psql -U postgres -c "CREATE USER wasac_user WITH PASSWORD 'wasac_pass';"
 psql -U postgres -c "CREATE DATABASE wasac_db OWNER wasac_user;"
 
-# 6. Start the backend (auto-creates tables and seeds demo data)
-python main.py
+# 6. Start the backend (auto-creates tables and seeds sample data)
+uvicorn app.main:app --reload
 ```
 
 The API will be available at **http://localhost:8000**  
@@ -205,7 +205,7 @@ speed and memory with `python scripts/benchmark_vision.py [--photos <folder>]`.
 | Testing from this laptop | Cloudflare quick tunnel | `tools/phone_test.sh` |
 
 **Models on ONNX Runtime.** The deployed API runs the three models with ONNX Runtime
-(`backend/vision/onnx_models.py`) instead of PyTorch, so the image installs only
+(`backend/app/vision/onnx_models.py`) instead of PyTorch, so the image installs only
 `requirements-serve.txt` and fits a 512 MB instance. `backend/scripts/export_onnx.py` makes the
 `.onnx` files from the `.pt` ones and compares both: on 150 real meter photos plus 12 synthetic
 ones they gave the same detections (boxes within 4 px), the same digits and the same retake
@@ -232,21 +232,33 @@ waits for it to start again (about a minute: start, model download, model loadin
 ```
 wasac-platform/
 ├── backend/
-│   ├── main.py              # FastAPI app & lifespan
-│   ├── database.py          # SQLAlchemy models & seed data
-│   ├── schemas.py           # Pydantic request/response models
-│   ├── ml/                  # model code + config shared with training; .pt weights downloaded
-│   ├── vision/              # model loading, photo pipeline, guidance checks and thresholds
-│   ├── anomaly/             # Stage 3: rules + Isolation Forest, pending review
-│   ├── auth/                # staff sign-in, roles, audit log, staff accounts
-│   ├── routes/
-│   │   ├── reading.py       # /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
-│   │   ├── billing.py       # /customers, /bills
-│   │   ├── anomaly.py       # /api/anomaly/*
-│   │   └── ussd.py          # /submit-ussd
-│   ├── scripts/             # download_models, calibrate_guidance, benchmark_vision, anomaly tools
-│   ├── tests/
-│   └── requirements.txt
+│   ├── app/                     # the API (run: uvicorn app.main:app)
+│   │   ├── main.py              # builds the app: start-up, guards (rate limits, CORS), routes
+│   │   ├── api/
+│   │   │   ├── deps.py          # who is asking? require_staff, require_role, household_access
+│   │   │   └── routes/          # one file per area:
+│   │   │       ├── readings.py        # /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
+│   │   │       ├── billing.py         # /customers, /customers/{id}/bills, /bills/{id}/pay
+│   │   │       ├── anomaly.py         # /api/anomaly/* (messages, review queue, decisions)
+│   │   │       ├── household_auth.py  # /household/* (SMS sign-in)
+│   │   │       ├── staff_auth.py      # /auth/* (staff sign-in, activity, accounts)
+│   │   │       ├── ussd.py            # /submit-ussd
+│   │   │       └── health.py          # /health
+│   │   ├── core/                # config.py (settings), security.py (passwords, tokens), ratelimit.py
+│   │   ├── db/                  # session.py (connection), init_db.py (tables), seed.py (local samples)
+│   │   ├── models/              # database tables (from app.models import Customer, Bill, ...)
+│   │   ├── schemas/             # request/response shapes (from app.schemas import ...)
+│   │   ├── services/            # billing.py (tariff), sms.py (Africa's Talking), audit.py (staff log)
+│   │   ├── anomaly/             # leaks and wrong readings: rules + Isolation Forest, location check, review
+│   │   ├── vision/              # meter-photo models (PyTorch or ONNX), pipeline, live guidance
+│   │   └── utils/               # small helpers (phone numbers)
+│   ├── ml/                      # model code + config shared with the training notebook; weights downloaded here
+│   ├── scripts/                 # download_models, export_onnx, create_officer, demo data, calibration, training
+│   ├── tests/                   # pytest
+│   ├── requirements.txt         # full environment (training, .pt models, tests)
+│   ├── requirements-serve.txt   # what the deployed API needs (ONNX, no torch)
+│   ├── Dockerfile, start.sh     # the container Render runs
+│   └── README.md
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.ts
@@ -296,7 +308,7 @@ not a number is registered.
 
 When a household confirms a reading, the app sends where the phone was when the photo was taken
 and whether it came from the camera or the gallery. Compared with the meter's location on file
-(`backend/anomaly/location.py`), a photo more than 150 m away (allowing for the phone's
+(`backend/app/anomaly/location.py`), a photo more than 150 m away (allowing for the phone's
 accuracy), with no location, with a very rough location, or chosen from the gallery is **held
 for an officer** (type `LOCATION_CHECK`), who sees why in the review queue and can accept it.
 Readings are never rejected for this alone; location can be faked, so it decides who gets a

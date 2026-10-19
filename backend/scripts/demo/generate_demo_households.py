@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _data import DEMO_BANNER  # noqa: E402
 
-from anomaly.demo_data import generate_demo_histories  # noqa: E402
+from app.anomaly.demo_data import generate_demo_histories  # noqa: E402
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "output" / "DEMO_households.csv"
 DEMO_GPS = {"DEMO-MTR-002": (-1.9441, 30.0619)}
@@ -35,8 +35,9 @@ def demo_phone(hid: str, households: int) -> str:
 
 
 def set_phone(meter_id: str, raw_phone: str) -> None:
-    from auth.household import normalize_phone
-    from database import Customer, SessionLocal
+    from app.utils.phone import normalize_phone
+    from app.db.session import SessionLocal
+    from app.models import Customer
 
     phone = normalize_phone(raw_phone)
     if not meter_id.startswith("DEMO-") or not phone:
@@ -55,7 +56,8 @@ def set_phone(meter_id: str, raw_phone: str) -> None:
 
 def update_contacts(histories) -> int:
     """Set the sign-in phone and location of DEMO- rows already in the database. Touches nothing else."""
-    from database import Customer, Meter, SessionLocal
+    from app.db.session import SessionLocal
+    from app.models import Customer, Meter
 
     db = SessionLocal()
     updated = 0
@@ -87,8 +89,9 @@ def write_csv(histories, path: Path) -> None:
 
 
 def load_into_db(histories) -> int:
-    from database import Base, Customer, Meter, Reading, SessionLocal, engine
-    import anomaly.db_models  # noqa: F401  registers anomaly_flags
+    from app.db.session import Base, SessionLocal, engine
+    from app.models import Customer, Meter, Reading
+    import app.models  # noqa: F401  registers anomaly_flags
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

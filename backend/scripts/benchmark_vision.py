@@ -16,9 +16,9 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import vision  # noqa: E402,F401
-from vision.image_io import bgr_to_pil  # noqa: E402
-from vision.pipeline import analyze_photo, guide_frame  # noqa: E402
+import app.vision  # noqa: F401  puts backend/ml on sys.path
+from app.vision.image_io import bgr_to_pil  # noqa: E402
+from app.vision.pipeline import analyze_photo, guide_frame  # noqa: E402
 from wasac_preprocessing import detect  # noqa: E402
 
 
@@ -50,7 +50,7 @@ def main() -> None:
 
     print(f"torch threads: {torch.get_num_threads()}   peak memory before models: {peak_mb():.0f} MB")
     t = time.perf_counter()
-    from vision.models import ModelRegistry
+    from app.vision.models import ModelRegistry
 
     reg = ModelRegistry().load()
     print(f"Model load (imports + weights + warm-up): {time.perf_counter() - t:.1f}s   {reg.health()}")
@@ -84,7 +84,7 @@ def main() -> None:
             crop[30:-30, x:x + 14] = 15
         pil_crop = bgr_to_pil(crop)
         photo_jpeg, frame_jpeg = jpeg(photo), jpeg(cv2.resize(photo, (640, 480)), 70)
-        from vision.image_io import load_bgr
+        from app.vision.image_io import load_bgr
 
         stages = {
             "decode + EXIF + resize (1600 px)": lambda: load_bgr(photo_jpeg, cfg.max_long_side),

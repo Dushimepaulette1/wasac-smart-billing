@@ -1,11 +1,11 @@
-"""Africa's Talking SMS (anomaly/notifications.py) and sign-in codes by SMS. No real requests."""
+"""Africa's Talking SMS (app/services/sms.py) and sign-in codes by SMS. No real requests."""
 import httpx
 import pytest
 
 from conftest import add_household, make_history
 
-from anomaly import notifications
-from auth.models import HouseholdCode
+from app.services import sms
+from app.models import HouseholdCode
 
 KEY = "atsk_secret_key_for_tests"
 
@@ -39,7 +39,7 @@ def sandbox(monkeypatch):
         return calls_answer[0]
 
     calls_answer = [accepted()]
-    monkeypatch.setattr(notifications.httpx, "post", post)
+    monkeypatch.setattr(sms.httpx, "post", post)
     return calls, calls_answer
 
 
@@ -47,16 +47,16 @@ def test_without_keys_nothing_is_sent(monkeypatch):
     def boom(*a, **k):
         raise AssertionError("must not call Africa's Talking")
 
-    monkeypatch.setattr(notifications.httpx, "post", boom)
-    assert notifications.send_sms("+250788000111", "hello") is False
+    monkeypatch.setattr(sms.httpx, "post", boom)
+    assert sms.send_sms("+250788000111", "hello") is False
 
 
 def test_sandbox_send(sandbox, caplog):
     calls, _ = sandbox
     with caplog.at_level("INFO"):
-        assert notifications.send_sms("+250788000111", "Your bill is ready") is True
+        assert sms.send_sms("+250788000111", "Your bill is ready") is True
     call = calls[0]
-    assert call["url"] == notifications.SANDBOX_URL
+    assert call["url"] == sms.SANDBOX_URL
     assert call["data"] == {"username": "sandbox", "to": "+250788000111", "message": "Your bill is ready"}
     assert call["headers"]["apiKey"] == KEY
     assert KEY not in caplog.text and "+250788000111" not in caplog.text  # key never, number masked
@@ -66,8 +66,8 @@ def test_live_username_uses_the_live_service(sandbox, monkeypatch):
     calls, _ = sandbox
     monkeypatch.setenv("AT_USERNAME", "wasac")
     monkeypatch.setenv("AT_SENDER_ID", "WASAC")
-    notifications.send_sms("+250788000111", "hi")
-    assert calls[0]["url"] == notifications.LIVE_URL and calls[0]["data"]["from"] == "WASAC"
+    sms.send_sms("+250788000111", "hi")
+    assert calls[0]["url"] == sms.LIVE_URL and calls[0]["data"]["from"] == "WASAC"
 
 
 @pytest.mark.parametrize("answer", [
@@ -79,7 +79,7 @@ def test_refusals_return_false(sandbox, answer, caplog):
     _, answers = sandbox
     answers[0] = answer
     with caplog.at_level("INFO"):
-        assert notifications.send_sms("+250788000111", "x") is False
+        assert sms.send_sms("+250788000111", "x") is False
     assert KEY not in caplog.text
 
 
@@ -87,8 +87,8 @@ def test_network_errors_return_false(sandbox, monkeypatch):
     def fail(*a, **k):
         raise httpx.ConnectTimeout("slow")
 
-    monkeypatch.setattr(notifications.httpx, "post", fail)
-    assert notifications.send_sms("+250788000111", "x") is False
+    monkeypatch.setattr(sms.httpx, "post", fail)
+    assert sms.send_sms("+250788000111", "x") is False
 
 
 def test_sign_in_code_goes_by_sms_and_is_not_logged(db, anon_client, sandbox, caplog):
@@ -123,8 +123,8 @@ def test_pasted_settings_are_trimmed_and_sandbox_is_case_blind(sandbox, monkeypa
     calls, _ = sandbox
     monkeypatch.setenv("AT_USERNAME", " Sandbox\n")
     monkeypatch.setenv("AT_API_KEY", f"  {KEY}\n")
-    assert notifications.send_sms("+250788000111", "hi") is True
-    assert calls[0]["url"] == notifications.SANDBOX_URL
+    assert sms.send_sms("+250788000111", "hi") is True
+    assert calls[0]["url"] == sms.SANDBOX_URL
     assert calls[0]["data"]["username"] == "sandbox" and calls[0]["headers"]["apiKey"] == KEY
 
 
@@ -132,6 +132,6 @@ def test_a_refused_key_logs_africas_talkings_reason(sandbox, caplog):
     _, answers = sandbox
     answers[0] = FakeResponse(401, None, text="The supplied authentication is invalid")
     with caplog.at_level("INFO"):
-        assert notifications.send_sms("+250788000111", "x") is False
+        assert sms.send_sms("+250788000111", "x") is False
     assert "http=401 service=sandbox reason=The supplied authentication is invalid" in caplog.text
     assert KEY not in caplog.text

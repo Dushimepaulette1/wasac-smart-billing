@@ -9,14 +9,13 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import anomaly.db_models  # noqa: E402,F401  registers anomaly_flags on Base
-import anomaly.location  # noqa: E402,F401  registers reading_evidence on Base
-import auth.models  # noqa: E402,F401  registers staff_users, household_codes on Base
-from anomaly.config import AnomalyConfig  # noqa: E402
-from anomaly.demo_data import generate_demo_histories  # noqa: E402
-from anomaly.features import ReadingPoint  # noqa: E402
-from anomaly.model import AnomalyModel, build_training_matrix, clear_model_cache  # noqa: E402
-from database import Base, Customer, Meter, Reading  # noqa: E402
+import app.models  # noqa: E402,F401  registers every table on Base
+from app.anomaly.config import AnomalyConfig  # noqa: E402
+from app.anomaly.demo_data import generate_demo_histories  # noqa: E402
+from app.anomaly.features import ReadingPoint  # noqa: E402
+from app.anomaly.model import AnomalyModel, build_training_matrix, clear_model_cache  # noqa: E402
+from app.db.session import Base  # noqa: E402
+from app.models import Customer, Meter, Reading  # noqa: E402
 
 T0 = datetime(2025, 1, 1, 9, 0)
 
@@ -34,7 +33,7 @@ def make_history(dailies, days=30, start_m3=500.0, start=T0):
 
 @pytest.fixture(autouse=True)
 def no_real_sms(monkeypatch):
-    """database.py loads backend/.env; tests must never send a real SMS with its keys."""
+    """app/db/session.py loads backend/.env; tests must never send a real SMS with its keys."""
     for name in ("AT_USERNAME", "AT_API_KEY", "AT_SENDER_ID"):
         monkeypatch.delenv(name, raising=False)
 
@@ -42,8 +41,8 @@ def no_real_sms(monkeypatch):
 @pytest.fixture(autouse=True)
 def fresh_rate_limits():
     """Rate limits are per process; reset them so tests do not throttle each other."""
-    import ratelimit
-    from auth.household import reset_household_limits
+    from app.core import ratelimit
+    from app.api.routes.household_auth import reset_household_limits
 
     ratelimit.reset_limits()
     reset_household_limits()
@@ -111,8 +110,8 @@ def add_household(db, meter_id, points, phone="+250788000111"):
 
 
 def add_officer(db, username="officer1", password="correct horse", full_name="Test Officer", active=True, role="officer"):
-    from auth.models import StaffUser
-    from auth.security import hash_password
+    from app.models import StaffUser
+    from app.core.security import hash_password
 
     user = StaffUser(
         username=username,
@@ -129,40 +128,40 @@ def add_officer(db, username="officer1", password="correct horse", full_name="Te
 def _test_client(db, headers=None):
     from fastapi.testclient import TestClient
 
-    from database import get_db
-    from main import app
+    from app.db.session import get_db
+    from app.main import app as fastapi_app
 
     def override():
         yield db
 
-    app.dependency_overrides[get_db] = override
+    fastapi_app.dependency_overrides[get_db] = override
     # no context manager: lifespan (Postgres init_db) is not run
-    return app, TestClient(app, headers=headers or {})
+    return fastapi_app, TestClient(fastapi_app, headers=headers or {})
 
 
 @pytest.fixture
 def client(db):
     """Signed in as an officer, as the staff dashboard is."""
-    from auth.security import make_token
+    from app.core.security import make_token
 
     add_officer(db)
-    app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('officer1')[0]}"})
+    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('officer1')[0]}"})
     try:
         yield test_client
     finally:
-        app.dependency_overrides.clear()
+        fastapi_app.dependency_overrides.clear()
 
 
 def signed_in_client(db, username):
-    """A client signed in as an existing staff user; the caller clears app.dependency_overrides."""
-    from auth.security import make_token
+    """A client signed in as an existing staff user; the caller clears fastapi_app.dependency_overrides."""
+    from app.core.security import make_token
 
     return _test_client(db, {"Authorization": f"Bearer {make_token(username)[0]}"})
 
 
 def household_token(phone="+250788000111"):
-    from auth.household import SESSION_TTL, SUBJECT_PREFIX
-    from auth.security import make_token
+    from app.api.deps import SESSION_TTL, SUBJECT_PREFIX
+    from app.core.security import make_token
 
     return make_token(SUBJECT_PREFIX + phone, ttl=SESSION_TTL)[0]
 
@@ -170,22 +169,22 @@ def household_token(phone="+250788000111"):
 @pytest.fixture
 def household_client(db):
     """Signed in as the household whose phone is +250788000111 (add_household's default)."""
-    app, test_client = _test_client(db, {"Authorization": f"Bearer {household_token()}"})
+    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {household_token()}"})
     try:
         yield test_client
     finally:
-        app.dependency_overrides.clear()
+        fastapi_app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def anon_client(db):
     """Not signed in, as the household app is."""
-    from auth.routes import reset_failures
+    from app.api.routes.staff_auth import reset_failures
 
     reset_failures()
-    app, test_client = _test_client(db)
+    fastapi_app, test_client = _test_client(db)
     try:
         yield test_client
     finally:
-        app.dependency_overrides.clear()
+        fastapi_app.dependency_overrides.clear()
         reset_failures()

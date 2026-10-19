@@ -1,11 +1,11 @@
 /**
  * @file location.ts
  * @description The location check on a held reading (backend
- * anomaly/location.py), read from the flag's features. Shared by the
+ * app/anomaly/location.py), read from the flag's features. Shared by the
  * household's Messages and the staff review queue.
  */
 
-/** The location check's outcome on a held reading (backend anomaly/location.py), if it needs a look. */
+/** The location check's outcome on a held reading (backend app/anomaly/location.py), if it needs a look. */
 export interface LocationFinding {
   reason: 'far' | 'no_location' | 'imprecise' | 'upload';
   distanceM: number | null;

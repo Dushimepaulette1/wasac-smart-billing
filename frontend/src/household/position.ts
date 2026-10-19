@@ -1,7 +1,7 @@
 /**
  * @file position.ts
  * @description Where the phone is while the camera is open, so a reading can
- * be checked against the meter's location (backend anomaly/location.py).
+ * be checked against the meter's location (backend app/anomaly/location.py).
  * Asking is the browser's own prompt; refusing is fine: the reading is still
  * sent, and an officer checks it before it is billed.
  */

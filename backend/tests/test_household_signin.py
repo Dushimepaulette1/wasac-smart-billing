@@ -3,8 +3,8 @@ import pytest
 
 from conftest import add_household, household_token, make_history
 
-from auth.household import normalize_phone
-from auth.models import HouseholdCode
+from app.utils.phone import normalize_phone
+from app.models import HouseholdCode
 
 PHONE = "+250788000111"  # add_household's default
 

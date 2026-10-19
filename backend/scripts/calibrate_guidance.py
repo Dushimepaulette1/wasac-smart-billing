@@ -33,11 +33,11 @@ from typing import Dict, List, Optional, Sequence
 import cv2
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import vision  # noqa: E402,F401
-from vision.config import GuidanceConfig, load_model_config  # noqa: E402
-from vision.guidance import Measurements, guidance_codes  # noqa: E402
-from vision.image_io import BadImage, bgr_to_pil, load_bgr  # noqa: E402
-from vision.pipeline import _locate  # noqa: E402
+import app.vision  # noqa: F401  puts backend/ml on sys.path
+from app.vision.config import GuidanceConfig, load_model_config  # noqa: E402
+from app.vision.guidance import Measurements, guidance_codes  # noqa: E402
+from app.vision.image_io import BadImage, bgr_to_pil, load_bgr  # noqa: E402
+from app.vision.pipeline import _locate  # noqa: E402
 
 IMAGE_EXT = {".jpg", ".jpeg", ".png"}
 METER_GROUPS = ["readable", "unreadable", "unlabelled"]
@@ -96,7 +96,7 @@ def measure_image(data: bytes, registry, cfg: GuidanceConfig, sizes: Sequence[in
 
 
 def run_measure(args) -> None:
-    from vision.models import ModelRegistry
+    from app.vision.models import ModelRegistry
 
     registry = ModelRegistry().load()
     if not registry.ready or registry.quality_gate is None:
@@ -288,8 +288,8 @@ def same_reading(read: Optional[str], label: str) -> bool:
 def run_reader_check(args) -> None:
     """Run /submit-photo's pipeline on held-out readable photos and record, per photo, whether
     CHECK_NUMBERS fired and whether the reading was right. Writes no file names to the report."""
-    from vision.models import ModelRegistry
-    from vision.pipeline import analyze_photo
+    from app.vision.models import ModelRegistry
+    from app.vision.pipeline import analyze_photo
 
     registry = ModelRegistry().load()
     if not registry.ready:

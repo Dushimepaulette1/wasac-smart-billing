@@ -10,9 +10,9 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from anomaly.demo_data import DEMO_PREFIX  # noqa: E402
-from anomaly.features import ReadingPoint  # noqa: E402
-# seed_data() in database.py creates these three synthetic app-demo meters; they are not WASAC data.
+from app.anomaly.demo_data import DEMO_PREFIX  # noqa: E402
+from app.anomaly.features import ReadingPoint  # noqa: E402
+# seed_data() in app/db/seed.py creates these three synthetic app-demo meters; they are not WASAC data.
 SEED_METER_IDS = {"MTR001", "MTR002", "MTR003"}
 
 Histories = Dict[str, List[ReadingPoint]]
@@ -37,7 +37,8 @@ def load_histories_csv(path: Path) -> Histories:
 
 
 def load_histories_db(include_demo: bool = False, include_seed: bool = False) -> Histories:
-    from database import Reading, SessionLocal
+    from app.db.session import SessionLocal
+    from app.models import Reading
 
     db = SessionLocal()
     try:

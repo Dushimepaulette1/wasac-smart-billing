@@ -1,6 +1,6 @@
 import pytest
 
-from anomaly.readings import digits_to_m3, m3_to_digits
+from app.anomaly.readings import digits_to_m3, m3_to_digits
 
 
 def test_eight_digits_convert_to_m3(config):

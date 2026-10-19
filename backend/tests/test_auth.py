@@ -2,7 +2,7 @@ import time
 
 from conftest import add_household, add_officer, make_history
 
-from auth.security import hash_password, make_token, read_token, verify_password
+from app.core.security import hash_password, make_token, read_token, verify_password
 
 
 def test_password_hash_round_trip_and_salt():
@@ -71,8 +71,8 @@ def test_household_routes_need_a_sign_in(db, anon_client):
 
 
 def test_review_queue_lists_held_readings_with_context(db, client):
-    from anomaly.db_models import AnomalyFlag
-    from database import Reading
+    from app.models import AnomalyFlag
+    from app.models import Reading
 
     add_household(db, "MTR-Q", make_history([1.0] * 4))
     reading = Reading(meter_id="MTR-Q", submitted_value=900.0, validation_status="pending_review")

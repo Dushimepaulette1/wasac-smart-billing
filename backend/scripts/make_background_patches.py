@@ -15,8 +15,8 @@ from pathlib import Path
 import cv2
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import vision  # noqa: E402,F401
-from vision.image_io import BadImage, load_bgr  # noqa: E402
+import app.vision  # noqa: F401  puts backend/ml on sys.path
+from app.vision.image_io import BadImage, load_bgr  # noqa: E402
 from wasac_preprocessing import detect, display_box  # noqa: E402
 
 IMAGE_EXT = {".jpg", ".jpeg", ".png"}
@@ -54,7 +54,7 @@ def main() -> None:
     if args.size < 0.3:
         parser.error("--size must be at least 0.3")
 
-    from vision.models import ModelRegistry
+    from app.vision.models import ModelRegistry
 
     reg = ModelRegistry().load()
     if reg.yolo is None:

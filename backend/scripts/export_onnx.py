@@ -23,7 +23,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "ml"))
 
-from vision.config import load_model_config, weights_dir, yolo_weights_name  # noqa: E402
+from app.vision.config import load_model_config, weights_dir, yolo_weights_name  # noqa: E402
 
 OPSET = 17
 
@@ -103,8 +103,8 @@ def compare(directory: Path, cfg: dict, extra_dir, limit=None) -> bool:
     from PIL import Image
     from ultralytics import YOLO
 
-    from vision.models import QualityGate
-    from vision.onnx_models import OnnxQualityGate, OnnxReader, OnnxYolo
+    from app.vision.models import QualityGate
+    from app.vision.onnx_models import OnnxQualityGate, OnnxReader, OnnxYolo
     from wasac_models import MeterReader
     from wasac_preprocessing import crop_display, detect
 

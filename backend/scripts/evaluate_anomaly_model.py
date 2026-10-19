@@ -21,12 +21,12 @@ from typing import Callable, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _data import DEMO_BANNER, contains_demo, load_histories_csv, load_histories_db  # noqa: E402
 
-from anomaly.config import AnomalyConfig  # noqa: E402
-from anomaly.demo_data import generate_demo_histories  # noqa: E402
-from anomaly.features import ReadingPoint, build_periods  # noqa: E402
-from anomaly.model import AnomalyModel, build_training_matrix  # noqa: E402
-from anomaly.readings import digits_to_m3, m3_to_digits  # noqa: E402
-from anomaly.service import assess  # noqa: E402
+from app.anomaly.config import AnomalyConfig  # noqa: E402
+from app.anomaly.demo_data import generate_demo_histories  # noqa: E402
+from app.anomaly.features import ReadingPoint, build_periods  # noqa: E402
+from app.anomaly.model import AnomalyModel, build_training_matrix  # noqa: E402
+from app.anomaly.readings import digits_to_m3, m3_to_digits  # noqa: E402
+from app.anomaly.service import assess  # noqa: E402
 
 
 def _other_digit(d: str, rng: random.Random) -> str:

@@ -1,9 +1,9 @@
-"""ONNX serving (vision/onnx_models.py): the numpy steps match torchvision / Ultralytics / the decoder."""
+"""ONNX serving (app/vision/onnx_models.py): the numpy steps match torchvision / Ultralytics / the decoder."""
 import numpy as np
 import pytest
 from PIL import Image
 
-from vision.onnx_models import decode_with_confidence, gate_input, letterbox, nms, postprocess, reader_input
+from app.vision.onnx_models import decode_with_confidence, gate_input, letterbox, nms, postprocess, reader_input
 
 GATE_CFG = {"input_size": [128, 384], "normalize_mean": [0.485, 0.456, 0.406], "normalize_std": [0.229, 0.224, 0.225]}
 
@@ -77,7 +77,7 @@ def test_postprocess_filters_suppresses_per_class_and_undoes_the_letterbox():
 
 
 def test_registry_prefers_onnx_files(tmp_path, monkeypatch):
-    from vision.models import ModelRegistry
+    from app.vision.models import ModelRegistry
 
     reg = ModelRegistry()
     reg.model_config = {"cropper": {"yolo_weights": "best.pt (Benax)"}}

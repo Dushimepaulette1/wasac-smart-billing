@@ -29,7 +29,7 @@ from typing import Dict, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dotenv import load_dotenv  # noqa: E402
 
-from vision.config import ML_CODE_DIR, weights_dir  # noqa: E402
+from app.vision.config import ML_CODE_DIR, weights_dir  # noqa: E402
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")  # the Drive links live in backend/.env
 
