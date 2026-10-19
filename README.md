@@ -254,7 +254,7 @@ wasac-platform/
 │   │   └── utils/               # small helpers (phone numbers)
 │   ├── ml/                      # model code + config shared with the training notebook; weights downloaded here
 │   ├── scripts/                 # download_models, export_onnx, create_officer, demo data, calibration, training
-│   ├── tests/                   # pytest
+│   ├── tests/                   # pytest, mirroring app/ (api/, anomaly/, core/, ...); helpers in tests/support/
 │   ├── requirements.txt         # full environment (training, .pt models, tests)
 │   ├── requirements-serve.txt   # what the deployed API needs (ONNX, no torch)
 │   ├── Dockerfile, start.sh     # the container Render runs
@@ -262,6 +262,7 @@ wasac-platform/
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.ts
+│   ├── tests/                   # Vitest, mirroring src/ (api/, components/, pages/, ...); helpers in tests/support/
 │   └── src/
 │       ├── api/             # Typed API client and FastAPI response models
 │       ├── components/      # MeterCounter, Screen, Button, Notice, ...
@@ -274,6 +275,16 @@ wasac-platform/
 │   └── wasac_meter_reading_pipeline.ipynb
 └── README.md
 ```
+
+### Tests
+
+Both sides keep tests apart from the code, in a `tests/` folder that mirrors the code's folders,
+and name each test as a sentence: **when** this happens, it **should** do that.
+
+| | Run | Layout | Name |
+|---|---|---|---|
+| Backend | `cd backend && pytest` | `tests/api/test_household_auth.py` tests `app/api/routes/household_auth.py` | `test_when_a_household_asks_for_another_account_should_return_404` |
+| Frontend | `cd frontend && npm test` | `tests/pages/SignIn.test.tsx` tests `src/pages/SignIn/SignIn.tsx` | `it('when the code is wrong, should say so')` |
 
 ---
 
