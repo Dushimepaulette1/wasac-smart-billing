@@ -48,10 +48,14 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/setupTests.ts'],
-    // Few workers: on the Windows drive under WSL, many jsdom workers start
-    // too slowly and time out.
-    maxWorkers: 2,
+    // Tests live in tests/, mirroring src/ (tests/pages, tests/components, ...);
+    // shared helpers are in tests/support/. Names read "when ..., should ...".
+    include: ['tests/**/*.test.{ts,tsx}'],
+    setupFiles: ['./tests/setup.ts'],
+    // One thread at a time: on the Windows drive under WSL, jsdom workers start
+    // so slowly that two or more time out before they answer ("Failed to start").
+    pool: 'threads',
+    maxWorkers: 1,
     // Plain class names in tests ("cell", "active"), as CRA's Jest setup gave.
     css: { include: [/\.module\.css$/], modules: { classNameStrategy: 'non-scoped' } },
   },
