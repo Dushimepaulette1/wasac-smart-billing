@@ -15,7 +15,7 @@ _logged_forwarded = False
 
 
 def client_ip(request: Request) -> str:
-    """The caller's IP. Behind a proxy (Hugging Face Spaces) every request comes from the proxy,
+    """The caller's IP. Behind a proxy (Render) every request comes from the proxy,
     so read X-Forwarded-For, counting TRUSTED_PROXY_HOPS entries from the right: those were added
     by proxies we trust, while entries further left can be faked by the client."""
     global _logged_forwarded
