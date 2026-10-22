@@ -1,6 +1,6 @@
 """Household sign-in with a one-time SMS code.
 
-    POST /household/request-code   {phone}           send a 6-digit code (same answer for any number)
+    POST /household/request-code   {phone}           send a 6-digit code (404 if no account has that number)
     POST /household/verify         {phone, code}     a 30-day household token
     GET  /household/me                               the accounts registered to that phone
 
@@ -41,6 +41,7 @@ CODE_WINDOW = timedelta(minutes=15)
 MAX_ATTEMPTS = 5                 # wrong tries per code
 DEMO_PREFIX = "DEMO-"
 WRONG_CODE = "That code is not right, or it has expired. Ask for a new code."
+NOT_REGISTERED = "This number is not linked to a WASAC account. Check the number, or call WASAC on 1580."
 
 # Per IP, on top of the per-phone limit: stops one caller sending SMS to many numbers.
 _request_limiter = RateLimiter(5, 15 * 60)
@@ -90,9 +91,10 @@ async def request_code(body: CodeRequest, request: Request, db: Session = Depend
     answer = CodeSent(phone=phone, expires_in=int(CODE_TTL.total_seconds()), resend_after=RESEND_AFTER_SECONDS)
     customers = customers_for(db, phone)
     if not customers:
-        # Same answer as for a registered number, so the form cannot be used to
-        # find out who is a WASAC customer. Nothing is stored or sent.
-        return answer
+        # Say so plainly: a household that typed a wrong or unregistered number must not wait
+        # for a code that will never come. Checking many numbers this way is held back by the
+        # per-IP limit above (5 per 15 minutes). Nothing is stored or sent.
+        raise HTTPException(status_code=404, detail=NOT_REGISTERED)
 
     code = f"{secrets.randbelow(1_000_000):06d}"
     db.add(HouseholdCode(phone=phone, code_hash=hash_code(phone, code), created_at=now, expires_at=now + CODE_TTL))

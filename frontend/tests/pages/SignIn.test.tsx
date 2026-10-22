@@ -43,7 +43,7 @@ describe('Household sign-in', () => {
 
     fireEvent.change(screen.getByLabelText('Your phone number'), { target: { value: '0788 123 456' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send me a code' }));
-    expect(await screen.findByText(/we have sent a 6-digit code/)).toHaveTextContent('078 812 3456');
+    expect(await screen.findByText(/have sent a 6-digit code/)).toHaveTextContent('078 812 3456');
     expect(screen.getByText('482913')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /New code in/ })).toBeDisabled();
 
@@ -52,6 +52,15 @@ describe('Household sign-in', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Bills page')).toBeInTheDocument();
     expect(api.verifyCode).toHaveBeenCalledWith('+250788123456', '482913');
+  });
+
+  it('when the number is not on any WASAC account, should say so instead of waiting for a code', async () => {
+    vi.mocked(api.requestCode).mockRejectedValue(new ApiError('notFound', 404));
+    renderSignIn();
+    fireEvent.change(screen.getByLabelText('Your phone number'), { target: { value: '0788999999' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send me a code' }));
+    expect(await screen.findByText(/not linked to a WASAC account/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument();
   });
 
   it('when the code is wrong, should say so', async () => {

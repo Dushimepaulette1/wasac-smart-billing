@@ -330,8 +330,9 @@ Every sign-in (and failed attempt), review decision and account change is record
 Households sign in with the phone number on their WASAC account and a 6-digit code sent by SMS
 (no password). The session lasts 30 days on that phone. A household sees only the accounts on
 its own number; staff see all. Codes are stored only as a keyed hash, work once, for 10 minutes
-and 5 tries; requests are limited per number and per IP, and the answer is the same whether or
-not a number is registered.
+and 5 tries; requests are limited per number and per IP. A number that is not on any account is
+told so plainly (call WASAC on 1580), so nobody waits for a code that will never come; the per-IP
+limit keeps anyone from checking numbers in bulk.
 
 When a household confirms a reading, the app sends where the phone was when the photo was taken
 and whether it came from the camera or the gallery. Compared with the meter's location on file

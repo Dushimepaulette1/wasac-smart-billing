@@ -1,0 +1,3 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"signin.household.notRegistered","Staff sign-in","This number is not linked to a WASAC account. Check the number, or call WASAC on 1580.","Iyi nimero ntihuye na konti ya WASAC. Genzura nimero, cyangwa uhamagare WASAC kuri 1580.","",""
+"signin.household.codeLede","Staff sign-in","We have sent a 6-digit code to {phone} by SMS. It works for 10 minutes.","Twohereje kode y'imibare 6 kuri {phone} binyuze kuri SMS. Imara iminota 10.","","{phone}"
