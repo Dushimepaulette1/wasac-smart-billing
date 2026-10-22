@@ -64,3 +64,6 @@ logs/
 # Calibration photos and labels (WASAC household photos: never commit)
 /calibration/
 /backend/calibration/
+
+# Private local notes (e.g. a staff password); never committed.
+*.local.txt

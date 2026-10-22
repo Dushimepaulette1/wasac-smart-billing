@@ -323,7 +323,13 @@ and whether it came from the camera or the gallery. Compared with the meter's lo
 accuracy), with no location, with a very rough location, or chosen from the gallery is **held
 for an officer** (type `LOCATION_CHECK`), who sees why in the review queue and can accept it.
 Readings are never rejected for this alone; location can be faked, so it decides who gets a
-second look, nothing more. Meters with no location on file are not checked.
+second look, nothing more. A meter with **no location on file** has its first located photo
+checked by an officer once; accepting it saves where the photo was taken (if the phone was
+accurate to 100 m) as the meter's location, and later readings are checked against it.
+
+**One reading per period, one at a time** (`backend/app/services/reading_window.py`): while a
+reading waits for an officer, the household cannot send another; after a reading is accepted, the
+next one opens 25 days later. The app says why and when; staff can always enter a reading.
 
 | Setting (`backend/.env`) | Default | Meaning |
 |---|---|---|
@@ -333,6 +339,9 @@ second look, nothing more. Meters with no location on file are not checked.
 | `LOCATION_MAX_ACCURACY_M` | `500` | Rougher phone positions count as "unclear" |
 | `AT_USERNAME`, `AT_API_KEY` | unset (SMS only logged) | Africa's Talking; `sandbox` sends to the simulator only |
 | `AT_SENDER_ID` | unset | Approved sender name (live only) |
+| `SMS_OUTBOX` | `1` | Keep sandbox SMS for admins to read under **Sent SMS** (the sandbox reaches no real phone) |
+| `MIN_DAYS_BETWEEN_READINGS` | `25` | Days between accepted readings (`0` turns the rule off, e.g. for testing) |
+| `LOCATION_SAVE_MAX_ACCURACY_M` | `100` | How precise a first photo must be to become the meter's location |
 
 **Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
 "Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for

@@ -41,6 +41,7 @@ const NAV: NavItem[] = [
   { to: '/staff/households', icon: 'households', label: 'staff.nav.households' },
   { to: '/staff/activity', icon: 'activity', label: 'staff.nav.activity' },
   { to: '/staff/accounts', icon: 'user', label: 'staff.nav.accounts', role: 'admin' },
+  { to: '/staff/sms', icon: 'messages', label: 'staff.nav.sms', role: 'admin' },
 ];
 
 function useMedia(query: string): boolean {

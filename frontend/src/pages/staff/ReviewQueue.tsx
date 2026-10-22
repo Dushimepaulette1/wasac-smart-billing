@@ -115,6 +115,18 @@ function DecisionPane({ item }: { item: ReviewItem }) {
                     distance: where.distanceM !== null ? formatDistance(where.distanceM) : '–',
                     accuracy: where.accuracyM !== null ? formatDistance(where.accuracyM) : '–',
                   })}
+                  {where.lat !== null && where.lng !== null && (
+                    <>
+                      {' '}
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${where.lat}&mlon=${where.lng}#map=18/${where.lat}/${where.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {t('staff.review.openMap')}
+                      </a>
+                    </>
+                  )}
                 </dd>
               </div>
             )}

@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import Access, household_access
-from app.models import StaffUser
-from app.api.deps import require_staff
+from app.api.deps import Access, household_access, require_staff
 from app.db.session import get_db
-from app.models import Bill, Customer, Meter, Reading
+from app.models import Bill, Customer, Meter, Reading, StaffUser
 from app.schemas import CustomerInfo
+from app.services.reading_window import PENDING, TOO_SOON, reading_block
 
 router = APIRouter()
 
@@ -34,6 +33,7 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
                    .all())
     )
 
+    block = reading_block(db, meter) if meter else None
     return CustomerInfo(
         customer_id=c.customer_id,
         name=c.name,
@@ -44,6 +44,8 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         last_reading_date=meter.last_reading_date if meter else None,
         avg_consumption=round(avg, 1) if avg else None,
         anomaly_flagged=anomaly_flagged,
+        reading_pending=bool(block and block.reason == PENDING),
+        next_reading_from=block.opens_on if block and block.reason == TOO_SOON else None,
     )
 
 

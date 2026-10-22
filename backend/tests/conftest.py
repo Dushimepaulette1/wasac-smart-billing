@@ -24,6 +24,8 @@ def no_real_sms(monkeypatch):
     """app/db/session.py loads backend/.env; tests must never send a real SMS with its keys."""
     for name in ("AT_USERNAME", "AT_API_KEY", "AT_SENDER_ID"):
         monkeypatch.delenv(name, raising=False)
+    # The sandbox outbox writes to the real database; tests that need it give it the test database.
+    monkeypatch.setenv("SMS_OUTBOX", "0")
 
 
 @pytest.fixture(autouse=True)
@@ -92,6 +94,19 @@ def client(db):
 
     add_officer(db)
     fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('officer1')[0]}"})
+    try:
+        yield test_client
+    finally:
+        fastapi_app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def as_admin(db):
+    """Signed in as an admin (staff accounts, the SMS outbox)."""
+    from app.core.security import make_token
+
+    add_officer(db, username="admin1", full_name="Test Admin", role="admin")
+    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('admin1')[0]}"})
     try:
         yield test_client
     finally:

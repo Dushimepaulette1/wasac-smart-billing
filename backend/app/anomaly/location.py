@@ -4,14 +4,15 @@ The phone sends where it was when the photo was taken (with the accuracy the
 phone reports) and whether the photo came from the camera or was uploaded
 from the gallery. That is compared with the meter's location on file:
 
-    ok           within LOCATION_MAX_M (plus the phone's own accuracy) of the meter
-    not_checked  the meter has no location on file, so nothing to compare with
-    far          further away than that
-    no_location  the phone sent no location (permission refused, or no fix)
-    imprecise    the phone's position is too rough to tell (accuracy > LOCATION_MAX_ACCURACY_M)
-    upload       the photo was chosen from the gallery, not taken now
+    ok              within LOCATION_MAX_M (plus the phone's own accuracy) of the meter
+    first_location  the meter has no location on file yet: an officer checks this photo once, and
+                    accepting it saves where it was taken as the meter's location (app/anomaly/review.py)
+    far             further away than that
+    no_location     the phone sent no location (permission refused, or no fix)
+    imprecise       the phone's position is too rough to tell (accuracy > LOCATION_MAX_ACCURACY_M)
+    upload          the photo was chosen from the gallery, not taken now
 
-Every outcome but ok and not_checked holds the reading for an officer to check
+Every outcome but ok holds the reading for an officer to check
 (anomaly type LOCATION_CHECK). Readings are never rejected for this; an
 officer can accept them. Location is evidence, not proof: it can be faked by
 a determined person, so it decides who gets a second look, nothing more.
@@ -22,10 +23,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 
-NEEDS_REVIEW = {"far", "no_location", "imprecise", "upload"}
+NEEDS_REVIEW = {"far", "first_location", "no_location", "imprecise", "upload"}
 
 
-def _env_float(name: str, default: float) -> float:
+def env_float(name: str, default: float) -> float:
     try:
         return float(os.getenv(name, default))
     except ValueError:
@@ -55,6 +56,9 @@ class LocationCheck:
             "distance_m": None if self.distance_m is None else round(self.distance_m),
             "accuracy_m": None if evidence.accuracy_m is None else round(evidence.accuracy_m),
             "photo_source": evidence.photo_source,
+            # So the officer can open the spot on a map (rounded: about 1 m).
+            "lat": None if evidence.lat is None else round(evidence.lat, 5),
+            "lng": None if evidence.lng is None else round(evidence.lng, 5),
         }
 
 
@@ -68,8 +72,8 @@ def distance_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def check_location(meter_lat: Optional[float], meter_lng: Optional[float], evidence: PhotoEvidence) -> LocationCheck:
-    max_m = _env_float("LOCATION_MAX_M", 150.0)
-    max_accuracy = _env_float("LOCATION_MAX_ACCURACY_M", 500.0)
+    max_m = env_float("LOCATION_MAX_M", 150.0)
+    max_accuracy = env_float("LOCATION_MAX_ACCURACY_M", 500.0)
     has_fix = evidence.lat is not None and evidence.lng is not None
     distance = (
         distance_m(meter_lat, meter_lng, evidence.lat, evidence.lng)
@@ -78,12 +82,12 @@ def check_location(meter_lat: Optional[float], meter_lng: Optional[float], evide
     )
     if evidence.photo_source == "upload":
         return LocationCheck("upload", distance)
-    if meter_lat is None or meter_lng is None:
-        return LocationCheck("not_checked")
     if not has_fix:
         return LocationCheck("no_location")
     accuracy = evidence.accuracy_m if evidence.accuracy_m is not None else 0.0
     if accuracy > max_accuracy:
         return LocationCheck("imprecise", distance)
+    if meter_lat is None or meter_lng is None:
+        return LocationCheck("first_location")
     # The phone may be off by its accuracy; only call it far when it is far even allowing for that.
     return LocationCheck("far" if distance - accuracy > max_m else "ok", distance)

@@ -40,7 +40,8 @@
   border-radius: var(--radius-button);
   background: none;
   color: var(--stage-soft);
-  font-size: var(--size-small);
+  font-size: var(--size-body);
+  font-weight: var(--weight-bold);
 }
 
 .back:hover {
@@ -134,6 +135,18 @@
 
   .withNav.withAction .main {
     padding-bottom: calc(var(--nav-height) + 168px);
+  }
+}
+
+/* A short form on a wide screen: one centred column; its button is inside the form,
+   so the pinned phone action is not shown here. */
+@media (min-width: 768px) {
+  .narrow .main {
+    max-width: calc(560px + 2 * var(--gutter));
+  }
+
+  .narrow .action {
+    display: none;
   }
 }
 

@@ -8,6 +8,7 @@
     POST  /auth/staff                          new account, temporary password  admin
     PATCH /auth/staff/{username}               name, role, active             admin
     POST  /auth/staff/{username}/reset-password  new temporary password       admin
+    GET   /auth/sms-outbox                     SMS sent through the sandbox   admin
 """
 import re
 import secrets
@@ -22,7 +23,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role, require_staff, role_at_least
 from app.core.security import hash_password, make_token, verify_password
 from app.db.session import get_db
-from app.models import StaffAction, StaffUser
+from app.models import SmsOutbox, StaffAction, StaffUser
 from app.schemas import (
     ChangePasswordRequest,
     LoginRequest,
@@ -30,6 +31,7 @@ from app.schemas import (
     StaffAccountCreate,
     StaffAccountOut,
     StaffAccountUpdate,
+    SmsOutboxOut,
     StaffActionOut,
     StaffUserOut,
     TemporaryPasswordResponse,
@@ -225,3 +227,13 @@ async def reset_password(
     record(db, admin.username, "password_reset", target=user.username, request=request, commit=False)
     db.commit()
     return TemporaryPasswordResponse(account=_account(db, user), temporary_password=password)
+
+
+@router.get("/sms-outbox", response_model=List[SmsOutboxOut])
+async def sms_outbox(
+    limit: int = Query(100, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _admin: StaffUser = Depends(require_role("admin")),
+):
+    """Newest first. Only sandbox messages are kept (app/services/sms.py); they include sign-in codes."""
+    return db.query(SmsOutbox).order_by(SmsOutbox.id.desc()).limit(limit).all()

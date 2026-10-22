@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models import Meter
 from app.anomaly.service import notify_household, submit_reading
+from app.services.reading_window import reading_block
 from app.schemas import USSDRequest
 
 router = APIRouter()
@@ -32,6 +33,10 @@ async def submit_ussd(body: USSDRequest, db: Session = Depends(get_db)):
         submitted = float(raw_reading)
     except ValueError:
         return {"response": "END Invalid reading. Please enter numbers only, e.g. 00444"}
+
+    block = reading_block(db, meter)
+    if block:
+        return {"response": f"END {block.message}"}
 
     sub = submit_reading(db, meter, customer.customer_id, submitted, method="ussd")
     actions = notify_household(db, sub.anomaly)

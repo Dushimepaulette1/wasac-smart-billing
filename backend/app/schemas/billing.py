@@ -36,6 +36,9 @@ class CustomerInfo(BaseModel):
     last_reading_date: Optional[datetime]
     avg_consumption: Optional[float]
     anomaly_flagged: bool = False
+    # Can the household send a reading now? (app/services/reading_window.py)
+    reading_pending: bool = False                 # one is waiting for an officer
+    next_reading_from: Optional[datetime] = None  # this period's reading is in; the next opens then
 
     class Config:
         from_attributes = True

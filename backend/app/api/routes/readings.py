@@ -7,6 +7,7 @@ from app.anomaly.location import PhotoEvidence
 from app.db.session import get_db
 from app.models import Customer
 from app.services import billing
+from app.services.reading_window import reading_block
 from app.core.ratelimit import MAX_UPLOAD_BYTES
 from app.anomaly.service import notify_household, submit_reading
 from app.vision.image_io import BadImage
@@ -93,6 +94,12 @@ async def confirm_reading(
         submitted = float(body.confirmed_reading)
     except ValueError:
         raise HTTPException(status_code=422, detail="Reading must be a number")
+
+    if access.staff is None:
+        block = reading_block(db, meter)
+        if block:
+            # 409: the app shows its own words for block.reason (see GET /customers/{id}).
+            raise HTTPException(status_code=409, detail=block.message)
 
     evidence = None
     if access.staff is None:

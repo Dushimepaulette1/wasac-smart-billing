@@ -210,6 +210,10 @@ export interface CustomerInfo {
   last_reading_date: IsoDateTime | null;
   avg_consumption: number | null;
   anomaly_flagged: boolean;
+  /** A reading is waiting for an officer: no new one until the decision. */
+  reading_pending: boolean;
+  /** This period's reading is in; the next one opens on this date (else null). */
+  next_reading_from: IsoDateTime | null;
 }
 
 /** app/api/routes/billing.py customer_bills (dict per bill, no schema) */
@@ -357,6 +361,16 @@ export interface StaffAccount extends StaffUser {
   is_active: boolean;
   created_at: string;
   last_sign_in: string | null;
+}
+
+/** schemas.SmsOutboxOut: one message sent through the Africa's Talking sandbox (admins only). */
+export interface SmsOutboxEntry {
+  id: number;
+  at: string;
+  phone: string;
+  message: string;
+  /** "sent", or Africa's Talking's reason it was not. */
+  status: string;
 }
 
 /** schemas.TemporaryPasswordResponse: shown once, for the admin to pass on. */

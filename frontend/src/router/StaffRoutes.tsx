@@ -13,6 +13,7 @@ import Households from '../pages/staff/Households';
 import Activity from '../pages/staff/Activity';
 import Accounts from '../pages/staff/Accounts';
 import MyAccount from '../pages/staff/MyAccount';
+import SmsOutbox from '../pages/staff/SmsOutbox';
 import { RequireStaff } from '../staff/auth';
 
 function StaffRoutes() {
@@ -25,6 +26,7 @@ function StaffRoutes() {
       <Route path="activity" element={<RequireStaff><Activity /></RequireStaff>} />
       <Route path="accounts" element={<RequireStaff role="admin"><Accounts /></RequireStaff>} />
       <Route path="account" element={<RequireStaff><MyAccount /></RequireStaff>} />
+      <Route path="sms" element={<RequireStaff role="admin"><SmsOutbox /></RequireStaff>} />
       <Route path="*" element={<Navigate to="/staff" replace />} />
     </Routes>
   );
