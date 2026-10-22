@@ -44,10 +44,15 @@ def test_when_a_real_household_requests_a_code_should_never_show_or_log_it(db, a
     assert "sign-in code is" not in caplog.text  # the SMS text is not logged
 
 
-def test_when_the_number_is_unknown_should_answer_the_same_and_store_no_code(db, anon_client):
+def test_when_the_number_is_unknown_should_say_so_and_store_no_code(db, anon_client):
     r = anon_client.post("/household/request-code", json={"phone": "0788999999"})
-    assert r.status_code == 200 and r.json()["demo_code"] is None
+    assert r.status_code == 404 and "not linked to a WASAC account" in r.json()["detail"]
     assert db.query(HouseholdCode).count() == 0
+
+
+def test_when_many_unknown_numbers_are_tried_should_slow_the_caller_down(db, anon_client):
+    codes = [anon_client.post("/household/request-code", json={"phone": f"078899990{i}"}).status_code for i in range(6)]
+    assert codes[:5] == [404] * 5 and codes[5] == 429  # 5 per IP per 15 minutes
 
 
 def test_when_a_wrong_code_is_tried_five_times_should_use_the_code_up(db, anon_client):

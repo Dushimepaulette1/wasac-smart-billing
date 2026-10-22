@@ -52,6 +52,10 @@ function SignIn() {
   if (household.signedIn && household.account && !switching) return <Navigate to={next} replace />;
 
   const message = (err: unknown, wrongKey: string) => {
+    // A number with no WASAC account (only asking for a code can answer this).
+    if (err instanceof ApiError && err.kind === 'notFound' && wrongKey === 'signin.household.badPhone') {
+      return t('signin.household.notRegistered');
+    }
     if (err instanceof ApiError && (err.kind === 'invalid' || err.kind === 'notFound')) return t(wrongKey);
     if (err instanceof ApiError && err.kind === 'tooMany') return t('signin.household.tooMany');
     return errorMessage(t, err);
