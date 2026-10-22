@@ -38,8 +38,37 @@ body {
 .stage {
   position: relative;
   isolation: isolate;
+  box-sizing: border-box;
   min-height: 100vh;
   min-height: 100dvh;
+  /* Installed app, edge to edge: the gradient (::before, fixed) runs behind the status bar and
+     round the corners, while everything on it starts inside the safe area. */
+  padding-top: var(--safe-top);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* Installed app: a backdrop exactly the height of the status bar, so content scrolling up
+   never shows behind the clock and battery. 0 px tall in a browser tab. */
+.stage::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  height: var(--safe-top);
+  background: var(--stage-base);
+  pointer-events: none;
+}
+
+/* iPhone (only iOS Safari matches this): its installed-app status bar text is always white, so
+   the strip behind it stays night-blue in the light theme too. Android colours its icons from
+   theme-color (src/theme/theme.ts) and keeps the page colour above. */
+@supports (-webkit-touch-callout: none) {
+  :root[data-theme='light'] .stage::after {
+    background: var(--night);
+  }
 }
 
 .stage::before {

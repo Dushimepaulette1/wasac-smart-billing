@@ -14,7 +14,9 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="WASAC" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- iPhone: draw edge to edge under a white-text status bar; content keeps to the safe area
+         (styles/base.css), and the strip behind the status bar is night-blue on iOS. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <script>
       // Apply the saved or system theme before the first paint (see src/theme/theme.ts).
