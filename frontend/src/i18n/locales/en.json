@@ -376,5 +376,7 @@
   "staff.review.empty": "No readings are waiting for a decision. New held readings appear here.",
   "notFound.title": "This page does not exist",
   "notFound.body": "Check the address, or go back to the start.",
-  "notFound.home": "Go to the start"
+  "notFound.home": "Go to the start",
+  "pwa.install": "Install the app",
+  "pwa.iosHint": "On iPhone: tap Share, then “Add to Home Screen”."
 }

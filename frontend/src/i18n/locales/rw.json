@@ -376,5 +376,7 @@
   "staff.review.empty": "Nta bipimo bitegereje icyemezo. Ibipimo bishya byahagaritswe bizagaragara hano.",
   "notFound.title": "Uru rupapuro ntirubaho",
   "notFound.body": "Genzura aderesi, cyangwa usubire aho watangiriye.",
-  "notFound.home": "Jya aho gutangirira"
+  "notFound.home": "Jya aho gutangirira",
+  "pwa.install": "Shyira porogaramu muri telefoni",
+  "pwa.iosHint": "Kuri iPhone: kanda Sangiza (Share), hanyuma “Add to Home Screen”."
 }

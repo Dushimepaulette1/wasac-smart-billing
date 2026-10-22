@@ -16,6 +16,7 @@ const PATHS = {
     </>
   ),
   upload: <path d="M12 16V4m-5 5l5-5 5 5M5 20h14" />,
+  install: <path d="M12 4v12m-5-5l5 5 5-5M5 20h14" />,
   keypad: (
     <>
       <rect x="4" y="3" width="16" height="18" rx="2" />

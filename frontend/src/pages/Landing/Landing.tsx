@@ -11,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SiteHeader from '../../components/SiteHeader/SiteHeader';
 import Button from '../../components/Button/Button';
 import { useI18n } from '../../i18n/I18nProvider';
+import InstallApp from '../../pwa/InstallApp';
 import styles from './Landing.module.css';
 
 const STEPS = ['landing.step1', 'landing.step2', 'landing.step3'] as const;
@@ -42,6 +43,7 @@ function Landing() {
           <Link to="/home" className={styles.account}>
             {t('landing.account')}
           </Link>
+          <InstallApp className={styles.install} />
         </section>
 
         <section className={styles.steps} aria-labelledby="steps-title">

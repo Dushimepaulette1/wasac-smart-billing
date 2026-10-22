@@ -276,6 +276,22 @@ wasac-platform/
 └── README.md
 ```
 
+### Installable app (PWA)
+
+The household app can be installed on a phone's home screen and opens like an app (no browser
+bar), even on a weak or missing connection:
+
+- `frontend/public/manifest.webmanifest`: name, Kinyarwanda first, icons, home-screen shortcuts
+  (read the meter, bills, messages).
+- `frontend/public/sw.js`, the service worker: the app shell opens from the phone after 4 s
+  without network (or offline); built files are cached by their unique names; **API data (bills,
+  readings, sign-in) is never cached**. Registered in production builds only
+  (`src/pwa/registerServiceWorker.ts`).
+- "Install the app": a button on Android (`beforeinstallprompt`), a Share → Add to Home Screen
+  hint on iPhone, hidden once installed (`src/pwa/`).
+- Icons: a meter counter on the night stage, drawn in `frontend/icons/*.svg` and rendered to
+  `frontend/public/` (192, 512, maskable 512, Apple 180, favicons).
+
 ### Tests
 
 Both sides keep tests apart from the code, in a `tests/` folder that mirrors the code's folders,
