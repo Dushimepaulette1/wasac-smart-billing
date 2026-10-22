@@ -14,7 +14,8 @@ import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
 import { hasRole, useAuth } from '../../staff/auth';
 import { dateTime } from '../../staff/time';
-import type { StaffAction } from '../../api/types';
+import type { AnomalyType, StaffAction } from '../../api/types';
+import { ISSUE_KEY } from '../../staff/issues';
 import styles from '../../staff/staff.module.css';
 
 /** Filter choices: '' is everything. */
@@ -39,6 +40,14 @@ function Activity() {
   const apply = (e?: FormEvent) => {
     e?.preventDefault();
     rows.run({ action: kind || undefined, username: everyone ? person.trim() || undefined : undefined });
+  };
+
+  /** A decision's details are "<meter> <ANOMALY_TYPE>": say the type in plain words. */
+  const details = (a: StaffAction) => {
+    const match = /^(\S+) ([A-Z_]+)$/.exec(a.detail ?? '');
+    const issue = match ? ISSUE_KEY[match[2] as AnomalyType] : undefined;
+    const detail = match && issue ? `${match[1]} · ${t(issue)}` : a.detail;
+    return [a.target, detail].filter(Boolean).join(' · ') || '–';
   };
 
   const label = (a: StaffAction) => {
@@ -103,7 +112,7 @@ function Activity() {
                         <span className={WATCH.has(a.action) ? styles.flagged : undefined}>{label(a)}</span>
                       </td>
                       <td data-label={t('staff.activity.col.detail')} className="code">
-                        {[a.target, a.detail].filter(Boolean).join(' · ') || '–'}
+                        {details(a)}
                       </td>
                     </tr>
                   ))}

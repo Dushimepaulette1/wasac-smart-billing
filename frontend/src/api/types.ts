@@ -214,6 +214,9 @@ export interface CustomerInfo {
   reading_pending: boolean;
   /** This period's reading is in; the next one opens on this date (else null). */
   next_reading_from: IsoDateTime | null;
+  /** Bills not paid yet (for the staff overview). */
+  unpaid_count: number;
+  unpaid_amount: number;
 }
 
 /** app/api/routes/billing.py customer_bills (dict per bill, no schema) */

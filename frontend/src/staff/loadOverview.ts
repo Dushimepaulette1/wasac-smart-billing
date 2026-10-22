@@ -25,15 +25,8 @@ export default async function loadOverview(): Promise<OverviewView> {
     api.reviewQueue(),
     api.listFlags('open'),
   ]);
-  const bills = await Promise.all(customers.map((c) => api.getBills(c.customer_id).catch(() => [])));
-  const households = customers.map((c, i) => {
-    const unpaid = (bills[i] ?? []).filter((b) => b.payment_status !== 'paid');
-    return {
-      ...c,
-      unpaidCount: unpaid.length,
-      unpaidAmount: unpaid.reduce((sum, b) => sum + b.amount_due, 0),
-    };
-  });
+  // The household list carries each household's unpaid bills: one request, not one per household.
+  const households = customers.map((c) => ({ ...c, unpaidCount: c.unpaid_count, unpaidAmount: c.unpaid_amount }));
   return {
     queue,
     openFlags,

@@ -83,6 +83,8 @@ export function makeCustomer(overrides: Partial<CustomerInfo> = {}): CustomerInf
     anomaly_flagged: false,
     reading_pending: false,
     next_reading_from: null,
+    unpaid_count: 0,
+    unpaid_amount: 0,
     ...overrides,
   };
 }
