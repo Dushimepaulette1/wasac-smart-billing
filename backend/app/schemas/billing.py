@@ -39,6 +39,9 @@ class CustomerInfo(BaseModel):
     # Can the household send a reading now? (app/services/reading_window.py)
     reading_pending: bool = False                 # one is waiting for an officer
     next_reading_from: Optional[datetime] = None  # this period's reading is in; the next opens then
+    # Bills not paid yet, for the staff overview (one request instead of one per household).
+    unpaid_count: int = 0
+    unpaid_amount: float = 0.0
 
     class Config:
         from_attributes = True

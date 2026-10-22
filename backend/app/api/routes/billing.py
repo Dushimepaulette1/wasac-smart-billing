@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import Access, household_access, require_staff
@@ -34,6 +35,11 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
     )
 
     block = reading_block(db, meter) if meter else None
+    unpaid_count, unpaid_amount = (
+        db.query(func.count(Bill.bill_id), func.coalesce(func.sum(Bill.amount_due), 0.0))
+        .filter(Bill.customer_id == c.customer_id, Bill.payment_status != "paid")
+        .one()
+    )
     return CustomerInfo(
         customer_id=c.customer_id,
         name=c.name,
@@ -46,6 +52,8 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         anomaly_flagged=anomaly_flagged,
         reading_pending=bool(block and block.reason == PENDING),
         next_reading_from=block.opens_on if block and block.reason == TOO_SOON else None,
+        unpaid_count=unpaid_count,
+        unpaid_amount=round(float(unpaid_amount), 2),
     )
 
 

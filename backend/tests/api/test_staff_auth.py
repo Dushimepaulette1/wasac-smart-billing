@@ -167,3 +167,17 @@ def test_when_making_temporary_passwords_should_be_readable_and_different():
     a, b = temporary_password(), temporary_password()
     assert a != b and len(a) == 14 and a.count("-") == 2
     assert not set(a) & set("0O1lI")
+
+
+def test_when_staff_list_households_should_include_their_unpaid_bills(db, client):
+    from app.models import Bill
+
+    add_household(db, "MTR-P", make_history([0.4] * 3))
+    db.add_all([
+        Bill(customer_id="CUST-P", consumption_m3=10, amount_due=5000.0, payment_status="unpaid"),
+        Bill(customer_id="CUST-P", consumption_m3=12, amount_due=6200.5, payment_status="unpaid"),
+        Bill(customer_id="CUST-P", consumption_m3=9, amount_due=4000.0, payment_status="paid"),
+    ])
+    db.commit()
+    row = next(c for c in client.get("/customers").json() if c["customer_id"] == "CUST-P")
+    assert row["unpaid_count"] == 2 and row["unpaid_amount"] == 11200.5

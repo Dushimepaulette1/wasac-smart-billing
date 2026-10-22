@@ -66,7 +66,7 @@ describe('Activity', () => {
     ]);
     renderPage(<Activity />);
     expect(await screen.findByText('Rejected a reading')).toBeInTheDocument();
-    expect(screen.getByText('flag 7 · DEMO-MTR-001 SPIKE')).toBeInTheDocument();
+    expect(screen.getByText('flag 7 · DEMO-MTR-001 · Much higher than usual')).toBeInTheDocument(); // plain words, not SPIKE
     expect(screen.queryByLabelText('Who')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Staff accounts/ })).not.toBeInTheDocument();
   });
