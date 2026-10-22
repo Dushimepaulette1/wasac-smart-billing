@@ -63,3 +63,14 @@ class TemporaryPasswordResponse(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+
+class SmsOutboxOut(BaseModel):
+    """One message sent through the Africa's Talking sandbox (admins only)."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    at: datetime
+    phone: str
+    message: str
+    status: str

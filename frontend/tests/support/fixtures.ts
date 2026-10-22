@@ -81,6 +81,8 @@ export function makeCustomer(overrides: Partial<CustomerInfo> = {}): CustomerInf
     last_reading_date: '2026-09-09T09:38:11',
     avg_consumption: 20,
     anomaly_flagged: false,
+    reading_pending: false,
+    next_reading_from: null,
     ...overrides,
   };
 }

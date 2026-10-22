@@ -92,7 +92,7 @@ function SignIn() {
   // Signed in, several meters on this number: which one?
   if (household.signedIn && (!household.account || switching)) {
     return (
-      <Screen title={t('signin.household.chooseTitle')} lede={<p>{t('signin.household.chooseLede')}</p>}>
+      <Screen title={t('signin.household.chooseTitle')} lede={<p>{t('signin.household.chooseLede')}</p>} narrow>
         <ul className={styles.accounts}>
           {household.accounts.map((a) => (
             <li key={a.customer_id}>
@@ -123,6 +123,7 @@ function SignIn() {
         title={t('signin.household.title')}
         lede={<p>{t('signin.household.lede')}</p>}
         back="/"
+        narrow
         action={
           <Button type="submit" form="phone-form" fullWidth loading={busy}>
             {t('signin.household.sendCode')}
@@ -152,6 +153,10 @@ function SignIn() {
           <p id={`${phoneId}-hint`} className="text-small text-secondary">
             {t('signin.household.phoneHint')}
           </p>
+          {/* Wide screens only; phones use the pinned button (Screen action). */}
+          <Button type="submit" fullWidth loading={busy} className={styles.wideSubmit}>
+            {t('signin.household.sendCode')}
+          </Button>
         </form>
         <p className={styles.staff}>
           <Link to="/staff/sign-in">{t('landing.staffLink')}</Link>
@@ -164,6 +169,7 @@ function SignIn() {
     <Screen
       title={t('signin.household.codeTitle')}
       lede={<p>{t('signin.household.codeLede', { phone: formatRwandanPhone(sent.phone) })}</p>}
+      narrow
       action={
         <Button type="submit" form="code-form" fullWidth loading={busy}>
           {t('signin.submit')}
@@ -195,6 +201,9 @@ function SignIn() {
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
           autoFocus
         />
+        <Button type="submit" fullWidth loading={busy} className={styles.wideSubmit}>
+          {t('signin.submit')}
+        </Button>
         <div className={styles.row}>
           <Button
             variant="text"

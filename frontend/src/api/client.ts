@@ -24,6 +24,7 @@ import type {
   HouseholdAccount,
   HouseholdSession,
   PhotoEvidence,
+  SmsOutboxEntry,
   StaffAccount,
   StaffAction,
   StaffRole,
@@ -275,6 +276,11 @@ export const api = {
     if (filters.username) params.set('username', filters.username);
     if (filters.action) params.set('action', filters.action);
     return request(`/auth/activity?${params.toString()}`, { auth: 'staff' });
+  },
+
+  /** GET /auth/sms-outbox (admin): messages sent through the SMS sandbox, newest first. */
+  smsOutbox(): Promise<SmsOutboxEntry[]> {
+    return request('/auth/sms-outbox', { auth: 'staff' });
   },
 
   /** GET /auth/staff (admin) */

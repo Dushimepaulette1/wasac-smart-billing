@@ -7,14 +7,31 @@
 
 /** The location check's outcome on a held reading (backend app/anomaly/location.py), if it needs a look. */
 export interface LocationFinding {
-  reason: 'far' | 'no_location' | 'imprecise' | 'upload';
+  reason: 'far' | 'first_location' | 'no_location' | 'imprecise' | 'upload';
   distanceM: number | null;
   accuracyM: number | null;
+  /** Where the photo was taken, for the officer's map link. */
+  lat: number | null;
+  lng: number | null;
 }
 
 export function locationFinding(features: Record<string, unknown> | null | undefined): LocationFinding | null {
   const reason = features?.location_check;
-  if (reason !== 'far' && reason !== 'no_location' && reason !== 'imprecise' && reason !== 'upload') return null;
+  if (
+    reason !== 'far' &&
+    reason !== 'first_location' &&
+    reason !== 'no_location' &&
+    reason !== 'imprecise' &&
+    reason !== 'upload'
+  ) {
+    return null;
+  }
   const num = (v: unknown) => (typeof v === 'number' ? v : null);
-  return { reason, distanceM: num(features?.distance_m), accuracyM: num(features?.accuracy_m) };
+  return {
+    reason,
+    distanceM: num(features?.distance_m),
+    accuracyM: num(features?.accuracy_m),
+    lat: num(features?.lat),
+    lng: num(features?.lng),
+  };
 }

@@ -27,9 +27,43 @@ def test_when_checking_where_a_photo_was_taken_should_give_the_right_outcome(evi
     assert check_location(METER_LAT, METER_LNG, evidence).outcome == outcome
 
 
-def test_when_the_meter_has_no_location_should_not_check_it():
-    assert check_location(None, None, PhotoEvidence()).outcome == "not_checked"
+def test_when_the_meter_has_no_location_should_check_the_photo_once():
+    assert check_location(None, None, PhotoEvidence(lat=-1.9442, lng=30.0619, accuracy_m=20)).outcome == "first_location"
+    assert check_location(None, None, PhotoEvidence()).outcome == "no_location"
+    assert check_location(None, None, PhotoEvidence(lat=-1.9, lng=30.0, accuracy_m=2000)).outcome == "imprecise"
     assert check_location(None, None, PhotoEvidence(photo_source="upload")).outcome == "upload"
+
+
+@pytest.fixture
+def unlocated_household(db):
+    start = datetime.utcnow() - timedelta(days=30 * 7)
+    points = make_history([0.4] * 6, start=start)
+    return add_household(db, "MTR-U", points), points[-1].reading_m3
+
+
+def confirm_unlocated(c, customer_id, value, **extra):
+    return c.post("/confirm-reading", json={
+        "customer_id": customer_id, "meter_id": "MTR-U", "confirmed_reading": f"{value:.3f}", **extra,
+    })
+
+
+@pytest.mark.parametrize("accuracy, saved", [(15, True), (300, False)])
+def test_when_an_officer_accepts_the_first_located_photo_should_save_it_as_the_meter_location(
+    db, household_client, client, unlocated_household, accuracy, saved,
+):
+    customer_id, last = unlocated_household
+    body = confirm_unlocated(household_client, customer_id, last + 12,
+                             location={"lat": -1.95, "lng": 30.07, "accuracy_m": accuracy}).json()
+    assert body["validation_status"] == "pending_review"
+    assert body["anomaly"]["features"]["location_check"] == "first_location"
+    assert body["anomaly"]["features"]["lat"] == -1.95  # so the officer can open it on a map
+
+    flag_id = client.get("/api/anomaly/review-queue").json()[0]["flag"]["id"]
+    accepted = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "accept"}).json()
+    meter = db.get(Meter, "MTR-U")
+    db.refresh(meter)
+    assert ("meter_location_saved" in accepted["actions"]) is saved
+    assert (meter.gps_lat, meter.gps_lng) == ((-1.95, 30.07) if saved else (None, None))
 
 
 @pytest.fixture

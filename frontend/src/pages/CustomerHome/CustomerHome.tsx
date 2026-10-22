@@ -35,12 +35,15 @@ function CustomerHome() {
     );
   }
 
-  const { customer, newestBill, checking, highUse } = home.data;
+  const { customer, newestBill, highUse } = home.data;
+  const checking = home.data.checking || customer.reading_pending;
+  // This period's reading is in: the next one opens on this date.
+  const opensOn = customer.next_reading_from;
   const due = newestBill && newestBill.payment_status !== 'paid' ? newestBill : null;
   const readMeter = () => navigate('/submit/camera');
 
-  // While a reading waits for an officer, a new one is not asked for: the household waits.
-  const readButton = checking ? null : (
+  // While a reading waits for an officer, or this period's reading is in, a new one is not asked for.
+  const readButton = checking || opensOn ? null : (
     <Button variant={due ? 'text' : undefined} fullWidth={!due} icon="camera" onClick={readMeter}>
       {t('home.read')}
     </Button>
@@ -59,6 +62,7 @@ function CustomerHome() {
   let title = t('home.readPrompt');
   if (due) title = t('home.billDue', { month: month(due.created_at), amount: rwf(due.amount_due) });
   else if (checking) title = t('home.checkingTitle');
+  else if (opensOn) title = t('home.readingInTitle');
 
   return (
     <Screen
@@ -71,6 +75,8 @@ function CustomerHome() {
           </Link>
         ) : checking ? (
           <p>{t('home.checkingBody')}</p>
+        ) : opensOn ? (
+          <p>{t('home.readingInBody', { date: date(opensOn) })}</p>
         ) : null
       }
       nav

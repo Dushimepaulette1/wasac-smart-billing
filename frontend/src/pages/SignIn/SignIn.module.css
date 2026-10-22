@@ -4,6 +4,22 @@
   max-width: 480px;
 }
 
+/* The form's own submit button: wide screens only (phones have the pinned one). */
+.wideSubmit {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .form {
+    max-width: none;
+  }
+
+  .wideSubmit {
+    display: inline-flex;
+    margin-top: var(--space-2);
+  }
+}
+
 .label {
   font-weight: var(--weight-bold);
 }

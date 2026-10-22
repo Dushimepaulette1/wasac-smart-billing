@@ -19,6 +19,7 @@ import NotFound from '../pages/NotFound/NotFound';
 import CounterPreview from '../pages/_dev/CounterPreview';
 import SignIn from '../pages/SignIn/SignIn';
 import { RequireHousehold } from '../household/session';
+import ReadingGate from '../household/ReadingGate';
 
 function HouseholdRoutes() {
   return (
@@ -26,8 +27,8 @@ function HouseholdRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/home" element={<RequireHousehold><CustomerHome /></RequireHousehold>} />
-      <Route path="/submit/camera" element={<RequireHousehold><CameraCapture /></RequireHousehold>} />
-      <Route path="/submit/confirm" element={<RequireHousehold><ConfirmReading /></RequireHousehold>} />
+      <Route path="/submit/camera" element={<RequireHousehold><ReadingGate><CameraCapture /></ReadingGate></RequireHousehold>} />
+      <Route path="/submit/confirm" element={<RequireHousehold><ReadingGate><ConfirmReading /></ReadingGate></RequireHousehold>} />
       <Route path="/submit/held" element={<RequireHousehold><ReadingHeld /></RequireHousehold>} />
       <Route path="/submit/manual" element={<Navigate to="/submit/camera" replace />} />
       <Route path="/bill" element={<RequireHousehold><BillDisplay /></RequireHousehold>} />

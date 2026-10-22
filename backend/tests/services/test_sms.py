@@ -134,3 +134,42 @@ def test_when_the_key_is_refused_should_log_africas_talkings_reason(sandbox, cap
         assert sms.send_sms("+250788000111", "x") is False
     assert "http=401 service=sandbox reason=The supplied authentication is invalid" in caplog.text
     assert KEY not in caplog.text
+
+
+@pytest.fixture
+def outbox(db, monkeypatch):
+    """The sandbox outbox, writing to the test database."""
+    monkeypatch.setenv("SMS_OUTBOX", "1")
+    monkeypatch.setattr(sms, "_outbox_session", lambda: db)
+    return db
+
+
+def test_when_a_sandbox_sms_is_sent_should_keep_a_copy_for_admins(sandbox, outbox, db, as_admin):
+    from app.models import SmsOutbox
+
+    assert sms.send_sms("+250788000111", "Your bill is ready") is True
+    row = db.query(SmsOutbox).one()
+    assert (row.phone, row.message, row.status) == ("+250788000111", "Your bill is ready", "sent")
+    listed = as_admin.get("/auth/sms-outbox").json()
+    assert listed[0]["message"] == "Your bill is ready"
+
+
+def test_when_the_live_service_is_used_should_keep_no_copy(sandbox, outbox, db, monkeypatch):
+    from app.models import SmsOutbox
+
+    monkeypatch.setenv("AT_USERNAME", "wasac")
+    sms.send_sms("+250788000111", "hi")
+    assert db.query(SmsOutbox).count() == 0
+
+
+def test_when_the_outbox_is_full_should_keep_only_the_newest(sandbox, outbox, db, monkeypatch):
+    from app.models import SmsOutbox
+
+    monkeypatch.setenv("SMS_OUTBOX_KEEP", "2")
+    for i in range(4):
+        sms.send_sms("+250788000111", f"message {i}")
+    assert [r.message for r in db.query(SmsOutbox).order_by(SmsOutbox.id)] == ["message 2", "message 3"]
+
+
+def test_when_a_non_admin_opens_the_outbox_should_refuse_it(client):
+    assert client.get("/auth/sms-outbox").status_code == 403

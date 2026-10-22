@@ -32,10 +32,13 @@ interface ScreenProps {
   nav?: boolean;
   /** Camera-style page: no site header, so the content gets the whole screen height. */
   immersive?: boolean;
+  /** A short form (sign-in): one centred column on wide screens, where the page puts its own
+   * button inside the form; `action` is then only the pinned button on phones. */
+  narrow?: boolean;
   children: ReactNode;
 }
 
-function Screen({ title, step, lede, back, action, nav = false, immersive = false, children }: ScreenProps) {
+function Screen({ title, step, lede, back, action, nav = false, immersive = false, narrow = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const isDemo = useHousehold().account?.is_demo ?? false;
@@ -52,7 +55,7 @@ function Screen({ title, step, lede, back, action, nav = false, immersive = fals
 
   const goBack = () => (typeof back === 'string' ? navigate(back) : navigate(-1));
 
-  const classes = [styles.screen, 'stage', nav ? styles.withNav : '', action ? styles.withAction : '']
+  const classes = [styles.screen, 'stage', nav ? styles.withNav : '', action ? styles.withAction : '', narrow ? styles.narrow : '']
     .filter(Boolean)
     .join(' ');
 

@@ -23,7 +23,7 @@ import type { HeldState } from '../ReadingHeld/ReadingHeld';
 import { useSubmission } from '../../household/submission';
 import { refreshHouseholdFlags } from '../../household/status';
 import { isComplete } from '../../utils/reading';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { useAccount } from '../../household/session';
 import styles from './ConfirmReading.module.css';
 
@@ -123,7 +123,9 @@ function ConfirmReading() {
     >
       {state === 'failed' && (
         <Notice tone="error" live>
-          {errorMessage(t, error)} {t('confirm.kept')}
+          {error instanceof ApiError && error.kind === 'conflict'
+            ? t('confirm.notNow')
+            : `${errorMessage(t, error)} ${t('confirm.kept')}`}
         </Notice>
       )}
 
