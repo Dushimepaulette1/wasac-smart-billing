@@ -7,7 +7,7 @@
   z-index: 4;
   border-top: 1px solid var(--color-rule);
   background: var(--stage-bar);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
 }
 
 @media (min-width: 768px) {

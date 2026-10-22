@@ -26,13 +26,13 @@
    -------------------------------------------------------------------------- */
 .sidebar {
   position: sticky;
-  top: 0;
+  top: var(--safe-top);
   display: flex;
   flex-direction: column;
   flex: none;
   width: var(--sidebar-width);
-  height: 100vh;
-  height: 100dvh;
+  height: calc(100vh - var(--safe-top));
+  height: calc(100dvh - var(--safe-top));
   padding: var(--space-5) var(--space-3);
   border-right: 1px solid var(--color-rule);
   background: var(--sidebar-bg);
@@ -220,7 +220,7 @@
 
 .topbar {
   position: sticky;
-  top: 0;
+  top: var(--safe-top);
   z-index: 5;
   display: flex;
   align-items: center;
@@ -290,6 +290,11 @@
     bottom: 0;
     z-index: 30;
     width: min(300px, 86vw);
+    height: auto;
+    /* The drawer covers the screen's edge: keep its content off the notch and home bar. */
+    padding-top: calc(var(--space-5) + var(--safe-top));
+    padding-bottom: calc(var(--space-5) + var(--safe-bottom));
+    padding-left: calc(var(--space-3) + var(--safe-left));
     background: var(--stage-bar);
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
     animation: slide 180ms ease-out;
