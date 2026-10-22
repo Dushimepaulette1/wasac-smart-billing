@@ -16,6 +16,7 @@ import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadHome from '../../household/loadHome';
 import { useAccount, useHousehold } from '../../household/session';
 import { formatRwandanPhone } from '../../utils/phone';
+import InstallApp from '../../pwa/InstallApp';
 import styles from './CustomerHome.module.css';
 
 function CustomerHome() {
@@ -135,6 +136,7 @@ function CustomerHome() {
           {t('home.signedInAs', { phone: formatRwandanPhone(household.phone) })}
         </p>
         <div className={styles.signedInActions}>
+          <InstallApp />
           {household.accounts.length > 1 && (
             <Button variant="text" onClick={() => navigate('/sign-in?switch=1')}>
               {t('home.switchMeter')}
