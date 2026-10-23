@@ -18,7 +18,7 @@ A three-stage AI-assisted web platform for analog water meter reading and billin
 ┌──────────────────────────▼──────────────────────────────────────┐
 │                   FastAPI Backend (Port 8000)                   │
 │  POST /submit-photo   POST /confirm-reading   POST /calculate-bill │
-│  POST /ussd (USSD)    GET  /health                              │
+│  POST /ussd (USSD)    GET  /health   GET /health/ready          │
 └──────┬───────────────────┬───────────────────┬──────────────────┘
        │                   │                   │
 ┌──────▼──────┐  ┌─────────▼──────┐  ┌────────▼────────┐
@@ -44,7 +44,7 @@ A three-stage AI-assisted web platform for analog water meter reading and billin
 
 ### Prerequisites
 - Python 3.10+
-- Node.js 18+
+- Node.js 20+ (Vitest 5)
 - PostgreSQL 14+
 
 ### Backend
@@ -118,8 +118,8 @@ gate on the crop (`quality_gate.pt`) → **ResNet18 + BiGRU (CTC)** reads the 8 
 | Model code shared with the training notebook | `backend/ml/wasac_models.py`, `backend/ml/wasac_preprocessing.py` |
 | Input sizes, normalisation, quality-gate threshold, test results | `backend/ml/model_config.json` |
 | Weight checksums | `backend/ml/weights.sha256.json` |
-| Loading, photo pipeline, guidance checks | `backend/vision/` |
-| Every guidance threshold | `backend/vision/guidance_config.json` |
+| Loading, photo pipeline, guidance checks | `backend/app/vision/` |
+| Every guidance threshold | `backend/app/vision/guidance_config.json` |
 
 **Weights.** The three `.pt` files (34 MB) are not in git and are not published anywhere public.
 `scripts/download_models.py` downloads them into `backend/ml/` (or `ML_WEIGHTS_DIR`) and saves a
@@ -140,7 +140,7 @@ If a file is missing, the API still starts: `/health` reports it, and `/submit-p
 
 **Held-out test results** (from `model_config.json`): 55.7% of readings exactly right on 79 photos
 of 34 meters (95% CI 42–69%), and 70.9% within one digit. That is why every reading is shown to the
-household to confirm, and why suspicious readings go to WASAC staff (see `backend/anomaly/README.md`).
+household to confirm, and why suspicious readings go to WASAC staff (see `backend/app/anomaly/README.md`).
 
 ### Photo guidance
 
@@ -325,6 +325,14 @@ and name each test as a sentence: **when** this happens, it **should** do that.
 | Backend | `cd backend && pytest` | `tests/api/test_household_auth.py` tests `app/api/routes/household_auth.py` | `test_when_a_household_asks_for_another_account_should_return_404` |
 | Frontend | `cd frontend && npm test` | `tests/pages/SignIn.test.tsx` tests `src/pages/SignIn/SignIn.tsx` | `it('when the code is wrong, should say so')` |
 
+GitHub Actions runs both on every push and pull request (`.github/workflows/ci.yml`), with no
+secrets: the backend tests use an in-memory database and fake models and can never reach Neon,
+Africa's Talking or MTN (`backend/tests/conftest.py`).
+
+**Health:** `GET /health` is Render's check and stays 200 while the process answers; it reports
+`degraded` if the database cannot be reached. `GET /health/ready` answers 503 in that case: point
+an uptime monitor at it.
+
 ---
 
 ## Staff accounts
@@ -332,6 +340,9 @@ and name each test as a sentence: **when** this happens, it **should** do that.
 There are no built-in staff passwords. Create the first admin with the script (it asks for the
 password twice and never prints it); that admin then adds everyone else under **Staff accounts**
 in the staff area, where each new or reset account gets a one-time temporary password.
+Someone signed in with a temporary password can only open **My account** until they choose their
+own. Changing or resetting a password ends every session signed in with the old one (staff tokens
+carry a stamp of the password, `backend/app/core/security.py`).
 
 ```bash
 cd backend
@@ -370,6 +381,15 @@ accurate to 100 m) as the meter's location, and later readings are checked again
 **One reading per period, one at a time** (`backend/app/services/reading_window.py`): while a
 reading waits for an officer, the household cannot send another; after a reading is accepted, the
 next one opens 25 days later. The app says why and when; staff can always enter a reading.
+Each reading is saved with its meter locked, so two at once (a double tap, a retry, the app and
+USSD together) are taken one after the other; the same value again within 2 minutes is refused,
+and the database allows only one bill per reading.
+
+**Review queue.** A held reading is accepted (billed) or rejected (the household reads again). A
+reading that was billed but needs a look (meter seems stuck, high use for months) is **closed**
+once followed up. Officers see the meter photo the reading came from, what the photo reader read,
+and whether the household changed it (`backend/app/services/photo_evidence.py`). Photos are kept
+`PHOTO_RETENTION_DAYS`, then deleted; a photo never confirmed is deleted after a day.
 
 | Setting (`backend/.env`) | Default | Meaning |
 |---|---|---|
@@ -384,6 +404,7 @@ next one opens 25 days later. The app says why and when; staff can always enter 
 | `LOCATION_SAVE_MAX_ACCURACY_M` | `100` | How precise a first photo must be to become the meter's location |
 | `MOMO_SUBSCRIPTION_KEY`, `MOMO_API_USER`, `MOMO_API_KEY` | unset (simulated payments) | MTN MoMo Collections |
 | `USSD_CALLBACK_TOKEN` | unset (USSD off) | Secret in the Africa's Talking USSD callback URL |
+| `PHOTO_RETENTION_DAYS` | `90` | How long meter photos are kept for reviewers |
 
 **Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
 "Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for
