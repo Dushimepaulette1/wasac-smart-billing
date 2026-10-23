@@ -267,8 +267,8 @@ export const api = {
     return request('/auth/me', { auth: 'staff' });
   },
 
-  /** POST /auth/password: change your own password. */
-  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  /** POST /auth/password: change your own password. Other sessions end; this one goes on with the new token. */
+  changePassword(currentPassword: string, newPassword: string): Promise<LoginResponse> {
     return request('/auth/password', {
       method: 'POST',
       auth: 'staff',
@@ -336,12 +336,12 @@ export const api = {
     return request('/api/anomaly/review-queue', { auth: 'staff' });
   },
 
-  /** PATCH /api/anomaly/flags/{id}/resolve */
-  resolveFlag(flagId: number, outcome: 'accept' | 'reject'): Promise<ResolveFlagResponse> {
+  /** PATCH /api/anomaly/flags/{id}/resolve: accept or reject a held reading, or (null) close a follow-up. */
+  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null): Promise<ResolveFlagResponse> {
     return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
       method: 'PATCH',
       auth: 'staff',
-      json: { outcome },
+      json: outcome ? { outcome } : {},
     });
   },
 };

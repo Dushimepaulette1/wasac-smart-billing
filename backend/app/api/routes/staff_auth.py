@@ -2,12 +2,15 @@
 
     POST  /auth/login                          sign in (every attempt is logged)
     GET   /auth/me                             the signed-in person
-    POST  /auth/password                       change your own password
+    POST  /auth/password                       change your own password (a new token: old sessions end)
     GET   /auth/activity                       audit log (officers: their own rows)
     GET   /auth/staff                          accounts                      admin
     POST  /auth/staff                          new account, temporary password  admin
     PATCH /auth/staff/{username}               name, role, active             admin
     POST  /auth/staff/{username}/reset-password  new temporary password       admin
+                                                 (ends that person's sessions)
+
+A temporary password only lets its owner see /auth/me and change it (require_staff refuses the rest).
     GET   /auth/sms-outbox                     SMS sent through the sandbox   admin
 """
 import re
@@ -20,10 +23,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_role, require_staff, role_at_least
-from app.core.security import hash_password, make_token, verify_password
+from app.api.deps import has_temporary_password, require_role, require_signed_in, require_staff, role_at_least
+from app.core.security import hash_password, make_staff_token, verify_password
 from app.db.session import get_db
-from app.models import SmsOutbox, StaffAction, StaffUser
+from app.models import SmsOutbox, StaffAction, StaffTemporaryPassword, StaffUser
 from app.schemas import (
     ChangePasswordRequest,
     LoginRequest,
@@ -71,6 +74,26 @@ def reset_failures() -> None:
     _failures.clear()
 
 
+def _user_out(db: Session, user: StaffUser) -> StaffUserOut:
+    return StaffUserOut.model_validate(user).model_copy(
+        update={"must_change_password": has_temporary_password(db, user)}
+    )
+
+
+def _session(db: Session, user: StaffUser, now: Optional[float] = None) -> LoginResponse:
+    token, expires_at = make_staff_token(user.username, user.password_hash, now=now)
+    return LoginResponse(access_token=token, expires_at=expires_at, user=_user_out(db, user))
+
+
+def _set_temporary_password(db: Session, user: StaffUser) -> str:
+    password = temporary_password()
+    user.password_hash = hash_password(password)
+    db.flush()  # a new account needs its id
+    if not has_temporary_password(db, user):
+        db.add(StaffTemporaryPassword(user_id=user.id))
+    return password
+
+
 def temporary_password() -> str:
     """Three groups of four, e.g. 'k7mq-x3vd-9tpa' (about 77 bits)."""
     return "-".join("".join(secrets.choice(_PASSWORD_ALPHABET) for _ in range(4)) for _ in range(3))
@@ -93,29 +116,33 @@ async def login(body: LoginRequest, request: Request, db: Session = Depends(get_
         raise HTTPException(status_code=401, detail=WRONG_LOGIN)
     _failures.pop(username, None)
     record(db, user.username, "sign_in", request=request)
-    token, expires_at = make_token(user.username, now=now)
-    return LoginResponse(access_token=token, expires_at=expires_at, user=StaffUserOut.model_validate(user))
+    return _session(db, user, now=now)
 
 
 @router.get("/me", response_model=StaffUserOut)
-async def me(user: StaffUser = Depends(require_staff)):
-    return user
+async def me(db: Session = Depends(get_db), user: StaffUser = Depends(require_signed_in)):
+    return _user_out(db, user)
 
 
-@router.post("/password", status_code=204)
+@router.post("/password", response_model=LoginResponse)
 async def change_password(
     body: ChangePasswordRequest,
     request: Request,
     db: Session = Depends(get_db),
-    user: StaffUser = Depends(require_staff),
+    user: StaffUser = Depends(require_signed_in),
 ):
+    """Every other session of this account ends; this one continues with the new token returned."""
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Your current password is not right.")
     if len(body.new_password) < MIN_PASSWORD_LENGTH:
         raise HTTPException(status_code=400, detail=f"Use at least {MIN_PASSWORD_LENGTH} characters.")
+    if body.new_password == body.current_password:
+        raise HTTPException(status_code=400, detail="Choose a password different from the current one.")
     user.password_hash = hash_password(body.new_password)
+    db.query(StaffTemporaryPassword).filter(StaffTemporaryPassword.user_id == user.id).delete()
     record(db, user.username, "password_changed", request=request, commit=False)
     db.commit()
+    return _session(db, user)
 
 
 @router.get("/activity", response_model=List[StaffActionOut])
@@ -177,9 +204,9 @@ async def create_account(
         raise HTTPException(status_code=400, detail="Enter the person's full name.")
     if db.query(StaffUser).filter(StaffUser.username == username).first():
         raise HTTPException(status_code=409, detail="That username is taken.")
-    password = temporary_password()
-    user = StaffUser(username=username, full_name=full_name[:120], role=body.role, password_hash=hash_password(password))
+    user = StaffUser(username=username, full_name=full_name[:120], role=body.role, password_hash="")
     db.add(user)
+    password = _set_temporary_password(db, user)
     record(db, admin.username, "account_created", target=username, detail=body.role, request=request, commit=False)
     db.commit()
     return TemporaryPasswordResponse(account=_account(db, user), temporary_password=password)
@@ -221,8 +248,7 @@ async def reset_password(
     admin: StaffUser = Depends(require_role("admin")),
 ):
     user = _find(db, username)
-    password = temporary_password()
-    user.password_hash = hash_password(password)
+    password = _set_temporary_password(db, user)
     _failures.pop(user.username, None)
     record(db, admin.username, "password_reset", target=user.username, request=request, commit=False)
     db.commit()

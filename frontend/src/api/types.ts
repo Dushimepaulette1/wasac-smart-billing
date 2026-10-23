@@ -272,7 +272,7 @@ export interface AnomalyFlag {
   created_at: IsoDateTime;
   resolved_at: IsoDateTime | null;
   /** The flagged reading's status: 'pending_review', 'valid' (accepted), 'rejected', 'anomaly_flagged'. */
-  reading_status?: string | null;
+  reading_status?: ReadingStatus | null;
 }
 
 /** schemas.ResolveFlagRequest */
@@ -318,6 +318,8 @@ export interface StaffUser {
   username: string;
   full_name: string;
   role: string;
+  /** Signed in with a password an admin set: choose a new one before anything else. */
+  must_change_password?: boolean;
 }
 
 // ---------------------------------------------------------------------------

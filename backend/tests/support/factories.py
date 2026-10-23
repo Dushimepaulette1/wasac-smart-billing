@@ -47,6 +47,13 @@ def add_officer(db, username="officer1", password="correct horse", full_name="Te
     return user
 
 
+def staff_token(user):
+    """A token as /auth/login gives this staff user (stamped with their current password)."""
+    from app.core.security import make_staff_token
+
+    return make_staff_token(user.username, user.password_hash)[0]
+
+
 def household_token(phone="+250788000111"):
     from app.api.deps import SESSION_TTL, SUBJECT_PREFIX
     from app.core.security import make_token

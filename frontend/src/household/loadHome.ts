@@ -29,7 +29,7 @@ export default async function loadHome(customerId: string, meterId: string): Pro
   return {
     customer,
     newestBill: bills[0] ?? null,
-    checking: open.some((f) => f.requires_staff_review),
+    checking: customer.reading_pending,
     highUse: open.some((f) => HIGH_USE_TYPES.includes(f.anomaly_type)),
   };
 }

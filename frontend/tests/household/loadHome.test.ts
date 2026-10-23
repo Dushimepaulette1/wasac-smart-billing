@@ -31,10 +31,21 @@ describe('loadHome', () => {
     expect(home.highUse).toBe(false);
   });
 
-  it('when flags are open, should notice checking and high use, ignoring resolved ones', async () => {
-    vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag('MISREAD_SUSPECTED'), flag('SPIKE', 'resolved')]);
+  it('when a reading is held, should say checking from the server, not from the flags', async () => {
+    vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ reading_pending: true }));
     let home = await loadHome('CUST001', 'MTR001');
     expect(home.checking).toBe(true);
+
+    // Already billed, open only for WASAC's follow-up: nothing to wait for.
+    vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ reading_pending: false }));
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([makeFlag({ anomaly_type: 'METER_STUCK', reading_status: 'valid' })]);
+    home = await loadHome('CUST001', 'MTR001');
+    expect(home.checking).toBe(false);
+  });
+
+  it('when flags are open, should notice high use, ignoring resolved ones', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag('MISREAD_SUSPECTED'), flag('SPIKE', 'resolved')]);
+    let home = await loadHome('CUST001', 'MTR001');
     expect(home.highUse).toBe(false);
 
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag('SUSTAINED_HIGH', 'open', false)]);

@@ -25,7 +25,7 @@ def test_when_staff_score_a_spike_should_flag_list_and_resolve_it(client, db, co
     assert r.status_code == 200
     body = r.json()
     assert body["anomaly_type"] == "SPIKE"
-    assert "sms_household_logged" in body["actions"] and "staff_dashboard_flag" in body["actions"]
+    assert "sms_household_not_sent" in body["actions"]  # SMS is off in tests and "staff_dashboard_flag" in body["actions"]
 
     flags = client.get("/api/anomaly/flags", params={"household_id": DEMO_ID, "status": "open"}).json()
     assert [f["id"] for f in flags] == [body["flag_id"]]
@@ -64,3 +64,29 @@ def test_when_readings_are_held_should_list_them_in_the_review_queue_with_contex
     assert items[0]["reading_m3"] == 900.0
     assert items[0]["flag"]["anomaly_type"] == "SPIKE"
     assert isinstance(items[0]["history"], list)
+
+
+def test_when_a_billed_reading_needs_follow_up_should_say_so_and_close_without_an_outcome(db, client):
+    from app.models import AnomalyFlag, Reading
+
+    add_household(db, "MTR-F", make_history([1.0] * 4))
+    held = Reading(meter_id="MTR-F", submitted_value=900.0, validation_status="pending_review")
+    billed = Reading(meter_id="MTR-F", submitted_value=5.0, validation_status="anomaly_flagged")
+    db.add_all([held, billed])
+    db.flush()
+    db.add_all([
+        AnomalyFlag(household_id="MTR-F", reading_id=held.reading_id, anomaly_type="SPIKE",
+                    requires_staff_review=True, status="open"),
+        AnomalyFlag(household_id="MTR-F", reading_id=billed.reading_id, anomaly_type="METER_STUCK",
+                    requires_staff_review=True, status="open"),
+    ])
+    db.commit()
+    items = {i["flag"]["anomaly_type"]: i["flag"] for i in client.get("/api/anomaly/review-queue").json()}
+    assert items["SPIKE"]["reading_status"] == "pending_review"
+    assert items["METER_STUCK"]["reading_status"] == "anomaly_flagged"
+
+    stuck = items["METER_STUCK"]["id"]
+    assert client.patch(f"/api/anomaly/flags/{stuck}/resolve", json={"outcome": "accept"}).status_code == 409
+    closed = client.patch(f"/api/anomaly/flags/{stuck}/resolve", json={})
+    assert closed.status_code == 200 and closed.json()["status"] == "resolved" and closed.json()["outcome"] is None
+    assert [i["flag"]["anomaly_type"] for i in client.get("/api/anomaly/review-queue").json()] == ["SPIKE"]

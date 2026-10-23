@@ -4,7 +4,9 @@ Passwords: PBKDF2-HMAC-SHA256 with a random salt, stored as
 "pbkdf2_sha256$<iterations>$<salt>$<hash>".
 
 Tokens: base64url(JSON payload) + "." + base64url(HMAC-SHA256 signature),
-signed with WASAC_AUTH_SECRET. Without that variable a random secret is
+signed with WASAC_AUTH_SECRET. A staff token also carries a stamp of the
+account's password hash ("pv"), so changing or resetting the password ends
+every session signed in with the old one. Without that variable a random secret is
 made at start-up, so tokens stop working when the server restarts; set it
 in production.
 """
@@ -45,15 +47,39 @@ def verify_password(password: str, stored: str) -> bool:
     return hmac.compare_digest(digest, _unb64(expected))
 
 
-def make_token(username: str, *, now: Optional[float] = None, ttl: int = TOKEN_TTL_SECONDS) -> tuple[str, int]:
+def password_stamp(password_hash: str) -> str:
+    """Short keyed fingerprint of a password hash: changes whenever the password does."""
+    return _b64(hmac.new(_SECRET, f"pv:{password_hash}".encode(), hashlib.sha256).digest()[:12])
+
+
+def make_token(
+    username: str, *, stamp: Optional[str] = None, now: Optional[float] = None, ttl: int = TOKEN_TTL_SECONDS
+) -> tuple[str, int]:
     """Return (token, expires_at as Unix seconds)."""
     expires_at = int((now if now is not None else time.time()) + ttl)
-    payload = _b64(json.dumps({"sub": username, "exp": expires_at}, separators=(",", ":")).encode())
+    claims = {"sub": username, "exp": expires_at, **({"pv": stamp} if stamp else {})}
+    payload = _b64(json.dumps(claims, separators=(",", ":")).encode())
     return f"{payload}.{_sign(payload)}", expires_at
+
+
+def make_staff_token(username: str, password_hash: str, *, now: Optional[float] = None) -> tuple[str, int]:
+    return make_token(username, stamp=password_stamp(password_hash), now=now)
+
+
+def staff_token_matches(token: str, password_hash: str) -> bool:
+    """The token was issued for this password (not one since changed or reset)."""
+    claims = read_claims(token)
+    return bool(claims) and hmac.compare_digest(str(claims.get("pv", "")), password_stamp(password_hash))
 
 
 def read_token(token: str, *, now: Optional[float] = None) -> Optional[str]:
     """The username in a valid, unexpired token, or None."""
+    claims = read_claims(token, now=now)
+    return claims["sub"] if claims else None
+
+
+def read_claims(token: str, *, now: Optional[float] = None) -> Optional[dict]:
+    """The payload of a valid, unexpired token with a string subject, or None."""
     try:
         payload, signature = token.split(".")
     except ValueError:
@@ -66,8 +92,7 @@ def read_token(token: str, *, now: Optional[float] = None) -> Optional[str]:
         return None
     if not isinstance(data, dict) or data.get("exp", 0) < (now if now is not None else time.time()):
         return None
-    sub = data.get("sub")
-    return sub if isinstance(sub, str) else None
+    return data if isinstance(data.get("sub"), str) else None
 
 
 def hash_code(phone: str, code: str) -> str:

@@ -113,6 +113,7 @@ export function makeFlag(overrides: Partial<AnomalyFlag> = {}): AnomalyFlag {
     status: 'open',
     created_at: '2026-10-09T10:39:57',
     resolved_at: null,
+    reading_status: 'pending_review',
     ...overrides,
   };
 }

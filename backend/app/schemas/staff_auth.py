@@ -16,6 +16,8 @@ class StaffUserOut(BaseModel):
     username: str
     full_name: str
     role: str
+    # Set by an admin (new account or reset): the dashboard asks for a new one before anything else.
+    must_change_password: bool = False
 
 
 class LoginResponse(BaseModel):
