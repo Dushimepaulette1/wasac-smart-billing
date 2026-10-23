@@ -1,0 +1,7 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"staff.review.readerRead","Staff dashboard","Photo reader read","Usoma imibare yasomye","",""
+"staff.review.edited","Staff dashboard","changed by the household","byahinduwe n'urugo","",""
+"staff.review.photoAlt","Staff dashboard","Meter photo sent by {name}","Ifoto ya mubazi yoherejwe na {name}","","{name}"
+"staff.review.photoLoading","Staff dashboard","Loading the photo…","Ifoto irimo kuza…","",""
+"staff.review.photoFailed","Staff dashboard","The photo could not be loaded.","Ifoto ntiyashoboye kuboneka.","",""
+"staff.review.noPhoto","Staff dashboard","No photo for this reading (typed by hand, sent by USSD, or older than the photo retention period).","Nta foto y'iki gipimo (cyanditswe n'intoki, cyoherejwe kuri USSD, cyangwa gishaje kurusha igihe amafoto abikwa).","",""

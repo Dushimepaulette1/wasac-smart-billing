@@ -99,13 +99,16 @@ await step('08 staff sign in', s, async () => {
   await s.getByRole('button', { name: 'Sign in' }).click();
   await s.waitForURL(/\/staff\/?$/, { timeout: 30000 });
 });
-await step('09 review queue: accept our reading', s, async () => {
+await step('09 review queue: see the photo, accept our reading', s, async () => {
   await s.goto(APP + '/staff/review');
   const item = s.getByRole('button', { name: new RegExp(HOUSEHOLD) }).first();
   await item.waitFor({ timeout: 30000 });
   await item.click();
   const pane = (await s.locator('main').innerText()).replace(/\s+/g, ' ');
   log('     decision pane mentions location:', /Where the photo was taken/.test(pane), '| map link:', await s.getByRole('link', { name: 'Open in map' }).count());
+  // The officer sees the photo the household sent (kept by /submit-photo, linked on confirm).
+  await s.getByRole('img', { name: /Meter photo sent by/ }).waitFor({ timeout: 20000 });
+  log('     photo shown to the officer; reader read:', /Photo reader read/.test(pane));
   await s.getByRole('button', { name: 'Accept reading' }).click();
   await s.waitForTimeout(8000); // 5 s undo window, then the request
 });

@@ -9,7 +9,7 @@ import { makeFlag } from '../../support/fixtures';
 
 vi.mock('../../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../src/api/client')>();
-  return { ...actual, api: { ...actual.api, reviewQueue: vi.fn(), resolveFlag: vi.fn() } };
+  return { ...actual, api: { ...actual.api, reviewQueue: vi.fn(), resolveFlag: vi.fn(), readingPhoto: vi.fn() } };
 });
 
 const item = (id: number, name: string, flag: Parameters<typeof makeFlag>[0]): ReviewItem => ({
@@ -76,5 +76,26 @@ describe('ReviewQueue', () => {
     });
     expect(api.resolveFlag).toHaveBeenCalledWith(2, null);
     expect(screen.getByText(/closed the follow-up for stuck house/i)).toBeInTheDocument();
+  });
+
+  it('when the reading came from a photo, should show the photo and what the reader read', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:photo');
+    URL.revokeObjectURL = vi.fn();
+    vi.mocked(api.readingPhoto).mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
+    vi.mocked(api.reviewQueue).mockResolvedValue([
+      { ...item(3, 'Photo House', { anomaly_type: 'SPIKE' }), reading_id: 41, photo_available: true,
+        reader_digits: '00565846', edited_by_household: true },
+    ]);
+    renderQueue();
+    const photo = await screen.findByRole('img', { name: /meter photo sent by photo house/i });
+    expect(photo).toHaveAttribute('src', 'blob:photo');
+    expect(api.readingPhoto).toHaveBeenCalledWith(41);
+    expect(screen.getByText(/changed by the household/i)).toBeInTheDocument();
+  });
+
+  it('when no photo was kept, should say so', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([item(4, 'Typed House', { anomaly_type: 'SPIKE' })]);
+    renderQueue();
+    expect(await screen.findByText(/no photo for this reading/i)).toBeInTheDocument();
   });
 });

@@ -28,6 +28,8 @@ class PhotoSubmitResponse(BaseModel):
     crop_method: str = "none"
     thumbnail_jpeg_base64: Optional[str] = None
     timings_ms: Dict[str, float] = {}
+    # Send back with /confirm-reading: the officer who checks the reading then sees this photo.
+    photo_id: Optional[str] = None
 
 
 class NormalizedBox(BaseModel):
@@ -59,6 +61,8 @@ class ConfirmReadingRequest(BaseModel):
     location: Optional[GeoPoint] = None
     # "upload": chosen from the gallery, so it may be old or from elsewhere.
     photo_source: Literal["camera", "upload"] = "camera"
+    # From /submit-photo; None when the numbers were typed without a photo.
+    photo_id: Optional[str] = Field(default=None, max_length=32)
 
 
 class ConfirmReadingResponse(BaseModel):

@@ -96,11 +96,13 @@ interface RequestOptions {
   timeout?: number;
   /** Which session's token to send; household unless the endpoint is staff only. */
   auth?: Auth;
+  /** 'blob' for an image; errors still come as JSON. */
+  as?: 'json' | 'blob';
 }
 
 async function request<T>(
   path: string,
-  { method = 'GET', json, body, timeout = REQUEST_TIMEOUT_MS, auth = 'household' }: RequestOptions = {},
+  { method = 'GET', json, body, timeout = REQUEST_TIMEOUT_MS, auth = 'household', as = 'json' }: RequestOptions = {},
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -124,6 +126,8 @@ async function request<T>(
   } finally {
     clearTimeout(timer);
   }
+
+  if (as === 'blob' && response.ok) return (await response.blob()) as T;
 
   let data: unknown = null;
   try {
@@ -186,12 +190,15 @@ export const api = {
     meterId,
     cells,
     evidence,
+    photoId,
   }: {
     customerId: string;
     meterId: string;
     cells: Cells;
     /** Where and how the photo was taken, for the location check. */
     evidence?: PhotoEvidence;
+    /** From /submit-photo: the photo is kept for the officer checking the reading. */
+    photoId?: string | null;
   }): Promise<ConfirmReadingResponse> {
     return request('/confirm-reading', {
       method: 'POST',
@@ -200,6 +207,7 @@ export const api = {
         meter_id: meterId,
         confirmed_reading: cellsToCubicMetreString(cells),
         photo_source: evidence?.photoSource ?? 'camera',
+        photo_id: photoId ?? null,
         location: evidence?.location
           ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
           : null,
@@ -334,6 +342,11 @@ export const api = {
   /** GET /api/anomaly/review-queue: held readings with their context. */
   reviewQueue(): Promise<ReviewItem[]> {
     return request('/api/anomaly/review-queue', { auth: 'staff' });
+  },
+
+  /** GET /api/anomaly/readings/{id}/photo: the photo a held reading came from (staff). */
+  readingPhoto(readingId: number): Promise<Blob> {
+    return request(`/api/anomaly/readings/${encodeURIComponent(readingId)}/photo`, { auth: 'staff', as: 'blob' });
   },
 
   /** PATCH /api/anomaly/flags/{id}/resolve: accept or reject a held reading, or (null) close a follow-up. */

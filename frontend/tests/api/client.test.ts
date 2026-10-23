@@ -34,6 +34,7 @@ describe('api', () => {
       meter_id: 'MTR001',
       confirmed_reading: '00464.500',
       photo_source: 'camera',
+      photo_id: null,
       location: null,
     });
   });
@@ -49,6 +50,26 @@ describe('api', () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(body.photo_source).toBe('upload');
     expect(body.location).toEqual({ lat: -1.94, lng: 30.06, accuracy_m: 12 });
+  });
+
+  it('when the reading came from a photo, should send its id so the officer can see the photo', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, { success: true }));
+    await api.confirmReading({
+      customerId: 'CUST001', meterId: 'MTR001', cells: normalizeReading('00464500').cells, photoId: 'abc123',
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).photo_id).toBe('abc123');
+  });
+
+  it('when staff open a reading photo, should send the staff token and return the image', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('jpeg', { status: 200, headers: { 'Content-Type': 'image/jpeg' } }));
+    setStaffToken('staff-token');
+    const blob = await api.readingPhoto(41);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/anomaly/readings/41/photo');
+    expect((fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>).Authorization).toBe('Bearer staff-token');
+    expect(await blob.text()).toBe('jpeg');
+    setStaffToken(null);
   });
 
   it('when the connection drops, should report offline', async () => {
