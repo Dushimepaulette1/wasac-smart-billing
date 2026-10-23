@@ -67,14 +67,18 @@ def message_for(anomaly_type: AnomalyType) -> str:
     return MESSAGES[anomaly_type]
 
 
+def sms_household(phone: str, message: str) -> str:
+    """Send the SMS; the action to report says whether Africa's Talking took it."""
+    return "sms_household_sent" if send_sms(phone, message) else "sms_household_not_sent"
+
+
 def dispatch(anomaly_type: AnomalyType, phone: Optional[str], message: str) -> List[str]:
     """Perform the actions for this anomaly type. Returns what was done, for logging/response."""
     action = action_for(anomaly_type)
     done = []
     if action.sms_household:
         if phone:
-            send_sms(phone, message)
-            done.append("sms_household_logged")
+            done.append(sms_household(phone, message))
         else:
             logger.warning("No phone number on file; cannot SMS household about %s", anomaly_type.value)
     if action.staff_review:

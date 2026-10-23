@@ -37,6 +37,7 @@ def load_histories_csv(path: Path) -> Histories:
 
 
 def load_histories_db(include_demo: bool = False, include_seed: bool = False) -> Histories:
+    from app.anomaly.statuses import NOT_CONFIRMED
     from app.db.session import SessionLocal
     from app.models import Reading
 
@@ -44,6 +45,9 @@ def load_histories_db(include_demo: bool = False, include_seed: bool = False) ->
     try:
         rows = (
             db.query(Reading.meter_id, Reading.submission_time, Reading.submitted_value)
+            # Confirmed readings only, as the live detector's history (app/anomaly/service.py):
+            # a held or rejected reading is not what the meter used.
+            .filter(Reading.validation_status.notin_(NOT_CONFIRMED))
             .order_by(Reading.meter_id, Reading.submission_time)
             .all()
         )
