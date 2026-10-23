@@ -12,6 +12,7 @@ from app.anomaly.service import household_phone, lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
 from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
 from app.services.billing import build_bill
+from app.services.push import send_to_phone
 
 ACCEPT = "accept"
 REJECT = "reject"
@@ -78,6 +79,23 @@ def _save_meter_location(db: Session, reading: Reading) -> bool:
     return True
 
 
+def decision_alert(outcome: str, amount_due: Optional[float]) -> tuple[str, str, str]:
+    """(title, body, url) of the phone alert: Kinyarwanda first, then English (the server does
+    not know the household's language). Kinyarwanda drafts: docs/i18n/kinyarwanda_review_push.csv."""
+    if outcome == ACCEPT:
+        amount = f"RWF {amount_due:,.0f}" if amount_due is not None else ""
+        return (
+            "Mubazi: igipimo cyemejwe",
+            f"Fagitire yawe ni {amount}. Kanda wishyure.\nYour reading was accepted. Bill: {amount}.",
+            "/history",
+        )
+    return (
+        "Mubazi: ongera usome mubazi",
+        "Ntitwashoboye kwemeza igipimo cyawe. Ohereza indi foto.\nPlease read your meter again.",
+        "/submit/camera",
+    )
+
+
 def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Resolution:
     """Close a flag. A flag on a pending reading needs an outcome; other flags must not have one.
 
@@ -124,4 +142,7 @@ def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Reso
                 else RESUBMIT_MESSAGE
             )
             resolution.actions.append(sms_household(phone, message))
+            title, body, url = decision_alert(outcome, resolution.bill.amount_due if resolution.bill else None)
+            if send_to_phone(db, phone, title, body, url):
+                resolution.actions.append("push_household_sent")
     return resolution
