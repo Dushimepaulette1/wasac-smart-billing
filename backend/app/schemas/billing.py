@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TariffBreakdown(BaseModel):
@@ -51,3 +51,18 @@ class MeterCorrectionRequest(BaseModel):
     """Staff set a meter's current reading (a replaced meter, or a wrong record)."""
     reading_m3: float = Field(ge=0, le=99_999.999)
     reason: str = Field(min_length=3, max_length=200)
+
+
+class PaymentOut(BaseModel):
+    """One attempt to pay a bill. status: pending (waiting for the payer's PIN), successful, failed."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    bill_id: int
+    provider: str                 # momo, momo_sandbox, simulated
+    status: str
+    amount: float
+    currency: str
+    transaction_id: Optional[str] = None
+    reason: Optional[str] = None
+    already_paid: bool = False

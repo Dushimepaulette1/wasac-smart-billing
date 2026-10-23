@@ -1,11 +1,11 @@
 """All API routes in one router. app/main.py adds it to the app.
 
     routes/readings.py        /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
-    routes/billing.py         /customers, /customers/{id}/bills, /bills/{id}/pay
+    routes/billing.py         /customers, /customers/{id}/bills, /bills/{id}/pay, /payments/{id}
     routes/anomaly.py         /api/anomaly/... (messages, review queue, decisions)
     routes/household_auth.py  /household/... (SMS sign-in)
     routes/staff_auth.py      /auth/... (staff sign-in, activity, accounts)
-    routes/ussd.py            /submit-ussd
+    routes/ussd.py            /ussd (Africa's Talking USSD callback)
     routes/health.py          /health
 """
 from fastapi import APIRouter

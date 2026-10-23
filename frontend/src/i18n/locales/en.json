@@ -391,5 +391,13 @@
   "staff.correct.incomplete": "Choose a household, then type the reading (0 to 99999.999 m³) and a reason.",
   "staff.correct.pending": "A reading from this household is waiting in the review queue. Decide on it first.",
   "staff.correct.done": "{meter} now reads {reading}. The next reading will be compared with it.",
-  "staff.activity.kind.meter_corrected": "Corrected a meter reading"
+  "staff.activity.kind.meter_corrected": "Corrected a meter reading",
+  "pay.waitingTitle": "Approve the payment on your phone",
+  "pay.waitingBody": "MTN Mobile Money sent a request to {phone} to pay {amount}. Enter your MoMo PIN to approve it.",
+  "pay.waitingCheck": "Waiting for MTN Mobile Money…",
+  "pay.sandboxNote": "Test system: MTN approves test payments by itself within seconds, and no real money is taken.",
+  "pay.stillWaiting": "MTN Mobile Money has not answered yet. If you approved the payment, the bill will show as paid soon: check your bills before you pay again.",
+  "pay.declinedTitle": "The payment did not go through",
+  "pay.declinedBody": "Nothing was taken from your account. You can try again.",
+  "pay.testMode": "Test payment: no real money was taken."
 }

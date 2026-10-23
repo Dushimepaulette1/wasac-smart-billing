@@ -88,7 +88,6 @@ def seed_data():
             for month in range(6):
                 reading_date = base_date + timedelta(days=30 * month)
                 consumption = c["avg_consumption"] + (month % 3 - 1) * 2
-                prev_val = reading_val
                 reading_val += consumption
 
                 reading = Reading(

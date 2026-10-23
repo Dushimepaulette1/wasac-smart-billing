@@ -18,7 +18,7 @@ const ASSET_LIMIT = 80;
 const NAV_TIMEOUT_MS = 4000;
 const PRECACHE = ['/', '/manifest.webmanifest', '/favicon.svg', '/favicon-32.png', '/icon-192.png', '/icon-512.png'];
 const API_PATHS = ['/auth', '/household', '/submit-photo', '/guide-frame', '/confirm-reading', '/calculate-bill',
-  '/customers', '/bills/', '/submit-ussd', '/health', '/api/'];
+  '/customers', '/bills/', '/payments/', '/ussd', '/health', '/api/'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));

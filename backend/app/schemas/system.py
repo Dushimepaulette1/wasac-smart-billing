@@ -1,4 +1,4 @@
-"""The health check and the USSD menu (app/api/routes/health.py, ussd.py)."""
+"""The health check (app/api/routes/health.py)."""
 from datetime import datetime
 from typing import Optional
 
@@ -15,9 +15,3 @@ class HealthResponse(BaseModel):
     anomaly_detector: str
     memory_peak_mb: Optional[int] = None      # peak resident memory of the API process
     timestamp: datetime
-
-
-class USSDRequest(BaseModel):
-    phone_number: str
-    reading_value: str
-    session_id: Optional[str] = None

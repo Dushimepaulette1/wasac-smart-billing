@@ -142,7 +142,7 @@ never logged. No keys are stored in code.
 | `GET` | `/api/anomaly/flags?household_id=&status=open\|resolved&requires_staff_review=` | List flags, newest first |
 | `PATCH` | `/api/anomaly/flags/{id}/resolve` | Close a flag; body `{"outcome": "accept" \| "reject"}` for a pending reading |
 
-`/confirm-reading` and `/submit-ussd` store the reading, score it, and then either confirm and bill it
+`/confirm-reading` and the USSD menu (`/ussd`) store the reading, score it, and then either confirm and bill it
 or hold it as `pending_review`. A held reading returns `success: true`,
 `validation_status: "pending_review"` and no bill. USSD replies "being checked by WASAC before
 billing". Both responses include an `anomaly` object with `pending_review`.

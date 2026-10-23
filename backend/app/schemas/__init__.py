@@ -23,6 +23,7 @@ from app.schemas.billing import (  # noqa: F401
     BillCalculateRequest,
     CustomerInfo,
     MeterCorrectionRequest,
+    PaymentOut,
 )
 from app.schemas.household_auth import (  # noqa: F401
     CodeRequest,
@@ -53,5 +54,4 @@ from app.schemas.staff_auth import (  # noqa: F401
 )
 from app.schemas.system import (  # noqa: F401
     HealthResponse,
-    USSDRequest,
 )

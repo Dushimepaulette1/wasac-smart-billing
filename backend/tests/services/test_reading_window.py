@@ -64,8 +64,9 @@ def test_when_a_rejected_reading_is_followed_by_a_new_one_should_allow_it(househ
     assert confirm(household_client, customer_id, last + 12).status_code == 200
 
 
-def test_when_a_ussd_reading_is_sent_while_one_is_waiting_should_refuse_it(anon_client, household_client, household):
+def test_when_a_ussd_reading_is_sent_while_one_is_waiting_should_refuse_it(anon_client, household_client, household, monkeypatch):
+    monkeypatch.setenv("USSD_CALLBACK_TOKEN", "t")
     customer_id, last = household
     confirm(household_client, customer_id, last + 300)
-    r = anon_client.post("/submit-ussd", json={"phone_number": "+250788000111", "reading_value": f"{last + 12:.3f}"})
-    assert "still being checked" in r.json()["response"]
+    r = anon_client.post("/ussd?token=t", data={"phoneNumber": "+250788000111", "text": "9*1"})
+    assert "still being checked" in r.text
