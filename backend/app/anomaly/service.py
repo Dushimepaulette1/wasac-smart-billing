@@ -10,8 +10,7 @@ from app.anomaly.features import ReadingPoint, compute_features
 from app.anomaly.location import PhotoEvidence, check_location
 from app.models import ReadingEvidence
 from app.anomaly.model import AnomalyModel, load_model_if_available
-from app.anomaly.notifications import RETAKE_MESSAGE, action_for, dispatch, message_for
-from app.services.sms import send_sms
+from app.anomaly.notifications import RETAKE_MESSAGE, action_for, dispatch, message_for, sms_household
 from app.anomaly.readings import digits_to_m3
 from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, is_cold_start
 from app.anomaly.statuses import (
@@ -309,6 +308,5 @@ def notify_household(db: Session, result: AnomalyResult) -> List[str]:
     if result.needs_retake:
         if not phone:
             return []
-        send_sms(phone, result.message_for_household)
-        return ["sms_household_logged"]
+        return [sms_household(phone, result.message_for_household)]
     return dispatch(AnomalyType(result.anomaly_type), phone, result.message_for_household)

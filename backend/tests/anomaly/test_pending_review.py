@@ -72,7 +72,7 @@ def test_when_an_officer_accepts_should_confirm_and_bill_the_reading(client, db,
     body = r.json()
     assert body["status"] == "resolved" and body["outcome"] == "accept"
     assert body["reading_status"] == "valid" and body["bill_id"] and body["amount_due"] > 0
-    assert "sms_household_logged" in body["actions"]
+    assert "sms_household_not_sent" in body["actions"]  # SMS is off in tests
 
     reading = reading_for(db, flag_id)
     assert reading.validation_status == "valid"
@@ -88,7 +88,7 @@ def test_when_an_officer_rejects_should_discard_the_reading_and_ask_for_a_new_on
     body = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"}).json()
     assert body["status"] == "resolved" and body["outcome"] == "reject"
     assert body["reading_status"] == "rejected" and body["bill_id"] is None
-    assert "sms_household_logged" in body["actions"]
+    assert "sms_household_not_sent" in body["actions"]  # SMS is off in tests
 
     reading = reading_for(db, flag_id)
     assert reading.validation_status == "rejected"

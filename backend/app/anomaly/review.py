@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_RESOLVED
 from app.anomaly.location import env_float
-from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message
-from app.services.sms import send_sms
+from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message, sms_household
 from app.anomaly.service import household_phone
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
 from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
@@ -112,6 +111,5 @@ def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Reso
                 if outcome == ACCEPT
                 else RESUBMIT_MESSAGE
             )
-            send_sms(phone, message)
-            resolution.actions.append("sms_household_logged")
+            resolution.actions.append(sms_household(phone, message))
     return resolution

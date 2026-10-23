@@ -115,3 +115,12 @@ def test_when_three_periods_in_a_row_are_high_should_be_sustained_high(config):
 def test_when_the_model_flags_anything_else_should_be_unusual(config):
     f = _features_for(config, [0.4] * 6, 0.1)
     assert classify_model_anomaly(f, config) == AnomalyType.UNUSUAL
+
+
+def test_when_the_household_sms_is_or_is_not_taken_should_report_which(monkeypatch):
+    from app.anomaly import notifications
+
+    monkeypatch.setattr(notifications, "send_sms", lambda phone, message: True)
+    assert notifications.sms_household("+250788000111", "hi") == "sms_household_sent"
+    monkeypatch.setattr(notifications, "send_sms", lambda phone, message: False)
+    assert notifications.sms_household("+250788000111", "hi") == "sms_household_not_sent"
