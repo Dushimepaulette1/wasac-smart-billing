@@ -78,7 +78,7 @@ def test_when_a_normal_reading_is_confirmed_should_bill_it_and_report_no_anomaly
 def test_when_a_confirmed_reading_is_a_spike_should_hold_it_for_review(client, db, demo_histories):
     points = demo_histories[DEMO_ID]
     customer_id = add_household(db, DEMO_ID, points)
-    huge = round(points[-1].reading_m3 + 100000, 3)  # far above 5 m3/day whatever the gap
+    huge = 99_999.999  # the highest a meter shows: far above 5 m3/day whatever the gap
     body = client.post("/confirm-reading", json={
         "customer_id": customer_id, "meter_id": DEMO_ID, "confirmed_reading": str(huge),
     }).json()
@@ -86,3 +86,19 @@ def test_when_a_confirmed_reading_is_a_spike_should_hold_it_for_review(client, d
     assert body["bill_id"] is None and body["bill_amount"] is None
     assert body["anomaly"]["anomaly_type"] == "SPIKE" and body["anomaly"]["pending_review"]
     assert db.get(Meter, DEMO_ID).last_reading == points[-1].reading_m3
+
+
+@pytest.mark.parametrize("typed", ["nan", "inf", "1e3", "-5", "565.8461"])
+def test_when_a_confirmed_reading_is_not_plain_digits_should_refuse_it(client, db, demo_histories, typed):
+    customer_id = add_household(db, DEMO_ID, demo_histories[DEMO_ID])
+    before = db.query(Reading).count()
+    r = client.post("/confirm-reading", json={
+        "customer_id": customer_id, "meter_id": DEMO_ID, "confirmed_reading": typed,
+    })
+    assert r.status_code == 422
+    assert db.query(Reading).count() == before and db.query(Bill).count() == 0
+
+
+@pytest.mark.parametrize("volume", ["NaN", "Infinity", -1, 1e9])
+def test_when_a_bill_is_estimated_for_an_impossible_volume_should_refuse_it(client, volume):
+    assert client.post("/calculate-bill", json={"consumption_m3": volume}).status_code == 422

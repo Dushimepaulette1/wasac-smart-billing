@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.models import Customer
 from app.services import billing
 from app.services.reading_window import reading_block
+from app.utils.meter_value import parse_meter_value
 from app.core.ratelimit import MAX_UPLOAD_BYTES
 from app.anomaly.service import notify_household, submit_reading
 from app.vision.image_io import BadImage
@@ -90,10 +91,9 @@ async def confirm_reading(
     if not customer or customer.meter_id != meter.meter_id:
         raise HTTPException(status_code=404, detail="Meter not found")
 
-    try:
-        submitted = float(body.confirmed_reading)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Reading must be a number")
+    submitted = parse_meter_value(body.confirmed_reading)
+    if submitted is None:
+        raise HTTPException(status_code=422, detail="Reading must be a number like 00565.846")
 
     if access.staff is None:
         block = reading_block(db, meter)
@@ -153,8 +153,6 @@ async def confirm_reading(
 
 @router.post("/calculate-bill")
 async def calculate_bill(body: BillCalculateRequest):
-    if body.consumption_m3 < 0:
-        raise HTTPException(status_code=422, detail="Consumption cannot be negative")
     data = billing.calculate_bill(body.consumption_m3)
     return {
         "consumption_m3": body.consumption_m3,

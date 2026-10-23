@@ -46,9 +46,9 @@ class GuideFrameResponse(BaseModel):
 
 
 class GeoPoint(BaseModel):
-    lat: float = Field(ge=-90, le=90)
-    lng: float = Field(ge=-180, le=180)
-    accuracy_m: Optional[float] = Field(default=None, ge=0)
+    lat: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    lng: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    accuracy_m: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
 
 
 class ConfirmReadingRequest(BaseModel):
