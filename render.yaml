@@ -29,6 +29,10 @@ services:
         sync: false
       - key: MOMO_API_KEY
         sync: false
+      - key: VAPID_PUBLIC_KEY       # phone alerts; make with scripts/make_vapid_keys.py
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
       - key: USSD_CALLBACK_TOKEN    # secret in the Africa's Talking USSD callback URL
         generateValue: true
       - key: WASAC_AUTH_SECRET      # signs sessions; generated once by Render

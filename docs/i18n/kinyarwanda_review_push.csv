@@ -1,0 +1,5 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"push.accepted.title","Phone alert","Mubazi: your reading was accepted","Mubazi: igipimo cyemejwe","",""
+"push.accepted.body","Phone alert","Your bill is {amount}. Tap to pay.","Fagitire yawe ni {amount}. Kanda wishyure.","","{amount}"
+"push.rejected.title","Phone alert","Mubazi: please read your meter again","Mubazi: ongera usome mubazi","",""
+"push.rejected.body","Phone alert","We could not confirm your reading. Send a new photo.","Ntitwashoboye kwemeza igipimo cyawe. Ohereza indi foto.","",""
