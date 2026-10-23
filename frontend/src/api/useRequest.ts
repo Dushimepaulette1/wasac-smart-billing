@@ -11,7 +11,8 @@ export type RequestStatus = 'idle' | 'loading' | 'success' | 'failed';
 /**
  * Checking `status === 'success'` narrows `data` to R, so screens never
  * need a non-null assertion. Data from an earlier run stays while
- * reloading or after a failure.
+ * reloading or after a failure. Only the latest run's answer is kept: an
+ * earlier, slower one that arrives after it is dropped.
  */
 type RequestState<R> =
   | { status: 'success'; data: R; error: null }
@@ -41,6 +42,7 @@ export default function useRequest<A extends unknown[], R>(
   });
   const lastArgs = useRef<A | null>(options.immediate ? options.args : null);
   const mounted = useRef(true);
+  const latest = useRef(0);
   const fnRef = useRef(fn);
   fnRef.current = fn;
 
@@ -53,13 +55,15 @@ export default function useRequest<A extends unknown[], R>(
 
   const run = useCallback(async (...args: A): Promise<R | undefined> => {
     lastArgs.current = args;
+    const id = ++latest.current;
+    const current = () => mounted.current && id === latest.current;
     setState((s) => ({ status: 'loading', data: s.data, error: null }));
     try {
       const data = await fnRef.current(...args);
-      if (mounted.current) setState({ status: 'success', data, error: null });
+      if (current()) setState({ status: 'success', data, error: null });
       return data;
     } catch (error) {
-      if (mounted.current) setState((s) => ({ status: 'failed', data: s.data, error }));
+      if (current()) setState((s) => ({ status: 'failed', data: s.data, error }));
       return undefined;
     }
   }, []);
