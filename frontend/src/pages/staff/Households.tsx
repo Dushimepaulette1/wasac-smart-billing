@@ -1,6 +1,7 @@
 /**
  * @file Households.tsx
- * @description Every household, searchable by name, meter or sector.
+ * @description Every household, searchable by name, meter or sector; supervisors
+ * and admins can also correct a meter's current reading.
  */
 
 import { useId, useState } from 'react';
@@ -10,11 +11,14 @@ import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
 import loadOverview from '../../staff/loadOverview';
 import HouseholdTable from './HouseholdTable';
+import MeterCorrection from './MeterCorrection';
+import { hasRole, useAuth } from '../../staff/auth';
 import styles from '../../staff/staff.module.css';
 
 function Households() {
   const { t } = useI18n();
   const data = useRequest(loadOverview, { immediate: true, args: [] });
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const searchId = useId();
 
@@ -56,6 +60,11 @@ function Households() {
         </p>
         <HouseholdTable households={shown} />
       </section>
+      {hasRole(user, 'supervisor') && (
+        <div className={styles.stackTop}>
+          <MeterCorrection households={data.data.households} onCorrected={data.retry} />
+        </div>
+      )}
     </StaffLayout>
   );
 }

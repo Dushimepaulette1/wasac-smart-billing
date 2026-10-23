@@ -22,6 +22,7 @@ from app.schemas.billing import (  # noqa: F401
     TariffBreakdown,
     BillCalculateRequest,
     CustomerInfo,
+    MeterCorrectionRequest,
 )
 from app.schemas.household_auth import (  # noqa: F401
     CodeRequest,
