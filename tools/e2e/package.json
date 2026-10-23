@@ -1,0 +1,9 @@
+{
+  "name": "wasac-live-e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end check of the live site in a real (headless) browser",
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}

@@ -67,3 +67,7 @@ logs/
 
 # Private local notes (e.g. a staff password); never committed.
 *.local.txt
+
+# Live end-to-end check (tools/e2e)
+tools/e2e/node_modules/
+tools/e2e/out/
