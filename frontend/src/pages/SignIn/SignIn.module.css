@@ -27,43 +27,27 @@
 /* Large: typed on a phone, often outdoors. */
 .input {
   width: 100%;
-  min-height: 58px;
+  min-height: 56px;
   padding: 0 var(--space-4);
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-field);
-  background: var(--surface);
-  color: var(--text);
+  background: var(--field-bg);
+  color: var(--field-text);
   font-size: 1.25rem;
-  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
-  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
-.input:hover {
-  border-color: var(--text-3);
-}
-
-.input:focus,
 .input:focus-visible {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+  border-color: var(--ink);
 }
 
 .codeInput {
-  max-width: 240px;
-  letter-spacing: 0.45em;
-  font-size: 1.6rem;
-  font-weight: var(--weight-bold);
-  text-align: center;
+  max-width: 220px;
+  letter-spacing: 0.4em;
+  font-size: 1.5rem;
 }
 
 .demoCode {
-  display: inline-block;
-  margin-left: var(--space-1);
-  padding: 2px 10px;
-  border-radius: 8px;
-  background: var(--surface);
   font-size: 1.25rem;
   letter-spacing: 0.15em;
 }
@@ -78,7 +62,6 @@
 .staff {
   margin-top: var(--space-6);
   font-size: var(--size-small);
-  font-weight: var(--weight-bold);
 }
 
 .accounts {
@@ -95,16 +78,14 @@
   gap: var(--space-1);
   width: 100%;
   min-height: var(--tap-min);
-  color: var(--text);
+  border: 0;
+  color: var(--color-text);
   text-align: left;
   cursor: pointer;
-  transition: transform var(--motion) var(--ease-out), border-color var(--motion-fast) ease, box-shadow var(--motion) var(--ease-out);
 }
 
-.account:hover {
-  transform: translateY(-2px);
-  border-color: var(--brand);
-  box-shadow: var(--shadow-2);
+.account:hover .accountName {
+  text-decoration: underline;
 }
 
 .accountName {

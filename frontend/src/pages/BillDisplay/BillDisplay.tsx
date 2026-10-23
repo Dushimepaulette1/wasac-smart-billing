@@ -135,9 +135,15 @@ function BillDisplay() {
           </div>
         </dl>
 
-        <p className={`${styles.status} ${paid ? styles.paidStatus : ''}`}>
-          <Icon name={paid ? 'check' : 'clock'} />
-          <span>{paid ? t('bill.paid') : t('bill.unpaid')}</span>
+        <p className={styles.status}>
+          {paid ? (
+            <>
+              <Icon name="check" />
+              <span>{t('bill.paid')}</span>
+            </>
+          ) : (
+            <span>{t('bill.unpaid')}</span>
+          )}
         </p>
 
         <details className={styles.details}>

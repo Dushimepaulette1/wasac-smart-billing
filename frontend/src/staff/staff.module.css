@@ -9,67 +9,35 @@
 }
 
 .stat {
-  position: relative;
   gap: var(--space-2);
-  overflow: hidden;
-  color: var(--text);
+  color: var(--color-text);
   text-decoration: none;
   padding: var(--space-5) var(--space-6);
-  transition: transform var(--motion) var(--ease-out), box-shadow var(--motion) var(--ease-out), border-color var(--motion-fast) ease;
 }
-
-a.stat:hover {
-  transform: translateY(-3px);
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-2);
-}
-
-/* A coloured icon tile in the corner of each figure. */
-.statIcon {
-  position: absolute;
-  top: var(--space-5);
-  right: var(--space-5);
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--brand-soft);
-  color: var(--brand-ink);
-}
-
-.stat:nth-child(2) .statIcon { background: var(--held-soft); color: var(--held); }
-.stat:nth-child(3) .statIcon { background: var(--clay-soft); color: var(--clay); }
-.stat:nth-child(4) .statIcon { background: var(--ok-soft); color: var(--ok); }
 
 .statLabel {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-right: 48px;
-  color: var(--text-2);
+  color: var(--color-text-secondary);
   font-size: var(--size-small);
-  font-weight: var(--weight-bold);
 }
 
 .statValue {
-  font-family: var(--font-display);
-  font-size: 2.25rem;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
 }
 
 .statNote {
-  color: var(--text-2);
+  color: var(--color-text-secondary);
   font-size: var(--size-small);
 }
 
-/* The figure that needs attention: an amber wash and edge. */
+/* The figure that needs attention gets the held (brass) edge. */
 .attention {
-  border-color: color-mix(in srgb, var(--held) 35%, var(--line));
-  background: linear-gradient(135deg, var(--held-soft) 0%, var(--surface) 70%);
+  box-shadow: inset 4px 0 0 var(--brass), var(--panel-shadow);
 }
 
 .grid {
@@ -80,7 +48,7 @@ a.stat:hover {
 
 @media (min-width: 1200px) {
   .grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   }
 }
 
@@ -106,7 +74,7 @@ a.stat:hover {
 }
 
 .queueList li + li {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-rule);
 }
 
 .queueRow {
@@ -115,14 +83,7 @@ a.stat:hover {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 2px var(--space-4);
-  padding: var(--space-3) var(--space-3);
-  margin-inline: calc(-1 * var(--space-3));
-  border-radius: 12px;
-  transition: background-color var(--motion-fast) ease;
-}
-
-.queueRow:hover {
-  background: var(--surface-2);
+  padding: var(--space-3) 0;
 }
 
 .queueName {
@@ -130,7 +91,7 @@ a.stat:hover {
 }
 
 .empty {
-  color: var(--text-2);
+  color: var(--color-text-secondary);
 }
 
 /* ---- Tables ------------------------------------------------------------ */
@@ -146,32 +107,19 @@ a.stat:hover {
 }
 
 .table th {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
-  color: var(--text-2);
-  font-size: var(--size-xs);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-text-secondary);
+  font-size: var(--size-small);
   font-weight: var(--weight-bold);
-  letter-spacing: 0.02em;
   text-align: left;
   white-space: nowrap;
 }
 
-.table th:first-child { border-radius: 10px 0 0 10px; }
-.table th:last-child { border-radius: 0 10px 10px 0; }
-
 .table td {
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--line);
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-rule);
   vertical-align: top;
-}
-
-.table tbody tr {
-  transition: background-color var(--motion-fast) ease;
-}
-
-.table tbody tr:hover {
-  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 }
 
 .table tr:last-child td {
@@ -190,17 +138,13 @@ a.stat:hover {
 }
 
 .flagged {
-  padding: 2px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--held-soft);
-  color: var(--held);
-  font-size: var(--size-small);
+  color: var(--brass);
   font-weight: var(--weight-bold);
 }
 
 .cellSub {
   display: block;
-  color: var(--text-2);
+  color: var(--color-text-secondary);
   font-size: var(--size-small);
 }
 
@@ -224,7 +168,7 @@ a.stat:hover {
 
   .table tr {
     padding: var(--space-3) 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--color-rule);
   }
 
   .table tr:last-child {
@@ -242,7 +186,7 @@ a.stat:hover {
 
   .table td::before {
     content: attr(data-label);
-    color: var(--text-2);
+    color: var(--color-text-secondary);
     font-size: var(--size-small);
     text-align: left;
   }
@@ -268,18 +212,10 @@ a.stat:hover .statNote,
   max-width: 420px;
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-field);
-  background: var(--surface);
-  color: var(--text);
-  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
-}
-
-.search:focus,
-.select:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+  background: var(--field-bg);
+  color: var(--field-text);
 }
 
 /* ---- Forms and filters ------------------------------------------------- */
@@ -319,19 +255,13 @@ a.stat:hover .statNote,
 }
 
 .select {
-  appearance: none;
   min-height: var(--tap-min);
-  padding: 0 36px 0 var(--space-3);
-  border: 1.5px solid var(--line-strong);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-field);
-  background: var(--surface) var(--chevron) no-repeat right 14px center;
-  color: var(--text);
+  background: var(--field-bg);
+  color: var(--field-text);
   font-weight: var(--weight-regular);
-}
-
-.select option {
-  background: var(--surface);
-  color: var(--text);
 }
 
 .select:disabled {
@@ -345,24 +275,19 @@ a.stat:hover .statNote,
 }
 
 .inactive td {
-  color: var(--text-2);
+  color: var(--color-text-secondary);
 }
 
 .you {
-  color: var(--text-2);
+  color: var(--color-text-secondary);
   font-size: var(--size-small);
   font-weight: var(--weight-regular);
 }
 
 /* The temporary password: big enough to read out, never wrapped mid-way. */
 .secret {
-  display: inline-block;
-  padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--line-strong);
-  border-radius: 10px;
-  background: var(--surface-2);
   font-size: 1.25rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -374,7 +299,7 @@ a.stat:hover .statNote,
 }
 
 .facts dt {
-  color: var(--text-2);
+  color: var(--color-text-secondary);
 }
 
 .facts dd {
@@ -384,122 +309,4 @@ a.stat:hover .statNote,
 
 .stackTop {
   margin-top: var(--space-6);
-}
-
-/* ---- Overview: welcome banner and the issues chart ---------------------- */
-.welcome {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4) var(--space-6);
-  margin-bottom: var(--space-6);
-  padding: var(--space-8) var(--space-6) var(--space-6);
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background:
-    radial-gradient(70% 120% at 100% 0%, color-mix(in srgb, var(--brand) 14%, transparent) 0%, transparent 60%),
-    var(--surface);
-  box-shadow: var(--shadow-1);
-  animation: enter var(--motion-slow) var(--ease-out) both;
-}
-
-.welcomeTitle {
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  margin-bottom: var(--space-1);
-}
-
-.welcomeCta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--tap-min);
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-button);
-  background: var(--brand);
-  color: var(--on-brand);
-  font-weight: var(--weight-bold);
-  text-decoration: none;
-  transition: transform var(--motion-fast) var(--ease-out), background-color var(--motion-fast) ease;
-}
-
-.welcomeCta:hover {
-  background: var(--brand-strong);
-}
-
-.welcomeCta:hover svg {
-  transform: translateX(3px);
-}
-
-.welcomeCta svg {
-  transition: transform var(--motion) var(--ease-spring);
-}
-
-.issueBars {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.issueRow {
-  display: grid;
-  grid-template-columns: minmax(8em, 1.2fr) 2fr 2.5ch;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.issueName {
-  color: var(--text-2);
-  font-size: var(--size-small);
-  font-weight: var(--weight-medium);
-}
-
-.issueTrack {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--surface-2);
-}
-
-/* One series: one colour; the number beside each bar is in text colours. */
-.issueBar {
-  display: block;
-  height: 100%;
-  min-width: 4px;
-  border-radius: 0 6px 6px 0;
-  background: var(--chart-1);
-  transform-origin: left;
-  animation: growX var(--motion-slow) var(--ease-out) both;
-}
-
-.issueValue {
-  font-weight: var(--weight-bold);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-@keyframes growX {
-  from { transform: scaleX(0); }
-}
-
-@media (min-width: 1200px) {
-  .wide {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .welcome,
-  .issueBar {
-    animation: none;
-  }
-
-  a.stat:hover {
-    transform: none;
-  }
 }

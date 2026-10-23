@@ -15,8 +15,7 @@ function ThemeToggle() {
   const label = theme === 'light' ? t('theme.toDark') : t('theme.toLight');
   return (
     <button type="button" className={styles.toggle} onClick={toggle} aria-label={label} title={label}>
-      {/* key: the icon pops in again each time the theme changes. */}
-      <Icon key={theme} name={theme === 'light' ? 'moon' : 'sun'} size={20} />
+      <Icon name={theme === 'light' ? 'moon' : 'sun'} size={20} />
     </button>
   );
 }

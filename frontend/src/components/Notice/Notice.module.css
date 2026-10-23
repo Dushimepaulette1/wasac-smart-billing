@@ -1,24 +1,41 @@
-/* Messages in the flow of a screen: a soft tinted card with the tone's icon in a small round
-   badge. Tone is carried by icon and words, never colour alone. */
+/* Messages in the flow of a screen. Colours follow the surface (stage or
+   panel); tone is carried by icon and words, never colour alone. */
 .notice {
   display: grid;
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: 24px 1fr;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  color: var(--text);
-  animation: enter var(--motion) var(--ease-out) both;
+  padding: var(--space-5);
+  border-radius: 16px;
+  background: var(--panel-bg);
+  color: var(--ink);
+  box-shadow: var(--panel-shadow);
+  --color-text: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-action: var(--ink);
+  --color-on-action: var(--mist);
+  --color-outline: var(--ink);
+  --focus-gap: var(--mist);
+  --focus-color: var(--ink);
+}
+
+/* Dark theme: the navy panel surface, as for .panel (base.css). */
+:global(:root:not([data-theme='light'])) .notice {
+  --ink: var(--mist);
+  --ink-2: var(--haze);
+  --brass: #E2C27A;
+  --color-text: var(--mist);
+  --color-text-secondary: var(--haze);
+  --color-action: var(--mist);
+  --color-on-action: #0A1426;
+  --color-outline: rgba(244, 247, 251, 0.6);
+  --focus-gap: var(--panel-dark);
+  --focus-color: var(--ice);
+  background: var(--panel-dark);
+  border: 1px solid var(--panel-dark-border);
 }
 
 .icon {
-  width: 36px;
-  height: 36px;
-  padding: 7px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--text-2);
+  margin-top: 2px;
 }
 
 .body {
@@ -26,23 +43,10 @@
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
-  padding-top: 6px;
 }
 
 .title {
   font-weight: var(--weight-bold);
-}
-
-.text {
-  color: var(--text-2);
-}
-
-.title + .text {
-  margin-top: 2px;
-}
-
-.body > .text:first-child {
-  color: var(--text);
 }
 
 .actions {
@@ -50,58 +54,38 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
-  margin-top: var(--space-3);
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
 }
 
+.actions > [data-variant='text']:first-child {
+  margin-left: calc(-1 * var(--space-2));
+}
+
+/* Errors: a light card with an ink edge, so it stands out on any surface. */
 .error {
-  border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
-  background: var(--danger-soft);
+  box-shadow: inset 4px 0 0 var(--ink), var(--panel-shadow);
 }
 
-.error .icon {
-  background: var(--danger);
-  color: var(--surface);
-}
-
+/* Held: brass edge and title. Calm, never alarming. */
 .held {
-  border-color: color-mix(in srgb, var(--held) 28%, var(--line));
-  background: var(--held-soft);
+  box-shadow: inset 4px 0 0 var(--brass), var(--panel-shadow);
 }
 
-.held .icon {
-  background: var(--held);
-  color: var(--surface);
-}
-
+.held .icon,
 .held .title {
-  color: var(--held);
+  color: var(--brass);
 }
 
-.info {
-  background: var(--brand-soft);
-  border-color: color-mix(in srgb, var(--brand) 22%, var(--line));
-}
-
-.info .icon {
-  background: var(--brand);
-  color: var(--on-brand);
-}
-
-.done {
-  background: var(--ok-soft);
-  border-color: color-mix(in srgb, var(--ok) 26%, var(--line));
-}
-
-.done .icon {
-  background: var(--ok);
-  color: var(--surface);
-  animation: pop var(--motion-slow) var(--ease-spring) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .notice,
-  .done .icon {
-    animation: none;
-  }
+/* Advice and confirmations: no card, just icon and words in the surface's
+   own colours. */
+.info,
+.done,
+:global(:root:not([data-theme='light'])) .info,
+:global(:root:not([data-theme='light'])) .done {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--color-text);
 }

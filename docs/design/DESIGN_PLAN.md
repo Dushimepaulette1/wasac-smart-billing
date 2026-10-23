@@ -1,84 +1,440 @@
-# Design plan: Mubazi (v3, "imigongo modern")
+# Design plan: frontend redesign v2
 
-Status: built 23/10/2026. Replaces v2 ("deep water at night", kept as `DESIGN_PLAN_v2.md`).
-The client asked for a new name and a livelier, more professional look that households are
-excited to open and staff enjoy using, with full dark mode, a real spinner, no emojis, and a
-refined blue (not the default UI blue).
+Branch: `feature/frontend-redesign-v2`, from `rebuilt-main` (d776deb, which includes
+`feature/anomaly-detection`).
+Status: **approved 09/10/2026**, with the decisions in section 7.
 
-## 1. Name and mark
+This plan follows `.claude/skills/wasac-frontend-design/SKILL.md`. It replaces the rejected
+`feature/frontend-redesign`; nothing from that branch's styling carries over.
 
-**Mubazi**: the everyday Kinyarwanda word for the water meter, understood by every household.
-The mark is an **imigongo zigzag drawing an "M"** (imigongo is the geometric relief art of eastern
-Rwanda, built from zigzags and nested diamonds), white on Kivu deep blue, with a terracotta
-diamond. Source: `src/components/Logo/Logo.tsx`; app icons: `frontend/icons/` (rendered with
-`tools/e2e/render_icons.mjs`). WASAC stays the utility: "For WASAC customers", SMS from WASAC.
+---
 
-## 2. Colour (all in `src/styles/tokens.css`, both themes)
+## 0. What exists today
 
-| Role | Light | Dark | Check |
+**Stack:** Create React App (react-scripts 5), React 18, react-router-dom 6, CSS Modules plus two
+global stylesheets (`styles/global.css`, `styles/typography.css`). No state library, no i18n, no
+HTTP client.
+
+**Routes** (`src/router/index.jsx`), all except `/` and `*` wrapped in `AppShell`
+(SideNav on desktop, BottomNav on mobile, BottomNav hidden on `/submit/camera` and `/payment`):
+
+| Route | Screen | Audience |
+|---|---|---|
+| `/` | Welcome | both (role choice) |
+| `/home` | CustomerHome | household |
+| `/submit/camera` | CameraCapture | household |
+| `/submit/confirm` | ConfirmReading | household |
+| `/submit/manual` | ManualEntry | household |
+| `/bill` | BillDisplay | household |
+| `/payment` | Payment | household |
+| `/history` | BillHistory | household |
+| `/account` | Account | household |
+| `/officer` | OfficerMode | staff |
+| `/officer/review` | AnomalyReview | staff |
+
+**Shared components:** BottomNav, SideNav, Button, Card, InputField, LoadingState,
+NetworkErrorBanner, PageHeader, ProgressStep, SkeletonLoader, StatusBadge.
+
+**Current look:** cream background `#F5F2EE`, teal accent `#0D9488`, Plus Jakarta Sans, monospace
+for data, pill status badges, identical rounded cards. This matches several of the brief's
+"AI-design tells" and is replaced entirely.
+
+### API calls
+
+The current screens call **no API at all**. They read mock data from `src/data/*.js`. The only real
+`fetch` calls are in `src/pages/_legacy_archive/`, hard-coded to `http://localhost:8000`.
+The rejected `feature/frontend-redesign` branch changed CSS only and has no API code to reuse.
+
+| Endpoint (backend) | Used by (legacy) | Notes |
+|---|---|---|
+| `POST /submit-photo` (multipart `file`) | CameraScreen | Returns `status` (`readable`/`unreadable`), `predicted_reading`, `confidence`, `quality_gate_score`, `guidance_message` |
+| `POST /confirm-reading` `{customer_id, meter_id, confirmed_reading}` | ConfirmReading | Returns `success`, `bill_amount`, `consumption_m3`, `tariff_breakdown`, `validation_status`, `anomaly_flagged`, `bill_id`, `error_message` |
+| `POST /bills/{bill_id}/pay` | PaymentScreen | MoMo is simulated client side (2 s delay, fake transaction ID) |
+| `GET /customers` | OfficerMode | `CustomerInfo[]` |
+| `GET /customers/{id}/bills` | not used yet | needed for usage history |
+| `POST /calculate-bill`, `POST /submit-ussd`, `GET /health` | not used | |
+
+**Only on `feature/anomaly-detection`, not on `rebuilt-main`:**
+`GET /api/anomaly/flags`, `PATCH /api/anomaly/flags/{id}/resolve` `{outcome: "accept" | "reject"}`, `POST /api/anomaly/score`, and
+`ConfirmReadingResponse.anomaly` (with `pending_review`, `anomaly_type`, `message_for_household`,
+`needs_retake`). The staff review queue and the household "held for checking" state depend on these.
+Anomaly types: `MISREAD_SUSPECTED`, `SPIKE`, `SUSTAINED_HIGH`, `METER_STUCK`, `UNUSUAL`,
+`BASELINE`, `NORMAL`. Readings are 8 digits, the last 3 being litres
+(`ANOMALY_READING_LENGTH=8`, `ANOMALY_DECIMAL_DIGITS=3`), which is what the counter below is built on.
+
+### Integration work the redesign will do
+
+- One `src/api/client.js` with the base URL from `REACT_APP_API_URL`, timeouts, and a shared
+  `{loading, failed, retry}` pattern. Screens stop importing from `src/data/`.
+- Keep the photo in memory after a failed upload so "Try again" does not mean "take it again".
+- Add a small `t()` helper and `src/i18n/{rw,en,fr}.json`, without a heavy library. Every string
+  goes through it.
+
+---
+
+## 1. Colour
+
+Taken from the meter: black and red number wheels, the brass body, the glass window.
+Six values, no gradients, no dark mode.
+
+| Name | Hex | Role | Contrast (checked) |
 |---|---|---|---|
-| Page `--bg` | #F6F1E9 warm cream | #0E1015 deep ink | |
-| Surface `--surface` | #FFFFFF | #181B23 | |
-| Text `--text` | #17181C | #F2EEE7 | 17.7:1 / 14.9:1 on surface |
-| Secondary `--text-2` | #575B66 | #AEB2BD | 6.8:1 / 8.1:1 |
-| Hint `--text-3` | #6B6F79 | #8A8F9B | 5.0:1 / 5.3:1 (on surface only) |
-| Brand `--brand` (Kivu deep) | #1E5470 | #7DBBD3 | white on it 8.2:1; dark text on dark brand 8.4:1 |
-| Terracotta `--clay` | #B9472A | #EE8A63 | patterns, accents; never errors |
-| Ochre `--ochre` | #D9982B | #F1B652 | decorative only |
-| OK / held / danger | #126B41 / #8A5A00 / #B3261E | #5DD39A / #F3C567 / #FF8A80 | each >= 5:1 on its soft fill |
-| Chart `--chart-1` | #24739F | #3F93BF | dataviz validator: lightness band, chroma, >= 3:1 |
+| **Wheel black** | `#000000` | Cubic-metre counter cells, primary buttons, body text | Paper on it 21:1 |
+| **Litre red** | `#A3111F` | Litre counter cells. **Used nowhere else.** | Paper on it 7.9:1 |
+| **Brass** | `#6E5414` | Counter bezel, "held for checking" status text and border | on Paper 7.1:1 (text allowed on Paper only; 5.9:1 on Glass) |
+| **Slate** | `#454E4B` | Secondary text, labels, inactive nav | on Paper 8.6:1, on Glass 7.1:1 |
+| **Glass** | `#E4EAE7` | Page background, the meter window behind the counter, quiet panels | Black on it 17.2:1 |
+| **Paper** | `#FFFFFF` | Surfaces that hold reading and paying content, digits on counter cells | |
 
-Contrast was computed, not eyeballed (WCAG formula; the chart colour with the dataviz skill's
-`validate_palette.js`). Meter black and meter red stay on the counter only.
+**State colours without new hues:**
+- Paid / accepted: black text, check icon, Glass panel. No green.
+- Held for checking: Brass text and 2px Brass border on Paper, clock icon. Calm, not alarming.
+- Error: black text with a "!" icon right next to the field or action that failed, plus the fix in
+  words. Not red, because red means litres.
+- Focus: 3px Wheel black outline with a 2px Paper gap, so it shows on black buttons and white
+  surfaces alike. Not Brass (2.9:1 on black fails).
 
-**Why dark mode was broken before:** panels were forced light in every theme (the v2 rule
-"content lives on light panels"), and several forms hard-coded `#FFFFFF`. Now every surface,
-field, select and table reads the theme roles; `base.css` styles bare fields with `:where()` so
-components still win.
+**Why no dark mode:** the household app is used outdoors in sunlight, where a light theme with black
+text reads best. Staff work in offices. Neither audience needs one; it would double the testing.
 
-## 3. Type
+---
 
-- **Bricolage Grotesque** (variable 200-800): headlines, the wordmark, money. Characterful but
-  clean; strong at large sizes.
-- **Plus Jakarta Sans** (variable 200-800): everything else. Friendly, very legible on cheap
-  screens, full Latin Extended for Kinyarwanda and French.
-- **Barlow Condensed** digits: the meter counter only.
+## 2. Type
 
-Self-hosted woff2, latin and latin-ext subsets (`src/assets/fonts/NOTICE.md`).
+Two families with clearly separate jobs. Self-hosted WOFF2, no Google Fonts CDN call
+(one less DNS lookup on patchy data, works offline once cached).
 
-## 4. Patterns, depth, motion
+| Family | Role | Why |
+|---|---|---|
+| **Atkinson Hyperlegible Next** (400, 700) | All interface text, amounts, dates, tables | Built for low-vision legibility: distinct `1 l I`, `0 O`, open counters. Readable on cheap screens in sun. Latin Extended covers French accents and Kinyarwanda. Tabular figures for amounts. |
+| **Barlow Condensed** (600) | Counter digits only | Narrow, upright digits like the printed numbers on meter wheels. 8 digits fit at 360px. Subset to `0-9` only, so the file is a few KB. |
 
-- Imigongo patterns as CSS data-URI tiles: a zigzag band on hero cards (`.imigongo-band`) and a
-  nested-diamond field (landing showcase, staff sign-in, sidebar foot). Accents only, never
-  behind text.
-- Soft two-step shadows; 18-26 px radii; the bottom bar floats.
-- Motion: short entrances, springy presses, the meter counter rolling up on the landing page,
-  bars growing into charts, a check-and-diamonds celebration when a bill is paid, a bell that
-  rings once for new messages, a scan line on the camera guide. All of it stops with
-  `prefers-reduced-motion`.
-- Loading: the Mubazi spinner (a turning lake-blue ring around a breathing terracotta diamond)
-  with words, `src/components/Progress/Progress.tsx`.
+Fallbacks: `system-ui, "Segoe UI", Roboto, sans-serif` for the text face;
+`"Arial Narrow", sans-serif-condensed, sans-serif` for the counter.
+Checked: the Atkinson Next files ship with `tnum` (tabular figures).
 
-## 5. Screens
+**Zero (decided 09/10/2026).** Atkinson Next only has a slashed zero, and the full upstream
+font has no alternate. Numbers (amounts, volumes, readings, dates) use a plain zero; codes that
+mix letters and numbers (account and meter IDs) keep the slashed zero so 0 and O stay distinct.
+The plain zero comes from "Atkinson Next Plain Zero", a derived font of under 800 bytes per
+weight that holds only the zero (built by `frontend/scripts/fonts/plain_zero.py`, OFL 1.1),
+layered over the main font with `unicode-range`. In CSS the body uses it, so every number in
+running text gets the plain zero; IDs use `.code` to keep the slashed zero, and `.num` adds
+tabular figures for aligned numbers.
+Comparison: `docs/design/screenshots/00-zero-options.png`.
 
-**Household (phone first):** landing with a live meter showcase; home with a greeting, one status
-card for what to do now (pay, being checked, next reading date, read now), a banner when an
-officer decides a reading, quick actions, a usage chart and the account (with phone alerts);
-bills as card rows with status chips; bill with a big total; payment with a celebration;
-messages with type icons; the camera with corner brackets and a scan line. Bottom bar: Home,
-Bills, a raised diamond Read button, Messages; the header has a bell with a count.
+**Scale** (Bringhurst's classical scale, px):
 
-**Staff (desktop first):** a deep lake-blue sidebar in both themes, a top bar with the date,
-an overview with a welcome banner, four figures with icon tiles, open issues by type as a bar
-chart, the review queue with the photo, and tables with sticky-feeling headers and hover rows.
+| Step | Size / line height | Use |
+|---|---|---|
+| small | 14 / 20 | Staff table secondary text, footnotes. Never for household body text. |
+| body-staff | 16 / 24 | Staff dashboard body |
+| body | 18 / 28 | Household body text and buttons |
+| lead | 21 / 28 | Household screen headings, amounts in lists |
+| title | 24 / 32 | Bill total, staff page titles |
+| counter | 36 digits in 52px cells | Household counter (mobile); 48 in 68px cells at ≥ 600px |
+| counter-small | 24 digits in 36px cells | Staff review pane |
 
-## 6. Alerts
+Sentence case everywhere. No ALL-CAPS labels, no letter-spacing tricks. Body line length capped at
+`60ch` for households, `75ch` for staff.
 
-When an officer accepts or rejects a reading the household gets the SMS (as before), the banner
-on home, the bell count, and a **phone alert** (web push) if they turned it on: backend
-`app/services/push.py`, keys from `scripts/make_vapid_keys.py`, service worker `public/sw.js`.
+---
 
-## 7. Writing
+## 3. Layout
 
-No emojis. Sentence case. Kinyarwanda first; every new Kinyarwanda string is a draft listed in
-`docs/i18n/kinyarwanda_review_mubazi_redesign.csv` (and `_push.csv`) for a native speaker.
+**Household concept:** one task per screen; the counter sits near the top the way the meter sits on
+the wall, and the one action you need sits at the bottom under your thumb.
+
+**Staff concept:** a review desk: queue on the left, and for the selected reading the photo, the
+read digits and that household's last six months side by side, decided with the keyboard.
+
+### Alignment rules
+
+- 4px base grid. Household side gutter 16px, staff 24px.
+- Household content is one column, max width 480px, centred on larger screens.
+- Primary action is a full-width 56px button pinned to the bottom safe area. At most one primary
+  action per screen; a secondary action is a plain text button above it.
+- All numbers are right-aligned in lists and tables, with tabular figures, so units line up.
+- Radii by object, not one radius everywhere: counter cells 3px (wheel windows), counter bezel
+  10px, buttons 8px, panels 0px edge-to-edge on mobile and 8px on desktop.
+- No drop shadows. Separation comes from Glass vs Paper, not shadows.
+
+### Wireframe 1: household submit flow (360px)
+
+Real sequence, so steps are shown as "Step 1 of 3" in words.
+
+```
+ Step 1 of 3: take photo          Step 2 of 3: check the numbers     Step 3 of 3 (held case)
+┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────────────────┐
+│ ←  Read your meter           │ │ ←  Check the numbers         │ │    Reading sent              │
+│                              │ │                              │ │                              │
+│ ┌──────────────────────────┐ │ │ ┌──────────────────────────┐ │ │  [clock] We're checking this │
+│ │                          │ │ │ │ [photo of meter, cropped │ │ │  reading.                    │
+│ │      live camera         │ │ │ │  to the number window]   │ │ │                              │
+│ │                          │ │ │ └──────────────────────────┘ │ │  You don't need to do        │
+│ │   ┌──────────────────┐   │ │ │                              │ │  anything. We'll text you    │
+│ │   │ fit the numbers  │   │ │ │  Do these match your meter?  │ │  within 24 hours.            │
+│ │   │ inside this box  │   │ │ │ ╔══════════════════════════╗ │ │                              │
+│ │   └──────────────────┘   │ │ │ ║█0█2█8█1█3│▓4▓5▓0▓        ║ │ │ ╔══════════════════════════╗ │
+│ │                          │ │ │ ╚══════════════════════════╝ │ │ ║█0█2█8█1█3│▓4▓5▓0▓        ║ │
+│ └──────────────────────────┘ │ │   2,813.450 m³               │ │ ╚══════════════════════════╝ │
+│                              │ │  Tap a number to change it.  │ │   sent 09/10/2026            │
+│ Hold the phone still, about  │ │                              │ │                              │
+│ one hand-length away.        │ │  ─ soft retake prompt, only  │ │                              │
+│                              │ │    if quality is low:        │ │                              │
+│  Upload a photo instead      │ │  "The last digits are blurry.│ │                              │
+│ ┌──────────────────────────┐ │ │   Move closer and hold the   │ │                              │
+│ │       Take photo         │ │ │   phone still."  Retake      │ │ ┌──────────────────────────┐ │
+│ └──────────────────────────┘ │ │ ┌──────────────────────────┐ │ │ │      Back to home        │ │
+└──────────────────────────────┘ │ │     Confirm reading      │ │ │ └──────────────────────────┘ │
+                                 │ └──────────────────────────┘ │ └──────────────────────────────┘
+ █ = Wheel black cell            └──────────────────────────────┘
+ ▓ = Litre red cell                (not held → goes straight to the bill)
+ ║ = Brass bezel
+```
+
+States on this flow: uploading ("Reading the numbers…"), upload failed ("We couldn't send the
+photo. Check your data connection." + "Try again", photo kept), unreadable (guidance text from the
+API + "Retake", never blocking: "Type the numbers instead" is always offered).
+
+The retake prompt is advice only. "Confirm reading" stays enabled while the quality warning is
+shown; "Retake" is a secondary text button next to the warning, never a gate.
+
+### Wireframe 2: household bill (360px)
+
+```
+┌──────────────────────────────┐
+│ ←  September bill            │
+│                              │
+│  You used 22.4 m³            │  ← lead size, plain text
+│  14/08/2026 to 13/09/2026    │
+│                              │
+│  This reading                │
+│ ╔══════════════════════════╗ │
+│ ║█0█2█8█1█3│▓4▓5▓0▓        ║ │  ← counter, display only
+│ ╚══════════════════════════╝ │
+│  Last reading     2,791.050  │  ← plain tabular text, not a 2nd counter
+│                              │
+│ ┌──────────────────────────┐ │  Paper panel
+│ │ Water          RWF 8,940 │ │
+│ │ Service charge RWF 1,000 │ │
+│ │ ──────────────────────── │ │
+│ │ Total         RWF 9,940  │ │  ← title size, bold, right aligned
+│ │ Pay by        30/09/2026 │ │
+│ │                          │ │
+│ │ How this is worked out ▸ │ │  ← expands tariff tiers
+│ └──────────────────────────┘ │
+│                              │
+│  Your last 6 months          │
+│  Apr ▇▇▇▇▇ 21                │  ← simple bar per month, m³,
+│  May ▇▇▇▇▇▇ 23               │    current month in black,
+│  ...                         │    others Slate
+│  Sep ▇▇▇▇▇▇ 22               │
+│ ┌──────────────────────────┐ │
+│ │     Pay RWF 9,940        │ │  ← pinned, thumb reach
+│ └──────────────────────────┘ │
+└──────────────────────────────┘
+```
+
+Payment: phone number prefilled → "Pay RWF 9,940" → "Approve on your phone" waiting state with
+"I didn't get a prompt" help → "Paid" with transaction ID and date. The button label changes from
+"Pay" to "Paid"; nothing else is renamed.
+
+### Wireframe 3: staff review queue (1280px)
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+│ WASAC billing   Review queue (12)   Flags   Households                     Signed in: J. Uwase│
+├──────────────────────────┬────────────────────────────────────────────────────────────────────┤
+│ Held readings      J / K │ Nzeyimana J-P · WAS-KIG-2018-03155 · Nyamirambo                     │
+│                          │ Reading higher than usual          held 13/09/2026, 2 days ago     │
+│▌Nzeyimana J-P            ├──────────────────────────┬─────────────────────┬───────────────────┤
+│ Higher than usual  128 m³│ Meter photo              │ Read by the system  │ Last 6 months, m³ │
+│                          │ ┌──────────────────────┐ │ ╔═════════════════╗ │ Apr   21          │
+│ Hakizimana T.            │ │                      │ │ ║█0█1█9█7█1│▓0▓0▓0▓║│ May   23          │
+│ Lower than last month 14 │ │   photo, zoomable    │ │ ╚═════════════════╝ │ Jun   19          │
+│                          │ │   (Z to zoom)        │ │ Previous  1,843.000 │ Jul   24          │
+│ Ingabire S.              │ │                      │ │ Used        128 m³  │ Aug   22          │
+│ Photo unclear       87 m³│ └──────────────────────┘ │ Usual       ~22 m³  │ Sep  128  ◀ this  │
+│                          │                          │ Confidence    61 %  │                   │
+│ …                        │                          │                     │ 5.8× usual        │
+│                          ├──────────────────────────┴─────────────────────┴───────────────────┤
+│                          │ [ Accept reading  A ]   [ Reject, ask for retake  R ]   Skip  S    │
+│                          │ Accepting creates a bill for RWF 118,420.                          │
+└──────────────────────────┴────────────────────────────────────────────────────────────────────┘
+ ▌ = selected row (black bar + bold, not colour alone)
+```
+
+Keys: `J`/`K` next/previous, `A` accept, `R` reject, `S` skip, `Z` zoom photo, `?` shows the list.
+After a decision the next reading loads in place; a 5-second "Undo" line replaces the action bar.
+Staff copy maps codes to plain words: `SPIKE` → "Higher than usual", `MISREAD_SUSPECTED` →
+"Lower than last month" or "Photo unclear" (by feature), `METER_STUCK` → "Same reading for N days",
+`SUSTAINED_HIGH` → "High for several months".
+
+At < 1024px the three panes stack (photo, digits, history) with the action bar sticky at the
+bottom; staff on laptops keep everything above the fold at 1366×768.
+
+---
+
+## 4. Signature: the meter counter
+
+A `<MeterCounter>` component that shows a reading the way the wall meter shows it.
+
+- 8 cells: 5 cubic-metre cells in Wheel black, then 3 litre cells in Litre red, digits in Paper,
+  Barlow Condensed 600, tabular. A 2px gap between cells, a 6px gap plus a thin Paper divider
+  between m³ and litres (where the decimal point is).
+- Brass bezel (3px) around the cells on a Glass window. That is the only ornament.
+- Leading zeros are shown, as on the meter (`02813` not `2813`).
+- Screen readers get one value: "2,813.450 cubic metres", not eight digits.
+- Edit mode (confirm screen only): one real `<input inputmode="numeric">` laid over the cells, so
+  typing, paste and voice input work; the cell under the caret gets the focus ring.
+- At 360px: 36px digits in 34×52px cells, total width ≈ 310px, inside the 328px content width.
+- No rolling animation. With reduced motion off, a single digit change on edit may slide 4px once;
+  that is the only motion in the app.
+
+**Where it is used:**
+1. Confirm reading (editable).
+2. "Reading held for checking" state (display).
+3. Bill: "This reading" (display, once).
+4. Staff review pane, small size (display).
+
+**Where it is NOT used:**
+- Money. RWF amounts are always plain text, so a price never looks like a volume.
+- Consumption ("22.4 m³"), averages, and history lists: plain tabular numbers.
+- Previous reading on the bill: plain text, so there is one counter per screen.
+- Staff queue rows and tables: plain text. The counter appears only in the decision pane.
+- Home, notifications, account, navigation, empty states, loading states, icons.
+
+---
+
+## 5. Principles
+
+1. **The screen matches the wall.** Digits appear in the same order, grouping and colours as on the
+   household's meter, so checking a reading is a glance from the wall to the phone.
+2. **Volume is a counter, money is a sentence.** m³ readings use the counter; RWF is always plain,
+   bold text. They never share a style.
+3. **Nobody is accused.** A held reading is "being checked", never "suspicious" or "anomaly". Brass,
+   not red. The household is told what happens next and when.
+4. **A dropped connection loses nothing.** Every network action has loading, failed and retry
+   states; the photo and typed digits survive a failure and a page reload.
+5. **Staff decide on one screen.** Photo, digits and history are visible together; every decision
+   has a key and an undo.
+
+---
+
+## 6. Checked against the brief: what I changed
+
+For each first instinct I asked "would I do this for any other utility app?" These failed and were
+revised.
+
+| First idea | Problem | Revised to |
+|---|---|---|
+| Keep a teal accent for buttons and links | Teal/blue utility look; nothing to do with the meter | Primary buttons in Wheel black. No accent hue apart from the meter's own red and brass. |
+| Red for errors and the reject button | Red already means "litres". Using it for errors dilutes the counter and makes staff "reject" look like a household mistake | Red appears only in litre cells. Errors are black text + icon + fix. Reject is an outlined black button with its label and key. |
+| Brass for primary buttons | Every button would become part of the signature; brass on black fails as a focus ring | Brass only on the counter bezel and the "held" state. |
+| Home screen led by a big counter of the last reading with a small label | That is tell #6 (big number + small label hero) and it shows an old number before the user has done anything | Home leads with what to do next ("Take meter photo", or "Pay RWF 9,940 by 30/09/2026"), in words. |
+| Glassy gradient and inner shadow over the counter to look like a real window | Decorative; costs paint time on cheap phones; a "designed" flourish | Flat Glass background behind the cells. |
+| Counter used for the previous reading as well, two counters on the bill | Two counters compete; the bill is about money | One counter per screen; previous reading as plain text. |
+| Staff queue as a full-width table with hairline rules | Tell #3 (broadsheet) and forces a second screen for the photo | Queue rail plus a three-pane decision area. |
+| Meter IDs and account numbers in monospace | Tell #5 | Atkinson Hyperlegible Next with tabular figures. |
+| "01 / 02 / 03" step markers | Tell #7 style; fine as a sequence but numbers-as-decoration | "Step 2 of 3" in words, which also translates. |
+| Dark mode for staff | Not justified by their office setting; doubles QA | Light only. |
+| Load fonts from Google Fonts | Extra lookup and request on patchy data | Self-hosted, Barlow subset to digits only. |
+
+---
+
+## 7. Decisions (09/10/2026)
+
+1. **Anomaly endpoints.** `feature/anomaly-detection` is merged into `rebuilt-main` (46 backend
+   tests pass) and this branch is rebased onto it. Staff screens use the real `/api/anomaly/flags` and
+   `/api/anomaly/flags/{id}/resolve`, not mocks.
+2. **Base.** 2ced262 is pushed; `rebuilt-main` is now d776deb, which also tracks the skill.
+3. **Translations.** English is filled in. Every Kinyarwanda and French string is
+   `"TODO: translate"` for review by the product owner. No machine translation of Kinyarwanda.
+4. **Counter input.** The counter is always 8 digits (5 m³ + 3 litres). The CRNN is not connected
+   yet, so the frontend is built against the `/submit-photo` response shape only, and handles what
+   the CRNN is known to do:
+   - readings shorter than 8 digits are left-padded with zeros (`565846` → `00565846`);
+   - anything that still is not 8 digits (too long, non-digits, empty) opens the editable
+     "check the numbers" state instead of an error.
+
+## 8. Build order
+
+Tokens as CSS custom properties → base typography → `MeterCounter` →
+**checkpoint: counter screenshots at 360px and desktop, display and edit mode, plus a short
+reading, approved before any screen is built** → API client and i18n → household screens
+(camera, confirm, held, bill, pay, history, home, notifications) → staff screens (review queue,
+flags, household detail). One screen per commit, each with screenshots at 360px and desktop width,
+and one decorative element removed before it is called done. The branch is not merged into
+`rebuilt-main`; it is reviewed by the product owner.
+
+## 9. Photo guidance on the camera screen (13/10/2026)
+
+Live tips while the camera is open, using the calibrated backend codes (see
+`docs/calibration/guidance_calibration.md`).
+
+```
++--------------------------------+
+| Step 1 of 3                    |
+| Read your meter          (serif)|
+| Fit the numbers inside the box |
+| +----------------------------+ |
+| |  camera                    | |
+| |   +--------------------+   | |   guide box: where the number window goes
+| |   |                    |   | |
+| |   +--------------------+   | |
+| | [Try moving a little     ] | |   one tip, light panel ON the camera,
+| | [closer to the meter.    ] | |   aria-live="polite"
+| +----------------------------+ |
+| [ ] Save mobile data           |
+|   No live tips. ...            |
+| [ (camera) Take photo        ] |   primary, thumb reach
+|   Upload a photo instead       |
++--------------------------------+
+```
+
+- **One tip at a time:** the most important code, on a light panel over the bottom of the camera,
+  below the guide box. It is visible while aiming on any screen height, and readable in sunlight.
+- **Requests:** at most one live request at a time; checks pause when the tab is hidden and stop
+  after 30 s. The shutter button always works.
+- **Auto-capture:** two OK frames in a row show "Hold still…" for 0.7 s, then take the photo.
+- **Save mobile data** (remembered on the device): no live tips; the photo is checked after it is
+  taken.
+- **After the photo, nothing blocks:**
+  - NO_METER offers "Retake" (primary) or "Type the numbers instead";
+  - TOO_FAR / CUT_OFF / TOO_DARK / GLARE / HARD_TO_READ offer "Retake" (primary) or "Use this
+    photo anyway";
+  - CHECK_NUMBERS goes to the confirm screen with "Please check the numbers.";
+  - BLURRY is off and has no message.
+- **Confirm screen:** shows the number window cut from the photo above the counter. The full photo
+  is not repeated beside it.
+- **Wording:** the four provisional checks say "Try …"; they are hints, not verdicts.
+- **Not drawn: the detected window box.** The camera view uses `object-fit: cover`, so a box in
+  frame coordinates would sit in the wrong place on many phones, and the tip already says what to
+  do.
+- **Removed as decoration:** the drop shadow on the tip panel over the camera image.
+
+Screenshots: `docs/design/screenshots/10-photo-guidance/` (360 px phone viewport and desktop). The
+camera there is Chrome's fake device, and the crop thumbnail is synthetic; no household photos.
+
+---
+
+## 8. Changes after the v2 build (23/10/2026)
+
+The client tried a louder "imigongo modern" redesign and rejected it as looking machine-made;
+this design stays, with these changes:
+
+- **Name:** the app is **Mubazi** (the Kinyarwanda word for the water meter), set as a plain
+  wordmark in the headline serif, with "Water billing" as a quiet second line on wide screens.
+  WASAC is still named as the water company. The app icon stays the meter counter.
+- **Type:** Source Serif 4 for headlines (sturdier and calmer than Cormorant Garamond) and Inter
+  for everything else (clean, neutral, tabular figures, plain zero; `cv05` for an l with a tail).
+- **Dark mode:** panels and notices no longer stay light in the dark theme. They are a navy
+  surface (#0C1D38, fine border) with light text; form fields use `--field-*` tokens per theme.
+  The light theme keeps its white panels.
+- **Bottom bar (phones):** a floating bar with a raised diamond Read button; the duplicate
+  pinned Read button is hidden on phones.
+- **Loading:** a thin spinner with words, instead of the sliding bar.
+- **Demo data:** a small tinted label, not an outlined pill that looked like a button.
+- **Alerts:** a bell with a count in the header, a banner on Home when an officer accepts or
+  rejects a reading, and optional phone alerts (web push) in the account panel.

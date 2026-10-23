@@ -2,40 +2,14 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 1px solid var(--color-outline);
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  transition: transform var(--motion) var(--ease-spring), background-color var(--motion-fast) ease;
+  background: transparent;
+  color: var(--color-text);
 }
 
 .toggle:hover {
-  background: var(--surface-2);
-}
-
-.toggle:active {
-  transform: rotate(-30deg) scale(0.92);
-}
-
-.toggle svg {
-  animation: pop var(--motion-slow) var(--ease-spring) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toggle svg {
-    animation: none;
-  }
-}
-
-/* The visible size is 42 px; the tap area is 48 px. */
-.toggle {
-  position: relative;
-}
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
+  border-color: var(--color-text);
 }

@@ -30,7 +30,7 @@ export function currentTheme(): Theme {
 
 /** The page base colour per theme (tokens.css --stage-base). Phones colour the status bar
  * from theme-color and pick dark or light status icons to contrast with it. */
-export const THEME_COLOR: Record<Theme, string> = { dark: '#0E1015', light: '#F6F1E9' };
+export const THEME_COLOR: Record<Theme, string> = { dark: '#040A16', light: '#EEF3F9' };
 
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;

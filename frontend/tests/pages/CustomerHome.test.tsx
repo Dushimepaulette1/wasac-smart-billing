@@ -46,12 +46,12 @@ describe('CustomerHome', () => {
     vi.mocked(api.getBills).mockResolvedValue([makeBill({ bill_id: 23, amount_due: 12400, payment_status: 'unpaid' })]);
     renderHome();
     expect(await screen.findByRole('button', { name: 'Pay RWF 12,400' })).toBeInTheDocument();
-    expect(screen.getAllByText('RWF 12,400').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('RWF 12,400');
   });
 
   it('when nothing is due, should ask for a reading', async () => {
     renderHome();
-    expect(await screen.findByText('Time to read your meter')).toBeInTheDocument();
+    expect(await screen.findByText('Read your meter to get your next bill.')).toBeInTheDocument();
   });
 
   it('when an officer accepted a reading lately, should say so until the household closes it', async () => {
@@ -65,7 +65,7 @@ describe('CustomerHome', () => {
 
     first.unmount();
     renderHome();
-    await screen.findByText('Time to read your meter');
+    await screen.findByText('Read your meter to get your next bill.');
     expect(screen.queryByText('Your reading was accepted')).not.toBeInTheDocument();
   });
 
