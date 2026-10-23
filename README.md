@@ -44,7 +44,7 @@ A three-stage AI-assisted web platform for analog water meter reading and billin
 
 ### Prerequisites
 - Python 3.10+
-- Node.js 20+ (Vitest 5)
+- Node.js 22+ (Vitest 5 with jsdom)
 - PostgreSQL 14+
 
 ### Backend
