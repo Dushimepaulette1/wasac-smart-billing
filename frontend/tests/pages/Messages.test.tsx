@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Messages, { SHOWN_TYPES } from '../../src/pages/Messages/Messages';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
@@ -96,11 +96,12 @@ describe('Messages', () => {
   });
 
   it('when Messages is opened, should mark the messages as seen', async () => {
-    window.localStorage.removeItem('wasac.messagesSeenAt');
+    window.localStorage.removeItem('wasac.messagesSeenAt:MTR001');
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag(3, 'SPIKE')]);
     renderMessages();
     await screen.findByRole('heading', { name: 'Much more water than usual' });
-    expect(Number(window.localStorage.getItem('wasac.messagesSeenAt'))).toBeGreaterThan(0);
+    // Seen per meter, once the list has loaded (an effect, so it may land just after the heading).
+    await waitFor(() => expect(Number(window.localStorage.getItem('wasac.messagesSeenAt:MTR001'))).toBeGreaterThan(0));
   });
 
   it('when a flag needs nothing from the household, should leave it out', async () => {

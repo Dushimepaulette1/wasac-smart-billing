@@ -138,6 +138,12 @@ export function useHousehold(): HouseholdValue {
   return ctx;
 }
 
+/** The chosen account's customer id, or null; also works outside HouseholdProvider (then: none). */
+export function useAccountId(): string | null {
+  const ctx = useContext(HouseholdContext);
+  return ctx?.account?.customer_id ?? null;
+}
+
 /** The account every household page works with. Only for pages behind RequireHousehold. */
 export function useAccount(): HouseholdAccount {
   const { account } = useHousehold();

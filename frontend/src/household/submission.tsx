@@ -4,11 +4,16 @@
  * bill: the photo, what the digit reader returned, and the digits the
  * household confirmed. Kept in sessionStorage so a dropped connection or a
  * page reload loses nothing; cleared when the reading is accepted.
+ *
+ * A draft belongs to the account it was started for: after switching meter,
+ * signing out, or another household signing in on the same phone, it is
+ * dropped, never sent for the wrong meter.
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { normalizeReading, type Cells } from '../utils/reading';
 import type { PhotoEvidence } from '../api/types';
+import { useAccountId } from './session';
 
 const STORAGE_KEY = 'wasac.submission';
 
@@ -31,6 +36,8 @@ export interface Submission {
   checkNumbers: boolean;
   /** Camera or gallery, and where the phone was, sent with the reading for the location check. */
   evidence: PhotoEvidence | null;
+  /** The customer the draft was started for. */
+  owner?: string | null;
 }
 
 export interface ReadExtras {
@@ -60,20 +67,29 @@ const EMPTY: Submission = {
   evidence: null,
 };
 
-function load(): Submission {
+function load(owner: string | null): Submission {
   try {
     const saved: unknown = JSON.parse(window.sessionStorage.getItem(STORAGE_KEY) ?? 'null');
     // Written by this module; merged over EMPTY so a missing field is safe.
-    return saved && typeof saved === 'object' ? { ...EMPTY, ...(saved as Partial<Submission>) } : EMPTY;
+    const draft = saved && typeof saved === 'object' ? { ...EMPTY, ...(saved as Partial<Submission>) } : EMPTY;
+    return draft.owner === owner ? draft : { ...EMPTY, owner };
   } catch {
-    return EMPTY;
+    return { ...EMPTY, owner };
   }
 }
 
 const SubmissionContext = createContext<SubmissionValue | null>(null);
 
 export function SubmissionProvider({ children, initial }: { children: ReactNode; initial?: Submission }) {
-  const [state, setState] = useState<Submission>(() => initial ?? load());
+  const owner = useAccountId();
+  const [saved, setState] = useState<Submission>(() => (initial ? { ...initial, owner } : load(owner)));
+  const own = useCallback((s: Submission) => (s.owner === owner ? s : { ...EMPTY, owner }), [owner]);
+  // Another account's draft is never shown, not even for the one render before it is dropped.
+  const state = useMemo(() => own(saved), [own, saved]);
+
+  useEffect(() => {
+    if (saved.owner !== owner) setState(own);
+  }, [saved.owner, owner, own]);
 
   useEffect(() => {
     try {
@@ -84,14 +100,14 @@ export function SubmissionProvider({ children, initial }: { children: ReactNode;
   }, [state]);
 
   const setPhoto = useCallback(
-    (photo: string, evidence: PhotoEvidence) => setState({ ...EMPTY, photo, evidence }),
-    [],
+    (photo: string, evidence: PhotoEvidence) => setState({ ...EMPTY, photo, evidence, owner }),
+    [owner],
   );
 
   const setReadResult = useCallback((predicted: string | null, confidence: number | null, extras: ReadExtras = {}) => {
     const { cells, needsCheck, raw } = normalizeReading(predicted);
     setState((s) => ({
-      ...s,
+      ...own(s),
       raw,
       confidence,
       cells,
@@ -100,21 +116,21 @@ export function SubmissionProvider({ children, initial }: { children: ReactNode;
       crop: extras.crop ?? null,
       checkNumbers: extras.checkNumbers ?? false,
     }));
-  }, []);
+  }, [own]);
 
   const startManual = useCallback(() => {
     setState((s) => ({
-      ...s,
+      ...own(s),
       cells: normalizeReading(null).cells,
       needsCheck: false,
       manual: true,
       crop: null,
       checkNumbers: false,
     }));
-  }, []);
+  }, [own]);
 
-  const setCells = useCallback((cells: Cells) => setState((s) => ({ ...s, cells })), []);
-  const reset = useCallback(() => setState(EMPTY), []);
+  const setCells = useCallback((cells: Cells) => setState((s) => ({ ...own(s), cells })), [own]);
+  const reset = useCallback(() => setState({ ...EMPTY, owner }), [owner]);
 
   const value = useMemo<SubmissionValue>(
     () => ({ ...state, setPhoto, setReadResult, startManual, setCells, reset }),
