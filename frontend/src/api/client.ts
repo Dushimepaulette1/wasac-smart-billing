@@ -306,6 +306,15 @@ export const api = {
     return request(`/auth/staff/${encodeURIComponent(username)}/reset-password`, { method: 'POST', auth: 'staff' });
   },
 
+  /** POST /customers/{id}/meter-correction (supervisors, admins): set the meter's current reading. */
+  correctMeter(customerId: string, readingM3: number, reason: string): Promise<CustomerInfo> {
+    return request(`/customers/${encodeURIComponent(customerId)}/meter-correction`, {
+      method: 'POST',
+      json: { reading_m3: readingM3, reason },
+      auth: 'staff',
+    });
+  },
+
   /** GET /customers: every household. */
   listCustomers(): Promise<CustomerInfo[]> {
     return request('/customers', { auth: 'staff' });

@@ -306,3 +306,7 @@ a.stat:hover .statNote,
   margin: 0;
   font-weight: var(--weight-bold);
 }
+
+.stackTop {
+  margin-top: var(--space-6);
+}

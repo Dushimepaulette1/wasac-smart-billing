@@ -99,7 +99,19 @@ def load_history(
     )
     if exclude_reading_id is not None:
         query = query.filter(Reading.reading_id != exclude_reading_id)
-    return [ReadingPoint(date=t, reading_m3=v) for v, t in query.order_by(Reading.submission_time).all()]
+    points = [ReadingPoint(date=t, reading_m3=v) for v, t in query.order_by(Reading.submission_time).all()]
+    return since_last_reset(points)
+
+
+def since_last_reset(points: List[ReadingPoint]) -> List[ReadingPoint]:
+    """Meters only count up, so a drop in confirmed readings is a fresh start: a replaced meter,
+    a staff correction (app/services/meter_correction.py) or an accepted lower reading. History
+    begins there; earlier readings describe the old count and would look like negative use."""
+    start = 0
+    for i in range(1, len(points)):
+        if points[i].reading_m3 < points[i - 1].reading_m3:
+            start = i
+    return points[start:]
 
 
 def _save_flag(

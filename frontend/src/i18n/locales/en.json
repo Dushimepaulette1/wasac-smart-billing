@@ -379,5 +379,17 @@
   "notFound.body": "Check the address, or go back to the start.",
   "notFound.home": "Go to the start",
   "pwa.install": "Install the app",
-  "pwa.iosHint": "On iPhone: tap Share, then “Add to Home Screen”."
+  "pwa.iosHint": "On iPhone: tap Share, then “Add to Home Screen”.",
+  "staff.correct.title": "Correct a meter reading",
+  "staff.correct.lede": "When WASAC's record is wrong, for example after a meter is replaced, set what the meter shows now. The next reading is compared with it. Every correction is in Activity.",
+  "staff.correct.choose": "Choose a household",
+  "staff.correct.now": "On record now: {reading}",
+  "staff.correct.reading": "What the meter shows now (m³)",
+  "staff.correct.reason": "Reason",
+  "staff.correct.reasonHint": "For example: meter replaced",
+  "staff.correct.submit": "Save the correction",
+  "staff.correct.incomplete": "Choose a household, then type the reading (0 to 99999.999 m³) and a reason.",
+  "staff.correct.pending": "A reading from this household is waiting in the review queue. Decide on it first.",
+  "staff.correct.done": "{meter} now reads {reading}. The next reading will be compared with it.",
+  "staff.activity.kind.meter_corrected": "Corrected a meter reading"
 }

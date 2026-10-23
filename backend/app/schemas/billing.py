@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TariffBreakdown(BaseModel):
@@ -45,3 +45,9 @@ class CustomerInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MeterCorrectionRequest(BaseModel):
+    """Staff set a meter's current reading (a replaced meter, or a wrong record)."""
+    reading_m3: float = Field(ge=0, le=99_999.999)
+    reason: str = Field(min_length=3, max_length=200)

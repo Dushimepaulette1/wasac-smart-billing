@@ -1,0 +1,13 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"staff.correct.title","Staff dashboard","Correct a meter reading","Kosora igipimo cya mubazi","",""
+"staff.correct.lede","Staff dashboard","When WASAC's record is wrong, for example after a meter is replaced, set what the meter shows now. The next reading is compared with it. Every correction is in Activity.","Iyo ibyanditswe na WASAC atari byo, urugero mubazi yasimbujwe, andika ibyo mubazi yerekana ubu. Igipimo gikurikiraho kizagereranywa na cyo. Ikosora ryose riba mu Bikorwa.","",""
+"staff.correct.choose","Staff dashboard","Choose a household","Hitamo urugo","",""
+"staff.correct.now","Staff dashboard","On record now: {reading}","Ibyanditswe ubu: {reading}","","{reading}"
+"staff.correct.reading","Staff dashboard","What the meter shows now (m³)","Ibyo mubazi yerekana ubu (m³)","",""
+"staff.correct.reason","Staff dashboard","Reason","Impamvu","",""
+"staff.correct.reasonHint","Staff dashboard","For example: meter replaced","Urugero: mubazi yasimbujwe","",""
+"staff.correct.submit","Staff dashboard","Save the correction","Bika ikosora","",""
+"staff.correct.incomplete","Staff dashboard","Choose a household, then type the reading (0 to 99999.999 m³) and a reason.","Hitamo urugo, hanyuma wandike igipimo (kuva kuri 0 kugeza kuri 99999.999 m³) n'impamvu.","",""
+"staff.correct.pending","Staff dashboard","A reading from this household is waiting in the review queue. Decide on it first.","Hari igipimo cy'uru rugo gitegereje mu bigomba kugenzurwa. Banza ugifateho icyemezo.","",""
+"staff.correct.done","Staff dashboard","{meter} now reads {reading}. The next reading will be compared with it.","{meter} ubu yerekana {reading}. Igipimo gikurikiraho kizagereranywa na cyo.","","{meter} {reading}"
+"staff.activity.kind.meter_corrected","Staff dashboard","Corrected a meter reading","Yakosoye igipimo cya mubazi","",""

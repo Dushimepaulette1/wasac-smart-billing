@@ -379,5 +379,17 @@
   "notFound.body": "Genzura aderesi, cyangwa usubire aho watangiriye.",
   "notFound.home": "Jya aho gutangirira",
   "pwa.install": "Shyira porogaramu muri telefoni",
-  "pwa.iosHint": "Kuri iPhone: kanda Sangiza (Share), hanyuma “Add to Home Screen”."
+  "pwa.iosHint": "Kuri iPhone: kanda Sangiza (Share), hanyuma “Add to Home Screen”.",
+  "staff.correct.title": "Kosora igipimo cya mubazi",
+  "staff.correct.lede": "Iyo ibyanditswe na WASAC atari byo, urugero mubazi yasimbujwe, andika ibyo mubazi yerekana ubu. Igipimo gikurikiraho kizagereranywa na cyo. Ikosora ryose riba mu Bikorwa.",
+  "staff.correct.choose": "Hitamo urugo",
+  "staff.correct.now": "Ibyanditswe ubu: {reading}",
+  "staff.correct.reading": "Ibyo mubazi yerekana ubu (m³)",
+  "staff.correct.reason": "Impamvu",
+  "staff.correct.reasonHint": "Urugero: mubazi yasimbujwe",
+  "staff.correct.submit": "Bika ikosora",
+  "staff.correct.incomplete": "Hitamo urugo, hanyuma wandike igipimo (kuva kuri 0 kugeza kuri 99999.999 m³) n'impamvu.",
+  "staff.correct.pending": "Hari igipimo cy'uru rugo gitegereje mu bigomba kugenzurwa. Banza ugifateho icyemezo.",
+  "staff.correct.done": "{meter} ubu yerekana {reading}. Igipimo gikurikiraho kizagereranywa na cyo.",
+  "staff.activity.kind.meter_corrected": "Yakosoye igipimo cya mubazi"
 }

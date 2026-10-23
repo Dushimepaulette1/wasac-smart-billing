@@ -59,7 +59,11 @@ def reading_block(db: Session, meter: Meter, now: Optional[datetime] = None) -> 
     # meter gets at creation even with no reading yet).
     last = (
         db.query(func.max(Reading.submission_time))
-        .filter(Reading.meter_id == meter.meter_id, Reading.validation_status.in_((READING_VALID, READING_FLAGGED)))
+        .filter(
+            Reading.meter_id == meter.meter_id,
+            Reading.validation_status.in_((READING_VALID, READING_FLAGGED)),
+            Reading.submission_method != "correction",  # a staff correction is not this period's reading
+        )
         .scalar()
     )
     if last and now - last < timedelta(days=days):
