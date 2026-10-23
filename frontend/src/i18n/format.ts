@@ -25,6 +25,8 @@ export interface Formatters {
   monthYear: (iso: string | null | undefined) => string;
   /** "September". */
   month: (iso: string | null | undefined) => string;
+  /** "Sep", for chart labels. */
+  monthShort: (iso: string | null | undefined) => string;
 }
 
 /** "2026-09-14T10:00:00" -> { y, m, d }, read from the string itself so a
@@ -61,6 +63,11 @@ export function makeFormatters(t: Translate): Formatters {
     month: (iso) => {
       const p = dateParts(iso);
       return p ? t(`month.${Number(p.m)}`) : '';
+    },
+
+    monthShort: (iso) => {
+      const p = dateParts(iso);
+      return p ? t(`monthShort.${Number(p.m)}`) : '';
     },
   };
 }

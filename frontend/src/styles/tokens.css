@@ -1,92 +1,150 @@
 /**
  * @file tokens.css
- * @description Design tokens: "deep water at night".
- * A navy stage lit by static blue glows; anything read carefully sits on a
- * light panel. Values and contrast checks: docs/design/DESIGN_PLAN.md.
+ * @description Design tokens for Mubazi: "imigongo modern".
  *
- * Colour roles (--color-*) are set twice: for the dark stage here, and for
- * light panels in .panel (base.css). Components only use roles, so the same
- * Button or Notice works on either surface.
+ * Kivu deep (a calm lake blue) for action, imigongo terracotta and ochre for warmth, on warm cream (light) or
+ * deep ink (dark). Imigongo, the geometric cow-dung art of eastern Rwanda, gives the patterns:
+ * zigzags and nested diamonds, used as accents only (a band, a corner), never behind text.
+ * Values and contrast checks: docs/design/DESIGN_PLAN.md.
+ *
+ * Components use the semantic roles (--bg, --surface, --text, --brand, ...). Every role is set
+ * for both themes, so nothing stays light in dark mode. The --color-* and older names at the
+ * end are aliases for code that still uses them.
  */
+
+:root,
+:root[data-theme='light'] {
+  /* ------------------------------------------------------------------------
+     Surfaces and text (light: warm cream and white)
+     ------------------------------------------------------------------------ */
+  --bg:          #F6F1E9; /* page */
+  --bg-raised:   #FBF8F3; /* header, bottom bar */
+  --surface:     #FFFFFF; /* cards, panels, forms */
+  --surface-2:   #F3EEE6; /* sunken: inputs, table stripes, chips */
+  --surface-3:   #EAE3D8; /* pressed, skeletons */
+  --line:        #E4DCCF; /* hairlines */
+  --line-strong: #C9BFAF; /* input borders, outlined buttons */
+  --text:        #17181C; /* 17.7:1 on --surface, 15.8:1 on --bg */
+  --text-2:      #575B66; /* 6.8:1 on --surface, 6.0:1 on --bg */
+  --text-3:      #6B6F79; /* hints only, on --surface (5.0:1), not on --surface-2 */
+
+  /* Brand: Kivu deep, a calm lake blue (not the default UI blue) */
+  --brand:        #1E5470; /* white on it 8.2:1; on --bg 7.3:1 */
+  --brand-strong: #164259;
+  --brand-soft:   #E3EEF2;
+  --brand-ink:    #174E63; /* brand-coloured text: 9.1:1 on --surface, 7.7:1 on --brand-soft */
+  --on-brand:     #FFFFFF;
+
+  /* Charts: one series in the lake family, validated (OKLCH L and C in band, >= 3:1). */
+  --chart-1: #24739F;
+  --chart-grid: #ECE6DC;
+
+  /* Imigongo warmth */
+  --clay:      #B9472A; /* terracotta, 5.3:1 on white; patterns, accents, never errors */
+  --clay-soft: #F7E3DA;
+  --ochre:     #D9982B; /* decorative only (patterns, highlights) */
+  --ochre-soft:#FBEFD6;
+
+  /* States: always with an icon and words. Each text colour is >= 5:1 on its soft fill. */
+  --ok:          #126B41; --ok-soft:     #DDF2E6;
+  --held:        #8A5A00; --held-soft:   #FCEFD2; /* "being checked": calm amber */
+  --danger:      #B3261E; --danger-soft: #FBE4E1;
+
+  /* Depth */
+  --shadow-1: 0 1px 2px rgba(23, 24, 28, 0.06), 0 2px 8px -2px rgba(23, 24, 28, 0.06);
+  --shadow-2: 0 2px 4px rgba(23, 24, 28, 0.05), 0 18px 36px -18px rgba(30, 84, 112, 0.32);
+  --shadow-pop: 0 24px 60px -20px rgba(23, 24, 28, 0.35);
+  --scrim: rgba(23, 24, 28, 0.45);
+
+  /* Imigongo patterns (data-URI SVG tiles), coloured for this theme. */
+  --pattern-zigzag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' viewBox='0 0 32 16'%3E%3Cpath d='M0 12 8 4l8 8 8-8 8 8' fill='none' stroke='%23B9472A' stroke-width='2.5'/%3E%3C/svg%3E");
+  --pattern-diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='none' stroke-width='2'%3E%3Cpath d='M20 2 38 20 20 38 2 20z' stroke='%2317181C' stroke-opacity='.10'/%3E%3Cpath d='M20 10 30 20 20 30 10 20z' stroke='%23B9472A' stroke-opacity='.22'/%3E%3C/g%3E%3C/svg%3E");
+
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23575B66' stroke-width='1.8'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  /* Dark: deep ink, never pure black; surfaces step up in lightness. */
+  --bg:          #0E1015;
+  --bg-raised:   #13161D;
+  --surface:     #181B23;
+  --surface-2:   #1F232D;
+  --surface-3:   #282D39;
+  --line:        #2A2F3B;
+  --line-strong: #3B4252;
+  --text:        #F2EEE7; /* 14.9:1 on --surface */
+  --text-2:      #AEB2BD; /* 8.0:1 on --surface */
+  --text-3:      #8A8F9B; /* 5.3:1 on --surface */
+
+  --brand:        #7DBBD3; /* 8.1:1 on --surface; buttons use dark text on it (8.4:1) */
+  --brand-strong: #9CCBDD;
+  --brand-soft:   #132A33;
+  --brand-ink:    #9CCBDD; /* 8.5:1 on --brand-soft */
+  --on-brand:     #0B1A22;
+
+  --chart-1: #3F93BF;
+  --chart-grid: #262B36;
+
+  --clay:      #EE8A63;
+  --clay-soft: #3A2119;
+  --ochre:     #F1B652;
+  --ochre-soft:#3A2D12;
+
+  --ok:          #5DD39A; --ok-soft:     #0F2E20;
+  --held:        #F3C567; --held-soft:   #33290F;
+  --danger:      #FF8A80; --danger-soft: #3A1714;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.3), 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --pattern-zigzag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' viewBox='0 0 32 16'%3E%3Cpath d='M0 12 8 4l8 8 8-8 8 8' fill='none' stroke='%23EE8A63' stroke-width='2.5'/%3E%3C/svg%3E");
+  --pattern-diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='none' stroke-width='2'%3E%3Cpath d='M20 2 38 20 20 38 2 20z' stroke='%23F2EEE7' stroke-opacity='.07'/%3E%3Cpath d='M20 10 30 20 20 30 10 20z' stroke='%23EE8A63' stroke-opacity='.2'/%3E%3C/g%3E%3C/svg%3E");
+
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23AEB2BD' stroke-width='1.8'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
 
 :root {
   /* ------------------------------------------------------------------------
-     Palette
+     The meter itself: the counter only. Its red is never used for anything else.
      ------------------------------------------------------------------------ */
-  --night:  #040A16; /* page base, behind the gradient */
-  --deep:   #0B2244; /* lower stage */
-  --tide:   #1D4B82; /* mid-blue glow */
-  --glow:   #6CA0D6; /* luminous glow, used at 40% alpha */
-  --ice:    #BFD7F0; /* focus ring and highlights on dark */
-  --mist:   #F4F7FB; /* headlines on dark; panel surface. 7.2:1 on the lightest glow */
-  --haze:   #C3D2E6; /* body text on dark. 5.1:1 on the lightest glow */
-  --ink:    #0A1426; /* text on panels. 17:1 on mist */
-  --ink-2:  #45516A; /* secondary text on panels. 7.4:1 on mist */
-  --line:   #D5DEEA; /* hairlines inside panels */
-
-  /* The meter itself: counter only. Red is never used for anything else. */
-  --wheel-black: #000000;
-  --litre-red:   #A3111F;
-  --brass:       #6E5414; /* counter bezel and "held" state. 6.7:1 on mist */
-  --glass:       #E3EAF3; /* counter window */
-  --paper:       #FFFFFF; /* digits on counter cells */
+  --wheel-black: #0B0B0D;
+  --litre-red:   #B0141F;
+  --bezel:       #2B2F3A;
+  --glass:       #E9EDF3;
+  --paper:       #FFFFFF;
 
   /* ------------------------------------------------------------------------
-     Roles on the dark stage (panels override these)
+     Type
      ------------------------------------------------------------------------ */
-  --color-text:           var(--mist);
-  --color-text-secondary: var(--haze);
-  --color-surface:        transparent;
-  --color-action:         var(--mist);   /* solid light button */
-  --color-on-action:      var(--ink);
-  --color-outline:        rgba(244, 247, 251, 0.72); /* thin outlined pill */
-  --color-held:           #E2C27A;       /* held text on dark: 8.9:1 on --deep */
-  --color-rule:           rgba(195, 210, 230, 0.18);
-  --focus-gap:            var(--night);
-  --focus-color:          var(--ice);
-
-  /* Stage surfaces (switch with the theme) */
-  --stage-base:       var(--night);
-  --stage-base-clear: rgba(4, 10, 22, 0);
-  --stage-strong:     var(--mist);  /* headlines, wordmark */
-  --stage-soft:       var(--haze);  /* body text on the stage */
-  --stage-bar:        #06122a;      /* phone navigation bar */
-  --panel-bg:         var(--mist);
-  --panel-shadow:     none;
-  --quiet-bg:         rgba(6, 18, 42, 0.55);
-  --row-hover:        #E3EAF3;
-  --sidebar-bg:       rgba(5, 14, 32, 0.82);
-  --sidebar-active:   rgba(191, 215, 240, 0.12);
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23C3D2E6' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
-  color-scheme: dark;
-
-  /* ------------------------------------------------------------------------
-     Type: Cormorant Garamond for headlines only, Atkinson Hyperlegible Next
-     for everything else, Barlow Condensed for counter digits.
-     ------------------------------------------------------------------------ */
-  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
-  --font-text: 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-numbers: 'Atkinson Next Plain Zero', 'Atkinson Hyperlegible Next', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-text: 'Plus Jakarta Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-numbers: var(--font-text);
   --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
 
-  /* Bringhurst's scale; display sizes grow with the viewport. */
+  --size-xs: 12px;           --leading-xs: 16px;
   --size-small: 14px;        --leading-small: 20px;
-  --size-body-staff: 16px;   --leading-body-staff: 24px;
-  --size-body: 17px;         --leading-body: 27px;
-  --size-lead: 20px;         --leading-lead: 30px;
-  --size-title: 24px;        --leading-title: 32px;
-  --size-display: clamp(2.5rem, 1.7rem + 3.2vw, 4.5rem);   /* landing hero */
-  --size-page-title: clamp(2.1rem, 1.6rem + 1.9vw, 3.25rem); /* app pages */
-  --size-panel-title: 1.75rem;
+  --size-body-staff: 15px;   --leading-body-staff: 22px;
+  --size-body: 16px;         --leading-body: 25px;
+  --size-lead: 18px;         --leading-lead: 28px;
+  --size-title: 22px;        --leading-title: 28px;
+  --size-display: clamp(2.6rem, 1.6rem + 4vw, 5rem);
+  --size-page-title: clamp(1.9rem, 1.5rem + 1.6vw, 2.75rem);
+  --size-panel-title: 1.25rem;
+  --size-amount: clamp(2.4rem, 2rem + 2vw, 3.5rem);
 
   --weight-regular: 400;
+  --weight-medium: 550;
   --weight-bold: 700;
 
   --measure-household: 62ch;
   --measure-staff: 75ch;
 
   /* ------------------------------------------------------------------------
-     Space: 4px grid. Layout widths.
+     Space (4 px grid) and layout
      ------------------------------------------------------------------------ */
   --space-1: 4px;
   --space-2: 8px;
@@ -100,9 +158,7 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* The screen's unsafe edges (notch, status bar, rounded corners, home bar). They are 0 in a
-     browser tab; an installed app is drawn edge to edge (viewport-fit=cover in index.html), so
-     the background fills the whole screen while content stays inside these insets. */
+  /* The screen's unsafe edges (notch, status bar, home bar): 0 in a browser tab. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -110,66 +166,72 @@
 
   --gutter: clamp(16px, 4vw, 40px);
   --gutter-household: var(--gutter);
-  --gutter-staff: 24px;
+  --gutter-staff: 28px;
   --width-site: 1180px;
-  --header-height: 72px;
-  --nav-height: 64px;
+  --width-app: 640px;
+  --header-height: 64px;
+  --nav-height: 68px;
 
-  /* ------------------------------------------------------------------------
-     Size of things people touch.
-     ------------------------------------------------------------------------ */
   --tap-min: 48px;
   --button-height: 52px;
 
-  /* ------------------------------------------------------------------------
-     Radii by object.
-     ------------------------------------------------------------------------ */
-  --radius-cell: 3px;     /* counter wheel windows */
-  --radius-bezel: 10px;   /* counter body */
-  --radius-button: 999px; /* pills, as in the reference */
-  --radius-panel: 20px;
+  --radius-cell: 4px;
+  --radius-bezel: 12px;
+  --radius-button: 14px;
+  --radius-pill: 999px;
+  --radius-panel: 22px;
+  --radius-card: 18px;
   --radius-field: 12px;
 
-  --focus-ring: 0 0 0 2px var(--focus-gap), 0 0 0 5px var(--focus-color);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand);
 
-  /* One counter digit settling; one orchestrated moment on the landing hero. */
+  /* Motion: quick and springy; reduced-motion turns it off (below). */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-fast: 140ms;
+  --motion: 240ms;
+  --motion-slow: 520ms;
   --motion-digit: 120ms;
-  --motion-hero: 700ms;
-}
+  --motion-hero: 900ms;
 
-/* --------------------------------------------------------------------------
-   Light theme: morning over the water. Pale ice-blue stage with the same
-   blue glows; white panels lifted by a soft blue shadow; ink text.
-   Contrast at the deepest glow (#AECAE7): ink 10.9:1, --stage-soft 5.4:1.
-   -------------------------------------------------------------------------- */
-:root[data-theme='light'] {
-  --color-text:           var(--ink);
-  --color-text-secondary: #3C4860;
-  --color-action:         var(--ink);
-  --color-on-action:      #FFFFFF;
-  --color-outline:        rgba(10, 20, 38, 0.55);
-  --color-held:           var(--brass);
-  --color-rule:           rgba(10, 20, 38, 0.12);
-  --focus-gap:            #F4F7FB;
-  --focus-color:          var(--ink);
-
-  --stage-base:       #EEF3F9;
-  --stage-base-clear: rgba(238, 243, 249, 0);
-  --stage-strong:     var(--ink);
-  --stage-soft:       #3C4860;
-  --stage-bar:        #FFFFFF;
-  --panel-bg:         #FFFFFF;
-  --panel-shadow:     0 1px 2px rgba(10, 20, 38, 0.05), 0 18px 40px -20px rgba(29, 75, 130, 0.3);
-  --quiet-bg:         rgba(255, 255, 255, 0.55);
-  --row-hover:        #EEF3F9;
-  --sidebar-bg:       rgba(255, 255, 255, 0.86);
-  --sidebar-active:   rgba(29, 75, 130, 0.09);
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%233C4860' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
-  color-scheme: light;
+  /* ------------------------------------------------------------------------
+     Aliases: older role names, mapped onto the roles above.
+     ------------------------------------------------------------------------ */
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-surface: var(--surface);
+  --color-action: var(--brand);
+  --color-on-action: var(--on-brand);
+  --color-outline: var(--line-strong);
+  --color-held: var(--held);
+  --color-rule: var(--line);
+  --focus-gap: var(--bg);
+  --focus-color: var(--brand);
+  --stage-base: var(--bg);
+  --stage-strong: var(--text);
+  --stage-soft: var(--text-2);
+  --stage-bar: var(--bg-raised);
+  --panel-bg: var(--surface);
+  --panel-shadow: var(--shadow-1);
+  --quiet-bg: var(--surface-2);
+  --row-hover: var(--surface-2);
+  --sidebar-bg: var(--bg-raised);
+  --sidebar-active: var(--brand-soft);
+  --ink: var(--text);
+  --ink-2: var(--text-2);
+  --mist: var(--surface);
+  --haze: var(--text-2);
+  --ice: var(--brand);
+  --night: var(--bg);
+  --deep: var(--surface-2);
+  --brass: var(--held);
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --motion-fast: 0ms;
+    --motion: 0ms;
+    --motion-slow: 0ms;
     --motion-digit: 0ms;
     --motion-hero: 0ms;
   }

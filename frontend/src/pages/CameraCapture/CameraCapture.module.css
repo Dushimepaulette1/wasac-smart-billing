@@ -9,8 +9,9 @@
   max-width: 760px;
   border-radius: var(--radius-panel);
   overflow: hidden;
-  background: #020611;
+  background: #08090C;
   object-fit: cover;
+  box-shadow: var(--shadow-2);
 }
 
 /* Phones: the height is set from the measured space above the pinned buttons (see
@@ -36,9 +37,45 @@
   right: 8%;
   top: 38%;
   height: 24%;
-  border: 2px solid var(--mist);
   border-radius: var(--radius-bezel);
-  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45);
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.5);
+  /* Four white corner brackets instead of a full frame. */
+  background:
+    linear-gradient(#fff, #fff) top left / 26px 3px,
+    linear-gradient(#fff, #fff) top left / 3px 26px,
+    linear-gradient(#fff, #fff) top right / 26px 3px,
+    linear-gradient(#fff, #fff) top right / 3px 26px,
+    linear-gradient(#fff, #fff) bottom left / 26px 3px,
+    linear-gradient(#fff, #fff) bottom left / 3px 26px,
+    linear-gradient(#fff, #fff) bottom right / 26px 3px,
+    linear-gradient(#fff, #fff) bottom right / 3px 26px;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+/* A slow scan line: the camera is looking. */
+.guide::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.9), transparent);
+  box-shadow: 0 0 12px rgb(255 255 255 / 0.6);
+  animation: scan 2.4s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0%, 100% { top: 8%; opacity: 0.2; }
+  50% { top: 90%; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide::after {
+    display: none;
+  }
 }
 
 /* One live tip at a time, on a light panel over the bottom of the camera, below
@@ -49,10 +86,13 @@
   right: var(--space-2);
   bottom: var(--space-2);
   margin: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-field);
   font-size: var(--size-body);
+  font-weight: var(--weight-bold);
   line-height: 1.35;
   box-shadow: none; /* over a live camera image a shadow is decoration */
+  animation: enter var(--motion) var(--ease-out) both;
 }
 
 /* Empty: no panel, but the live region stays in the accessibility tree so its first tip is announced. */
@@ -75,7 +115,7 @@
   width: 24px;
   height: 24px;
   margin: 2px 0 0;
-  accent-color: var(--ice);
+  accent-color: var(--brand);
 }
 
 .saveData > span {
@@ -90,7 +130,7 @@
 .locationOff {
   max-width: 760px;
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--text-2);
 }
 
 .overlayText {

@@ -1,13 +1,17 @@
-/* Phones only: the header carries these links on wider screens. */
+/* Phones only: a floating bar above the home indicator. The header has these links on wider
+   screens. */
 .nav {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: calc(var(--space-3) + var(--safe-left));
+  right: calc(var(--space-3) + var(--safe-right));
+  bottom: calc(var(--space-2) + var(--safe-bottom));
   z-index: 4;
-  border-top: 1px solid var(--color-rule);
-  background: var(--stage-bar);
-  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-raised) 90%, transparent);
+  box-shadow: var(--shadow-pop);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
 }
 
 @media (min-width: 768px) {
@@ -18,9 +22,10 @@
 
 .list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
   margin: 0;
-  padding: 0;
+  padding: 0 var(--space-1);
   list-style: none;
 }
 
@@ -30,49 +35,102 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   min-height: var(--nav-height);
   padding: var(--space-1);
-  color: var(--stage-soft);
+  color: var(--text-2);
   text-decoration: none;
   text-align: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Current page: bright text, bold, and a bar; not colour alone. */
+.label {
+  font-size: 11.5px;
+  line-height: 14px;
+  font-weight: var(--weight-medium);
+}
+
+.iconWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  transition: background-color var(--motion) var(--ease-out), transform var(--motion) var(--ease-spring);
+}
+
+.link:active .iconWrap {
+  transform: scale(0.9);
+}
+
+/* Current page: a filled pill behind the icon and bold text; not colour alone. */
 .active {
-  color: var(--stage-strong);
+  color: var(--text);
+}
+
+.active .label {
   font-weight: var(--weight-bold);
 }
 
-.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 30%;
-  right: 30%;
-  height: 2px;
-  background: var(--stage-strong);
+.active .iconWrap {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+/* Read the meter: the main thing to do, raised out of the bar. */
+.main .iconWrap {
+  width: 56px;
+  height: 56px;
+  margin-top: -26px;
+  border: 4px solid var(--bg);
+  border-radius: 18px;
+  background: var(--brand);
+  color: var(--on-brand);
+  box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--brand) 85%, transparent);
+  transform: rotate(45deg);
+}
+
+.main .iconWrap > svg {
+  transform: rotate(-45deg);
+}
+
+.main:active .iconWrap {
+  transform: rotate(45deg) scale(0.92);
+}
+
+.main.active .iconWrap {
+  background: var(--brand-strong);
+  color: var(--on-brand);
+}
+
+.main .label {
+  margin-top: 2px;
+  color: var(--text);
+  font-weight: var(--weight-bold);
 }
 
 /* New messages: a small count on the Messages icon (also read out as "2 new"). */
-.iconWrap {
-  position: relative;
-  display: inline-flex;
-}
-
 .badge {
   position: absolute;
-  top: -6px;
-  right: -10px;
+  top: -4px;
+  right: 6px;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
+  border: 2px solid var(--bg-raised);
   border-radius: 9px;
-  background: var(--color-action);
-  color: var(--color-on-action);
-  font-size: 11px;
+  background: var(--clay);
+  color: #fff;
+  font-size: 10px;
   font-weight: var(--weight-bold);
-  line-height: 18px;
+  line-height: 14px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iconWrap {
+    transition: none;
+  }
 }

@@ -2,3 +2,37 @@
   align-items: flex-start;
   max-width: 640px;
 }
+
+/* A clock that turns slowly: someone is looking at it. */
+.hero {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.clock {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--held-soft);
+  color: var(--held);
+  animation: pop var(--motion-slow) var(--ease-spring) both;
+}
+
+.clock svg path {
+  transform-origin: 12px 12px;
+  animation: hand 6s linear infinite;
+}
+
+@keyframes hand {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock,
+  .clock svg path {
+    animation: none;
+  }
+}

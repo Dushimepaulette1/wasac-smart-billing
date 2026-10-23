@@ -1,7 +1,7 @@
 /**
  * @file RequestState.tsx
  * @description What a screen shows while its data loads or after loading
- * failed: plain words and a retry, never a spinner on its own.
+ * failed: the spinner with plain words, or what went wrong and a retry.
  */
 
 import Button from '../Button/Button';
@@ -41,7 +41,7 @@ function RequestState({ status, error, onRetry, loadingText }: RequestStateProps
       </Notice>
     );
   }
-  return <Progress label={loadingText || t('status.loading')} />;
+  return <Progress center label={loadingText || t('status.loading')} />;
 }
 
 export default RequestState;

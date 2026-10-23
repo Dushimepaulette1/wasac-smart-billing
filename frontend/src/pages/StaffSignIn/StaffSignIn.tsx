@@ -10,6 +10,7 @@ import SiteHeader from '../../components/SiteHeader/SiteHeader';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
 import Icon from '../../components/Icon/Icon';
+import { LogoMark } from '../../components/Logo/Logo';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { ApiError } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -68,8 +69,29 @@ function StaffSignIn() {
     <div className={`${styles.page} stage stage-hero`}>
       <SiteHeader links={false} />
       <main className={styles.main}>
+        <aside className={styles.brandPanel} aria-hidden="true">
+          <LogoMark size={56} />
+          <p className={styles.brandTitle}>{t('signin.panelTitle')}</p>
+          <ul className={styles.brandList}>
+            <li>
+              <Icon name="queue" size={20} />
+              {t('signin.panel1')}
+            </li>
+            <li>
+              <Icon name="chart" size={20} />
+              {t('signin.panel2')}
+            </li>
+            <li>
+              <Icon name="shield" size={20} />
+              {t('signin.panel3')}
+            </li>
+          </ul>
+        </aside>
+
+        <div className={styles.formSide}>
         <div className={styles.intro}>
-          <h1 className="display">{t('signin.title')}</h1>
+          <span className="chip chip-brand">{t('signin.eyebrow')}</span>
+          <h1 className="page-title">{t('signin.title')}</h1>
           <p className={`${styles.lede} text-lead`}>{t('signin.lede')}</p>
         </div>
 
@@ -131,6 +153,7 @@ function StaffSignIn() {
           <Icon name="back" size={18} />
           {t('signin.backHome')}
         </Link>
+        </div>
       </main>
     </div>
   );

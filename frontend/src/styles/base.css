@@ -1,7 +1,8 @@
 /**
  * @file base.css
- * @description Reset, the gradient stage, panels and base typography.
- * Element selectors only reset; spacing comes from classes and CSS Modules.
+ * @description Reset, the page, panels, base typography and the few shared pieces (skeletons,
+ * chips, the imigongo band, motion). Element selectors only reset; layout comes from classes
+ * and CSS Modules.
  */
 
 *,
@@ -13,43 +14,53 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background: var(--stage-base);
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--stage-base);
-  color: var(--color-text);
-  /* Plain zero for every number in text; IDs opt back in with .code. */
-  font-family: var(--font-numbers);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
   font-size: var(--size-body);
   line-height: var(--leading-body);
   font-weight: var(--weight-regular);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--text);
 }
 
 /* --------------------------------------------------------------------------
-   The stage: static layered radial gradients on a navy base. No blur, no
-   canvas, no animation; one paint, so cheap phones render it instantly.
-   Fixed behind the page (a pseudo-element, not background-attachment,
-   which mobile browsers repaint on scroll).
+   The page ("stage"). A calm base with two soft colour washes, fixed behind the page (a
+   pseudo-element, not background-attachment, which phones repaint on scroll). No blur, no
+   animation: one paint, so cheap phones render it instantly.
    -------------------------------------------------------------------------- */
 .stage {
   position: relative;
   isolation: isolate;
-  box-sizing: border-box;
   min-height: 100vh;
   min-height: 100dvh;
-  /* Installed app, edge to edge: the gradient (::before, fixed) runs behind the status bar and
-     round the corners, while everything on it starts inside the safe area. */
+  /* Installed app, edge to edge: the background runs under the status bar, content starts
+     inside the safe area. */
   padding-top: var(--safe-top);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
 }
 
-/* Installed app: a backdrop exactly the height of the status bar, so content scrolling up
-   never shows behind the clock and battery. 0 px tall in a browser tab. */
+/* Installed app: a strip the height of the status bar, so content scrolling up never shows
+   behind the clock and battery. 0 px tall in a browser tab. */
 .stage::after {
   content: '';
   position: fixed;
@@ -58,16 +69,16 @@ body {
   right: 0;
   z-index: 40;
   height: var(--safe-top);
-  background: var(--stage-base);
+  background: var(--bg);
   pointer-events: none;
 }
 
-/* iPhone (only iOS Safari matches this): its installed-app status bar text is always white, so
-   the strip behind it stays night-blue in the light theme too. Android colours its icons from
-   theme-color (src/theme/theme.ts) and keeps the page colour above. */
+/* iPhone (only iOS Safari matches this): its installed-app status bar text is always white, so in
+   the light theme the strip behind it is Kivu deep blue. Android colours its icons from
+   theme-color (src/theme/theme.ts) and keeps the page colour. */
 @supports (-webkit-touch-callout: none) {
   :root[data-theme='light'] .stage::after {
-    background: var(--night);
+    background: #1E5470;
   }
 }
 
@@ -77,62 +88,31 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(62% 55% at 18% 100%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 72%),
-    radial-gradient(48% 42% at 70% 30%, rgba(29, 75, 130, 0.55) 0%, rgba(29, 75, 130, 0) 70%),
-    radial-gradient(36% 30% at 96% 4%, rgba(58, 104, 160, 0.3) 0%, rgba(58, 104, 160, 0) 70%),
-    linear-gradient(168deg, #03070f 0%, #06122a 46%, var(--deep) 100%);
+    radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, var(--brand) 9%, transparent) 0%, transparent 70%),
+    radial-gradient(50% 35% at 0% 100%, color-mix(in srgb, var(--clay) 8%, transparent) 0%, transparent 70%),
+    var(--bg);
 }
 
-/* Landing: the glow rises behind the centred headline, as in the reference. */
 .stage-hero::before {
   background:
-    radial-gradient(55% 48% at 50% 108%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 74%),
-    radial-gradient(42% 40% at 38% 46%, rgba(29, 75, 130, 0.6) 0%, rgba(29, 75, 130, 0) 72%),
-    radial-gradient(34% 34% at 78% 22%, rgba(58, 104, 160, 0.34) 0%, rgba(58, 104, 160, 0) 70%),
-    linear-gradient(180deg, #03070f 0%, #06122a 50%, var(--deep) 100%);
-}
-
-/* Light theme: the same composition at dawn. */
-:root[data-theme='light'] .stage::before {
-  background:
-    radial-gradient(62% 55% at 18% 100%, rgba(108, 160, 214, 0.38) 0%, rgba(108, 160, 214, 0) 72%),
-    radial-gradient(48% 42% at 72% 26%, rgba(150, 188, 230, 0.5) 0%, rgba(150, 188, 230, 0) 70%),
-    radial-gradient(40% 34% at 96% 2%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(168deg, #F7FAFD 0%, #EBF1F8 50%, #D6E3F2 100%);
-}
-
-:root[data-theme='light'] .stage-hero::before {
-  background:
-    radial-gradient(55% 48% at 50% 108%, rgba(108, 160, 214, 0.42) 0%, rgba(108, 160, 214, 0) 74%),
-    radial-gradient(42% 40% at 34% 40%, rgba(150, 188, 230, 0.5) 0%, rgba(150, 188, 230, 0) 72%),
-    radial-gradient(34% 34% at 80% 18%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(180deg, #F7FAFD 0%, #EBF1F8 52%, #D6E3F2 100%);
+    radial-gradient(70% 55% at 85% 10%, color-mix(in srgb, var(--brand) 16%, transparent) 0%, transparent 70%),
+    radial-gradient(60% 45% at 5% 95%, color-mix(in srgb, var(--clay) 14%, transparent) 0%, transparent 70%),
+    var(--bg);
 }
 
 /* --------------------------------------------------------------------------
-   Panels: light surfaces floating on the stage. Anything read carefully
-   (readings, money, forms, errors) goes on one. Roles switch to dark ink.
+   Panels and cards
    -------------------------------------------------------------------------- */
 .panel {
-  --color-text:           var(--ink);
-  --color-text-secondary: var(--ink-2);
-  --color-surface:        var(--paper);
-  --color-action:         var(--ink);
-  --color-on-action:      var(--mist);
-  --color-outline:        var(--ink);
-  --color-held:           var(--brass);
-  --color-rule:           var(--line);
-  --focus-gap:            var(--mist);
-  --focus-color:          var(--ink);
-
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-6);
+  border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  background: var(--panel-bg);
-  box-shadow: var(--panel-shadow);
-  color: var(--color-text);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
 }
 
 @media (min-width: 768px) {
@@ -141,16 +121,87 @@ body {
   }
 }
 
-/* A quieter surface for secondary details that are short and not
-   critical, kept on the dark stage. */
+/* A quieter surface for short, secondary details. */
 .panel-quiet {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-6);
-  border: 1px solid var(--color-rule);
+  border: 1px dashed var(--line-strong);
   border-radius: var(--radius-panel);
-  background: var(--quiet-bg);
+  background: var(--surface-2);
+}
+
+/* The imigongo band: a strip of zigzag along the top of a hero card. Decorative. */
+.imigongo-band {
+  position: relative;
+  overflow: hidden;
+}
+
+.imigongo-band::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  background: var(--pattern-zigzag) repeat-x center / 32px 16px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Nested-diamond field in a corner: the mark of the brand. Decorative. */
+.imigongo-corner {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.imigongo-corner::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -40px;
+  top: -40px;
+  width: 200px;
+  height: 200px;
+  background: var(--pattern-diamond) repeat;
+  -webkit-mask-image: radial-gradient(circle at 70% 30%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(circle at 70% 30%, #000 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* A small rounded label: status, demo tag, counts. Never interactive. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 26px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.chip-ok { background: var(--ok-soft); color: var(--ok); }
+.chip-held { background: var(--held-soft); color: var(--held); }
+.chip-danger { background: var(--danger-soft); color: var(--danger); }
+.chip-brand { background: var(--brand-soft); color: var(--brand-ink); }
+
+/* Placeholder shapes while content loads: the layout appears at once and fills in. */
+.skeleton {
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -204,17 +255,38 @@ button, input, select, textarea {
   color: inherit;
 }
 
+/* Form fields follow the theme everywhere, including ones without their own class.
+   :where() keeps this at zero specificity, so a component's own field styles win. */
+:where(input:not([type='checkbox'], [type='radio'], [type='range']), select, textarea) {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--text-3);
+  opacity: 1;
+}
+
+:where(select) {
+  appearance: none;
+  background-image: var(--chevron);
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
 button {
   cursor: pointer;
 }
 
 a {
-  color: inherit;
+  color: var(--brand-ink);
   text-underline-offset: 0.2em;
+  text-decoration-thickness: 1.5px;
 }
 
-/* One focus style everywhere; its colours follow the surface. The outline
-   keeps focus visible in Windows high-contrast mode. */
+/* One focus style everywhere; the outline keeps focus visible in high-contrast mode. */
 :focus-visible {
   outline: 3px solid transparent;
   box-shadow: var(--focus-ring);
@@ -224,31 +296,44 @@ a {
    Type scale. Sentence case only.
    -------------------------------------------------------------------------- */
 .display {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-display);
-  line-height: 1.02;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   text-wrap: balance;
 }
 
 .page-title {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-page-title);
-  line-height: 1.08;
-  font-weight: 500;
-  letter-spacing: -0.005em;
+  line-height: 1.05;
+  font-weight: 750;
+  letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
 .panel-title {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-panel-title);
-  line-height: 1.15;
-  font-weight: 600;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Money and big figures. */
+.amount {
+  font-family: var(--font-display);
+  font-size: var(--size-amount);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-xs {
+  font-size: var(--size-xs);
+  line-height: var(--leading-xs);
 }
 
 .text-small {
@@ -273,17 +358,18 @@ a {
 }
 
 .text-secondary {
-  color: var(--color-text-secondary);
+  color: var(--text-2);
 }
 
-/* Aligned numbers: digits never shift. */
 .num {
   font-variant-numeric: tabular-nums;
 }
 
-/* Letter-and-number codes keep the slashed zero, so 0 and O stay distinct. */
+/* Letter-and-number codes (meter IDs): tabular, slightly tracked. */
 .code {
   font-family: var(--font-text);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: 0.01em;
 }
 
 .measure {
@@ -309,4 +395,48 @@ a {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Motion. Entrances are small and quick; all of it stops with reduced motion.
+   -------------------------------------------------------------------------- */
+.enter {
+  animation: enter var(--motion-slow) var(--ease-out) both;
+}
+
+.enter-1 { animation-delay: 60ms; }
+.enter-2 { animation-delay: 120ms; }
+.enter-3 { animation-delay: 180ms; }
+.enter-4 { animation-delay: 240ms; }
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
 }

@@ -15,53 +15,62 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-3);
-  margin-bottom: var(--space-8);
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  animation: enter var(--motion-slow) var(--ease-out) both;
 }
 
 @media (min-width: 768px) {
   .main {
-    padding-top: var(--space-10);
+    padding-top: var(--space-8);
   }
 
   .head {
-    margin-bottom: var(--space-12);
+    margin-bottom: var(--space-10);
   }
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: 0;
 }
 
 .back {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: var(--tap-min);
+  gap: var(--space-1);
+  min-height: 40px;
   margin-left: calc(-1 * var(--space-2));
   padding: 0 var(--space-3) 0 var(--space-2);
   border: 0;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-pill);
   background: none;
-  color: var(--stage-soft);
-  font-size: var(--size-body);
+  color: var(--text-2);
+  font-size: var(--size-small);
   font-weight: var(--weight-bold);
+  transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 .back:hover {
-  color: var(--stage-strong);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
+/* "Step 2 of 3": a small progress pill with three segments. */
 .step {
-  color: var(--stage-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--brand-ink);
+  font-weight: var(--weight-bold);
 }
 
-/* "Demo data": small and quiet, but never missing while a DEMO- household is shown. */
+/* "Demo data": a quiet tag, never a button. */
 .demo {
-  justify-self: start;
-  align-self: start;
-  width: fit-content;
   margin: 0;
-  padding: 2px var(--space-2);
-  border: 1px solid currentColor;
-  border-radius: var(--radius-button);
-  color: var(--stage-soft);
 }
 
 .title {
@@ -77,18 +86,26 @@
 
 .lede {
   max-width: var(--measure-household);
-  color: var(--stage-soft);
+  color: var(--text-2);
 }
 
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
+  animation: enter var(--motion-slow) var(--ease-out) 80ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head,
+  .body {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
    The main action. Wide screens: a row under the heading, primary first.
-   Phones: pinned to the bottom over a fade into the night colour.
+   Phones: pinned to the bottom over a fade into the page colour.
    -------------------------------------------------------------------------- */
 .action {
   display: flex;
@@ -96,7 +113,7 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3) var(--space-5);
+  gap: var(--space-3) var(--space-4);
   margin-top: var(--space-4);
 }
 
@@ -116,7 +133,7 @@
       calc(var(--gutter) + var(--safe-right))
       calc(var(--space-4) + var(--safe-bottom))
       calc(var(--gutter) + var(--safe-left));
-    background: linear-gradient(to top, var(--stage-base) 62%, var(--stage-base-clear));
+    background: linear-gradient(to top, var(--bg) 64%, color-mix(in srgb, var(--bg) 0%, transparent));
   }
 
   .action > [data-variant] {
@@ -124,37 +141,33 @@
   }
 
   .withNav .action {
-    bottom: var(--nav-height);
+    bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-2));
     padding-bottom: var(--space-3);
   }
 
-  /* Leave room so content can scroll clear of the pinned action and nav. */
   .withAction .main {
     padding-bottom: 168px;
   }
 
   .withNav .main {
-    padding-bottom: calc(var(--nav-height) + var(--space-8));
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-12));
   }
 
   .withNav.withAction .main {
-    padding-bottom: calc(var(--nav-height) + 168px);
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 176px);
   }
 }
 
-/* A short form on a wide screen: one centred column; its button is inside the form,
-   so the pinned phone action is not shown here. */
+/* A short form on a wide screen: one centred column; its button is inside the form. */
 @media (min-width: 768px) {
   .narrow .main {
-    max-width: calc(560px + 2 * var(--gutter));
+    max-width: calc(520px + 2 * var(--gutter));
   }
 
   .narrow .action {
     display: none;
   }
-}
 
-@media (min-width: 768px) {
   .action > [data-variant] {
     width: auto;
   }
