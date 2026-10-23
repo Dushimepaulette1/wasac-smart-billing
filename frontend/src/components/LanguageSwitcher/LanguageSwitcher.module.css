@@ -5,44 +5,40 @@
 }
 
 .label {
-  color: var(--text-2);
-  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 
-/* A native select keeps the phone's own picker; styled as a soft pill. */
+/* A native select keeps the phone's own picker; styled as a thin pill. */
 .select {
   appearance: none;
-  min-height: 42px;
-  padding: 0 34px 0 var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface) var(--chevron) no-repeat right 14px center;
-  color: var(--text);
+  min-height: 40px;
+  padding: 0 36px 0 var(--space-4);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-button);
+  background: var(--chevron) no-repeat right 14px center;
+  color: var(--color-text);
   font-size: var(--size-small);
-  font-weight: var(--weight-bold);
   cursor: pointer;
-  transition: background-color var(--motion-fast) ease;
-}
-
-.select:hover {
-  background-color: var(--surface-2);
 }
 
 .select option {
-  color: var(--text);
-  background: var(--surface);
+  color: var(--ink);
+  background: var(--mist);
+}
+
+.compact .select {
+  min-height: var(--tap-min);
 }
 
 .full .select {
   min-height: var(--tap-min);
   font-size: var(--size-body);
   max-width: 320px;
-  border-radius: var(--radius-field);
 }
 
 @media (max-width: 479px) {
   .compact .select {
-    max-width: 128px;
+    max-width: 150px;
     padding-left: var(--space-3);
   }
 }

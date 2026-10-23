@@ -16,9 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
-import Icon from '../../components/Icon/Icon';
 import Notice from '../../components/Notice/Notice';
-import Celebration from '../../components/Celebration/Celebration';
 import RequestState, { errorMessage } from '../../components/RequestState/RequestState';
 import Progress from '../../components/Progress/Progress';
 import useRequest from '../../api/useRequest';
@@ -147,7 +145,6 @@ function Payment() {
           </>
         }
       >
-        {!alreadyPaid && <Celebration />}
         <Notice tone="done" live title={alreadyPaid ? t('pay.already') : t('pay.paidBody', { amount })} />
         {receipt && (
           <dl className={`panel ${styles.receipt}`}>
@@ -223,15 +220,10 @@ function Payment() {
         </Notice>
       )}
 
-      <section className={`panel imigongo-band ${styles.panel}`}>
+      <section className={`panel ${styles.panel}`}>
         <p className="text-secondary">{t('bill.title', { month: month(bill.created_at) })}</p>
-        <p className={`${styles.amount} amount`}>{amount}</p>
-        <div className={styles.from}>
-          <span className={styles.fromIcon} aria-hidden="true">
-            <Icon name="phone" size={20} />
-          </span>
-          <span>{t('pay.from', { phone: formatRwandanPhone(phone) })}</span>
-        </div>
+        <p className={`${styles.amount} num`}>{amount}</p>
+        <p className={styles.from}>{t('pay.from', { phone: formatRwandanPhone(phone) })}</p>
       </section>
     </Screen>
   );

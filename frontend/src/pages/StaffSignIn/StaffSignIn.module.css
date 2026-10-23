@@ -5,116 +5,42 @@
 
 .main {
   flex: 1;
-  display: grid;
-  gap: var(--space-8);
-  width: 100%;
-  max-width: 1040px;
-  margin-inline: auto;
-  padding: var(--space-8) var(--gutter) var(--space-16);
-}
-
-@media (min-width: 900px) {
-  .main {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
-    align-items: stretch;
-    gap: var(--space-10);
-    padding-top: var(--space-12);
-  }
-}
-
-/* --------------------------------------------------------------------------
-   The brand panel: deep lake blue, imigongo diamonds, what the dashboard is for.
-   Wide screens only; decorative.
-   -------------------------------------------------------------------------- */
-.brandPanel {
-  display: none;
-}
-
-@media (min-width: 900px) {
-  .brandPanel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: var(--space-6);
-    min-height: 520px;
-    padding: var(--space-10);
-    overflow: hidden;
-    border-radius: 28px;
-    background:
-      radial-gradient(80% 60% at 100% 0%, rgba(229, 138, 98, 0.35) 0%, transparent 60%),
-      linear-gradient(160deg, #1E5470 0%, #133A4E 100%);
-    color: #F6F1E9;
-    animation: enter var(--motion-hero) var(--ease-out) both;
-  }
-
-  .brandPanel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke-width='2'%3E%3Cpath d='M24 3 45 24 24 45 3 24z' stroke='%23F6F1E9' stroke-opacity='.10'/%3E%3Cpath d='M24 13 35 24 24 35 13 24z' stroke='%23E58A62' stroke-opacity='.35'/%3E%3C/g%3E%3C/svg%3E") repeat;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
-    mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
-  }
-
-  .brandPanel > * {
-    position: relative;
-  }
-}
-
-.brandTitle {
-  max-width: 14ch;
-  font-family: var(--font-display);
-  font-size: 2.25rem;
-  line-height: 1.05;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.brandList {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brandList li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: rgba(246, 241, 233, 0.86);
-  font-weight: var(--weight-medium);
-}
-
-/* --------------------------------------------------------------------------
-   The form side
-   -------------------------------------------------------------------------- */
-.formSide {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: var(--space-6);
-  max-width: 460px;
+  gap: var(--space-8);
   width: 100%;
+  max-width: var(--width-site);
   margin-inline: auto;
-  animation: enter var(--motion-hero) var(--ease-out) 100ms both;
+  padding: var(--space-10) var(--gutter) var(--space-16);
+  text-align: center;
+  animation: rise var(--motion-hero) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }
 
 .intro {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--stage-strong);
 }
 
 .lede {
   max-width: 40ch;
-  color: var(--text-2);
+  color: var(--stage-soft);
 }
 
 .form {
   width: 100%;
+  max-width: 440px;
   text-align: left;
 }
 
@@ -134,82 +60,55 @@
 .inputIcon {
   position: absolute;
   left: 14px;
-  color: var(--text-3);
+  color: var(--color-text-secondary);
   pointer-events: none;
-  transition: color var(--motion-fast) ease;
-}
-
-.inputWrap:focus-within .inputIcon {
-  color: var(--brand);
 }
 
 .input {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--tap-min);
   padding: 0 var(--space-4) 0 44px;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-field);
-  background: var(--surface);
-  color: var(--text);
-  font-weight: var(--weight-medium);
-  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+  background: var(--field-bg);
+  color: var(--field-text);
+  font-weight: var(--weight-regular);
 }
 
 .input:hover {
-  border-color: var(--text-3);
+  border-color: var(--ink-2);
 }
 
-.input:focus,
 .input:focus-visible {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+  border-color: var(--ink);
 }
 
 .inputWrap:has(.reveal) .input {
-  padding-right: 80px;
+  padding-right: 76px;
 }
 
 .reveal {
   position: absolute;
-  right: 6px;
+  right: 4px;
   min-height: 40px;
   padding: 0 var(--space-3);
   border: 0;
   border-radius: 8px;
   background: none;
-  color: var(--brand-ink);
+  color: var(--ink-2);
   font-size: var(--size-small);
   font-weight: var(--weight-bold);
-}
-
-.reveal:hover {
-  background: var(--brand-soft);
 }
 
 .back {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--tap-min);
-  padding: 0 var(--space-3);
-  margin-left: calc(-1 * var(--space-3));
-  border-radius: var(--radius-pill);
-  color: var(--text-2);
+  color: var(--stage-soft);
   font-size: var(--size-small);
-  font-weight: var(--weight-bold);
-  text-decoration: none;
 }
 
 .back:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .brandPanel,
-  .formSide {
-    animation: none;
-  }
+  color: var(--stage-strong);
 }

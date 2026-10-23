@@ -14,16 +14,12 @@
   max-height: 160px;
   object-fit: contain;
   border-radius: var(--radius-bezel);
-  background: var(--surface-2);
+  background: var(--stage-base);
 }
 
 /* "Please check the numbers.": a plain line, not a warning. */
 .check {
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-field);
-  background: var(--brand-soft);
-  color: var(--brand-ink);
   font-weight: var(--weight-bold);
 }
 
@@ -34,6 +30,7 @@
   flex-direction: column;
   gap: var(--space-2);
   margin: 0;
+  --color-text-secondary: var(--stage-soft);
 }
 
 .photo {
@@ -41,7 +38,7 @@
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: var(--radius-panel);
-  background: var(--surface-2);
+  background: var(--stage-base);
 }
 
 @media (min-width: 960px) {

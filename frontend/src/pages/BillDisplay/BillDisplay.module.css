@@ -37,58 +37,20 @@
 
 /* The total: the one big number on the page, in the display face's
    neighbour size but the text face, so money never looks like a reading. */
-.line dt {
-  color: var(--text-2);
-}
-
-/* The total: the one big figure on the page, in the display face. */
 .total {
-  align-items: center;
   margin-top: var(--space-3);
   padding-top: var(--space-4);
-  border-top: 2px dashed var(--line-strong);
-}
-
-.total dt {
-  color: var(--text);
+  border-top: 1px solid var(--ink);
+  font-size: var(--size-title);
+  line-height: var(--leading-title);
   font-weight: var(--weight-bold);
-}
-
-.total dd {
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.4rem);
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.03em;
 }
 
 .status {
-  display: inline-flex;
-  align-self: flex-start;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 34px;
-  padding: 0 14px 0 10px;
-  border-radius: var(--radius-pill);
-  background: var(--held-soft);
-  color: var(--held);
   font-weight: var(--weight-bold);
-}
-
-.status svg {
-  width: 20px;
-  height: 20px;
-}
-
-.paidStatus {
-  background: var(--ok-soft);
-  color: var(--ok);
-}
-
-.details {
-  border-radius: var(--radius-field);
-  background: var(--surface-2);
-  padding: 0 var(--space-4);
 }
 
 .details summary {
@@ -96,12 +58,9 @@
   align-items: center;
   min-height: var(--tap-min);
   cursor: pointer;
-  color: var(--brand-ink);
-  font-weight: var(--weight-bold);
-}
-
-.details[open] {
-  padding-bottom: var(--space-3);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
 }
 
 .tiers {
@@ -139,27 +98,12 @@
   height: 10px;
 }
 
-.track {
-  border-radius: 5px;
-  background: var(--surface-2);
-}
-
 .bar {
   display: block;
   height: 100%;
   min-width: 2px;
   border-radius: 0 5px 5px 0;
-  background: color-mix(in srgb, var(--chart-1) 50%, var(--surface));
-  transform-origin: left;
-  animation: growX var(--motion-slow) var(--ease-out) both;
-}
-
-@keyframes growX {
-  from { transform: scaleX(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bar { animation: none; }
+  background: var(--bar-muted);
 }
 
 .current {
@@ -168,5 +112,5 @@
 }
 
 .current .bar {
-  background: var(--chart-1);
+  background: var(--ink);
 }

@@ -1,8 +1,7 @@
 /**
  * @file Progress.tsx
- * @description Something is loading: the Mubazi spinner (a turning ring around a small
- * imigongo diamond) with words saying what. Announced politely; with reduced motion the ring
- * turns slowly, and the words carry the meaning either way.
+ * @description Something is loading: a spinner with words saying what. Announced politely;
+ * with reduced motion the ring turns slowly, and the words carry the meaning either way.
  */
 
 import styles from './Progress.module.css';
@@ -16,11 +15,10 @@ interface ProgressProps {
 }
 
 /** The spinner on its own, for places that already say what is happening. */
-export function Spinner({ size = 40 }: { size?: number }) {
+export function Spinner({ size = 32 }: { size?: number }) {
   return (
     <span className={styles.spinner} style={{ width: size, height: size }} aria-hidden="true">
       <span className={styles.ring} />
-      <span className={styles.diamond} />
     </span>
   );
 }

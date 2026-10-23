@@ -1,26 +1,27 @@
+/* Inside the signed-in panel: a quiet row with a bell, what it does, and one button. */
 .box {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-3) var(--space-3);
+  gap: var(--space-2) var(--space-3);
   align-items: start;
-  padding: var(--space-4);
-  border-radius: var(--radius-card);
-  background: var(--surface-2);
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
 }
 
 .icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--text-2);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-rule);
+  border-radius: 50%;
+  color: var(--color-text-secondary);
 }
 
 .iconOn {
-  background: var(--ok-soft);
-  color: var(--ok);
+  color: var(--color-text);
+  border-color: var(--color-text);
 }
 
 .text {
@@ -32,11 +33,11 @@
 }
 
 .error {
-  color: var(--danger);
   margin-top: var(--space-1);
+  font-weight: var(--weight-bold);
 }
 
 .button {
-  grid-column: 1 / -1;
+  grid-column: 2;
   justify-self: start;
 }

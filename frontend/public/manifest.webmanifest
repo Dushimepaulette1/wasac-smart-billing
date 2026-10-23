@@ -2,15 +2,15 @@
   "id": "/",
   "name": "Mubazi",
   "short_name": "Mubazi",
-  "description": "Fotora mubazi yawe, genzura imibare, maze wishyure fagitire y'amazi ukoresheje MTN Mobile Money.",
+  "description": "Fotora mubazi yawe, genzura imibare, maze wishyure fagitire yawe ukoresheje MTN Mobile Money.",
   "lang": "rw",
   "dir": "ltr",
   "start_url": "/home?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F6F1E9",
-  "theme_color": "#1E5470",
+  "background_color": "#040A16",
+  "theme_color": "#040A16",
   "categories": [
     "utilities",
     "finance"

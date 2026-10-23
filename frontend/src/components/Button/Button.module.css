@@ -1,7 +1,6 @@
-/* primary: solid Kivu blue, the one main action. secondary: outlined surface. text: a link-like
-   minor action. A short springy press on touch; colours come from the theme roles. */
+/* Colours come from the surface (stage or panel): on the dark stage the
+   primary is a solid light pill with dark text; on a panel, solid ink. */
 .button {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10,59 +9,40 @@
   padding: var(--space-2) var(--space-6);
   border: 1.5px solid transparent;
   border-radius: var(--radius-button);
-  font-family: var(--font-text);
+  font-family: var(--font-numbers);
   font-size: var(--size-body);
   line-height: 1.25;
   font-weight: var(--weight-bold);
-  letter-spacing: -0.005em;
   text-align: center;
   text-decoration: none;
-  user-select: none;
-  transition:
-    transform var(--motion-fast) var(--ease-out),
-    box-shadow var(--motion) var(--ease-out),
-    background-color var(--motion-fast) ease,
-    border-color var(--motion-fast) ease,
-    color var(--motion-fast) ease;
-}
-
-.button:active:not(:disabled) {
-  transform: scale(0.97);
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .primary {
   min-height: var(--button-height);
-  background: var(--brand);
-  color: var(--on-brand);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 8px 20px -10px color-mix(in srgb, var(--brand) 80%, transparent);
+  background: var(--color-action);
+  color: var(--color-on-action);
 }
 
-.primary:hover:not(:disabled) {
-  background: var(--brand-strong);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 12px 26px -10px color-mix(in srgb, var(--brand) 90%, transparent);
-}
-
+/* Thin outlined pill, as in the reference. */
 .secondary {
   min-height: var(--button-height);
-  background: var(--surface);
-  border-color: var(--line-strong);
-  color: var(--text);
+  background: transparent;
+  border-color: var(--color-outline);
+  color: var(--color-text);
 }
 
-.secondary:hover:not(:disabled) {
-  border-color: var(--text-2);
-  background: var(--surface-2);
+.secondary:hover {
+  border-color: var(--color-text);
 }
 
 .text {
-  min-height: var(--tap-min);
-  padding-inline: var(--space-3);
+  padding-inline: var(--space-2);
   background: none;
-  color: var(--brand-ink);
-}
-
-.text:hover:not(:disabled) {
-  background: var(--brand-soft);
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
 }
 
 .fullWidth {
@@ -71,36 +51,50 @@
 
 .button:disabled {
   cursor: default;
-  opacity: 0.55;
-  box-shadow: none;
 }
 
-/* A busy button keeps its full colour, so it reads as working, not broken. */
-.button[aria-busy='true'] {
-  opacity: 1;
-  cursor: progress;
+.primary:disabled {
+  opacity: 0.72;
 }
 
-.spinner {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  border: 2.5px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+.secondary:disabled,
+.text:disabled {
+  opacity: 0.72;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .button {
     transition: none;
   }
+}
 
-  .button:active:not(:disabled) {
-    transform: none;
+/* Busy: a thin arc in the text colour, turning calmly. Reduced motion: a still ring. */
+.spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: turn 0.9s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
   }
+}
 
+@media (prefers-reduced-motion: reduce) {
   .spinner {
-    animation-duration: 1.6s;
+    animation: none;
+    border-right-color: currentColor;
+    opacity: 0.6;
   }
+}
+
+/* A busy button keeps its full colour (not the faded disabled look), so it reads as working. */
+.button[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
 }

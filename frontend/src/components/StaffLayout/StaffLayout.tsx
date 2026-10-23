@@ -14,11 +14,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Icon, { type IconName } from '../Icon/Icon';
-import { LogoMark } from '../Logo/Logo';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
-import { localDateIso } from '../../i18n/format';
 import { hasRole, useAuth } from '../../staff/auth';
 import type { StaffRole } from '../../api/types';
 import { api } from '../../api/client';
@@ -68,7 +66,7 @@ interface StaffLayoutProps {
 }
 
 function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
-  const { t, date } = useI18n();
+  const { t } = useI18n();
   const { user, signOut } = useAuth();
   const wide = useMedia(WIDE);
   // Pages that already load the queue pass their count; others load it here.
@@ -130,8 +128,6 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
   };
 
   const isCollapsed = wide && collapsed;
-  const now = new Date();
-  const today = `${t(`weekday.${now.getDay()}`)}, ${date(localDateIso(now))}`;
   const expanded = wide ? !collapsed : drawerOpen;
   const shellClass = [styles.shell, 'stage', 'staff', isCollapsed ? styles.collapsed : '', drawerOpen ? styles.drawerOpen : '']
     .filter(Boolean)
@@ -147,13 +143,8 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
 
       <aside id="staff-sidebar" className={styles.sidebar} aria-label={t('staff.sidebar')} {...(!wide && !drawerOpen ? { hidden: true } : {})}>
         <div className={styles.brand}>
-          <LogoMark size={isCollapsed ? 36 : 40} />
-          {!isCollapsed && (
-            <span className={styles.brandWords}>
-              <span className={styles.wordmark}>Mubazi</span>
-              <span className={styles.brandSub}>{t('staff.appName')}</span>
-            </span>
-          )}
+          <span className={styles.wordmark}>Mubazi</span>
+          {!isCollapsed && <span className={styles.brandSub}>{t('staff.appName')}</span>}
         </div>
 
         <nav className={styles.nav} aria-label={t('staff.sidebar')}>
@@ -221,7 +212,6 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
           >
             <Icon name={wide ? 'sidebar' : 'menu'} size={22} />
           </button>
-          <p className={styles.today}>{today}</p>
           <div className={styles.topbarEnd}>
             <LanguageSwitcher />
             <ThemeToggle />

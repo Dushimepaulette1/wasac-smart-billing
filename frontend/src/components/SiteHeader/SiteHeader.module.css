@@ -1,53 +1,100 @@
-/* Sticky, on a slightly raised translucent bar so content scrolls under it. */
 .header {
-  position: sticky;
-  top: var(--safe-top);
-  z-index: 20;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
-  backdrop-filter: saturate(1.4) blur(10px);
+  position: relative;
+  z-index: 2;
 }
 
 .inner {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-6);
   max-width: var(--width-site);
   min-height: var(--header-height);
   margin-inline: auto;
-  padding: var(--space-2) var(--gutter);
+  padding: var(--space-3) var(--gutter);
 }
 
+/* "Mubazi" in the headline serif; "Water billing" smaller and quieter beside it. */
 .brand {
   display: flex;
-  align-items: center;
-  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-3);
   min-height: var(--tap-min);
-  margin-right: auto;
-  border-radius: var(--radius-field);
+  align-content: center;
   text-decoration: none;
-  color: var(--text);
+  color: var(--stage-strong);
 }
 
-/* Phones: the tagline hides so the controls fit. */
-@media (max-width: 479px) {
-  .brand [class*='tagline'] {
+.wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 1.15rem + 0.8vw, 1.7rem);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--color-rule);
+  color: var(--stage-soft);
+  font-size: var(--size-small);
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+@media (max-width: 599px) {
+  .tagline {
     display: none;
   }
+}
+
+/* Household links: header on wide screens, bottom bar on phones. */
+.nav {
+  display: none;
+  margin-left: auto;
+}
+
+.links {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  color: var(--stage-soft);
+  font-size: var(--size-small);
+  text-decoration: none;
+  border-radius: var(--radius-button);
+}
+
+.link:hover {
+  color: var(--stage-strong);
+}
+
+/* Current page: brighter text and an underline, not colour alone. */
+.active {
+  color: var(--stage-strong);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.5em;
 }
 
 .end {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-left: auto;
 }
 
-/* Household links: a pill group, header on wide screens only. */
-.nav {
-  display: none;
-  margin-right: var(--space-4);
+.nav + .end {
+  margin-left: 0;
 }
+
 
 @media (min-width: 768px) {
   .nav {
@@ -55,50 +102,15 @@
   }
 }
 
-.links {
-  display: flex;
-  gap: 2px;
-  margin: 0;
-  padding: 4px;
-  list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-}
-
-.link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 38px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-pill);
-  color: var(--text-2);
-  font-size: var(--size-small);
-  font-weight: var(--weight-bold);
-  text-decoration: none;
-  transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
-}
-
-.link:hover {
-  color: var(--text);
-  background: var(--surface-2);
-}
-
-/* Current page: filled pill and aria-current, not colour alone. */
-.active,
-.active:hover {
-  background: var(--text);
-  color: var(--bg);
-}
-
-.count {
+/* New messages: a small count after "Messages" (also read out as "2 new"). */
+.badge {
   min-width: 18px;
   height: 18px;
+  margin-left: var(--space-2);
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--clay);
-  color: #fff;
+  background: var(--color-action);
+  color: var(--color-on-action);
   font-size: 11px;
   font-weight: var(--weight-bold);
   line-height: 18px;
@@ -106,61 +118,37 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The bell: new messages at a glance, on every household page. */
+/* The bell: the same thin outlined circle as the theme toggle. */
 .bell {
   position: relative;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 1px solid var(--color-outline);
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  transition: background-color var(--motion-fast) ease;
+  color: var(--color-text);
 }
 
 .bell:hover {
-  background: var(--surface-2);
+  border-color: var(--color-text);
 }
 
-.bell::after {
-  content: '';
+.bellCount {
   position: absolute;
-  inset: -3px;
-}
-
-.dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 19px;
-  height: 19px;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 5px;
-  border: 2px solid var(--bg);
-  border-radius: 10px;
-  background: var(--clay);
-  color: #fff;
+  border: 2px solid var(--stage-base);
+  border-radius: 9px;
+  background: var(--color-held);
+  color: #0A1426;
   font-size: 10px;
   font-weight: var(--weight-bold);
-  line-height: 15px;
+  line-height: 14px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  animation: pop var(--motion-slow) var(--ease-spring) both;
-}
-
-/* A gentle ring when there is something new. */
-@media (prefers-reduced-motion: no-preference) {
-  .bell:has(.dot) svg {
-    transform-origin: 50% 10%;
-    animation: ring 1.6s var(--ease-out) 0.4s 2;
-  }
-}
-
-@keyframes ring {
-  0%, 60%, 100% { transform: rotate(0); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-12deg); }
-  30% { transform: rotate(8deg); }
-  40% { transform: rotate(-5deg); }
 }
