@@ -127,7 +127,7 @@ await step('11 households page shows the unpaid bill', s, async () => {
 });
 await step('12 sent SMS page lists messages', s, async () => {
   await s.goto(APP + '/staff/sms');
-  await s.locator('table, p').first().waitFor({ timeout: 30000 });
+  await s.locator('#staff-main table, #staff-main section p').first().waitFor({ timeout: 30000 });
   log('     sms rows:', await s.locator('tbody tr').count());
 });
 await step('13 staff accounts page', s, async () => {

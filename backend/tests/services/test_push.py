@@ -26,7 +26,7 @@ def keys(monkeypatch):
 def test_when_alerts_are_not_set_up_should_say_so_and_store_nothing(household_client, db, household, monkeypatch):
     monkeypatch.delenv("VAPID_PUBLIC_KEY", raising=False)
     monkeypatch.delenv("VAPID_PRIVATE_KEY", raising=False)
-    assert household_client.get("/household/push/key").status_code == 404
+    assert household_client.get("/household/push/key").json() == {"public_key": None}
     assert household_client.post("/household/push/subscribe", json=SUB).status_code == 404
     assert db.query(PushSubscription).count() == 0
 
