@@ -10,7 +10,7 @@ from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
 from app.models import StaffUser
 from app.api.deps import household_access
-from app.api.deps import require_staff
+from app.api.deps import require_staff, staff_from_header
 from app.db.session import get_db
 from app.models import Customer, Reading
 from app.schemas import (
@@ -52,7 +52,7 @@ async def list_flags(
     if household_id:
         household_access(authorization, db).require_meter(household_id)
     else:
-        require_staff(authorization, db)
+        staff_from_header(authorization, db)
     query = db.query(AnomalyFlag)
     if household_id:
         query = query.filter(AnomalyFlag.household_id == household_id)
@@ -124,7 +124,11 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             .all()
         )
         items.append(ReviewItem(
-            flag=AnomalyFlagOut.model_validate(flag),
+            # reading_status tells the two kinds apart: pending_review needs accept or reject;
+            # an already-billed reading (valid, anomaly_flagged) only needs closing after follow-up.
+            flag=AnomalyFlagOut.model_validate(flag).model_copy(
+                update={"reading_status": reading.validation_status if reading else None}
+            ),
             reading_m3=reading.submitted_value if reading else None,
             submitted_at=reading.submission_time if reading else None,
             reading_confidence=reading.crnn_confidence if reading else None,

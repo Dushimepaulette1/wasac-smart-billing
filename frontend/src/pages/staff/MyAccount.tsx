@@ -18,7 +18,7 @@ const MIN_LENGTH = 10;
 
 function MyAccount() {
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, renew } = useAuth();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [repeat, setRepeat] = useState('');
@@ -35,7 +35,7 @@ function MyAccount() {
     setBusy(true);
     setResult(null);
     try {
-      await api.changePassword(current, next);
+      renew(await api.changePassword(current, next));
       setCurrent('');
       setNext('');
       setRepeat('');
@@ -71,6 +71,11 @@ function MyAccount() {
           <h2 id="password-title" className="panel-title">
             {t('staff.password.title')}
           </h2>
+          {user?.must_change_password && !result && (
+            <Notice tone="held" title={t('staff.password.temporaryTitle')}>
+              {t('staff.password.temporary')}
+            </Notice>
+          )}
           {result && (
             <Notice tone={result.tone} live>
               {result.text}

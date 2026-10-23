@@ -4,7 +4,11 @@
  * left, and for the selected reading the read digits on the meter counter,
  * the numbers a decision rests on, and the household's last readings.
  *
- * Keyboard: J / K next and previous, A accept, R reject, U undo.
+ * Two kinds of item: a held reading (accept or reject: no bill until then),
+ * and follow-up on a reading that was already billed, such as a meter that
+ * seems stuck (close once followed up).
+ *
+ * Keyboard: J / K next and previous, A accept, R reject, C close, U undo.
  * A decision waits 5 seconds before it is sent, so it can be undone
  * (accepting creates a bill, which cannot be taken back once sent).
  */
@@ -33,7 +37,14 @@ function formatDistance(m: number): string {
 import styles from './ReviewQueue.module.css';
 
 const UNDO_MS = 5000;
-type Outcome = 'accept' | 'reject';
+type Outcome = 'accept' | 'reject' | 'close';
+
+/** Already billed: nothing to accept or reject, only follow-up to close. */
+function isFollowUp(item: ReviewItem): boolean {
+  return item.flag.reading_status !== 'pending_review';
+}
+
+const SENT: Record<Outcome, 'accept' | 'reject' | null> = { accept: 'accept', reject: 'reject', close: null };
 
 interface Pending {
   item: ReviewItem;
@@ -195,7 +206,7 @@ function ReviewQueue() {
     async ({ item, outcome }: Pending) => {
       setPending(null);
       try {
-        const res = await api.resolveFlag(item.flag.id, outcome);
+        const res = await api.resolveFlag(item.flag.id, SENT[outcome]);
         setItems((list) => list.filter((i) => i.flag.id !== item.flag.id));
         const name = item.customer_name ?? item.flag.household_id;
         setResult(
@@ -203,7 +214,9 @@ function ReviewQueue() {
             ? res.amount_due !== null
               ? t('staff.review.acceptedBill', { name, amount: rwf(res.amount_due) })
               : t('staff.review.accepted', { name })
-            : t('staff.review.rejected', { name }),
+            : outcome === 'reject'
+              ? t('staff.review.rejected', { name })
+              : t('staff.review.closed', { name }),
         );
       } catch (err) {
         setError(err);
@@ -214,7 +227,7 @@ function ReviewQueue() {
 
   const decide = useCallback(
     (outcome: Outcome) => {
-      if (!selected) return;
+      if (!selected || (outcome === 'close') !== isFollowUp(selected)) return;
       if (pending) send(pending); // a second decision sends the first now
       setError(null);
       setResult(null);
@@ -240,7 +253,7 @@ function ReviewQueue() {
     () => () => {
       if (timer.current) window.clearTimeout(timer.current);
       const waiting = pendingRef.current;
-      if (waiting) api.resolveFlag(waiting.item.flag.id, waiting.outcome).catch(() => undefined);
+      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome]).catch(() => undefined);
     },
     [],
   );
@@ -257,6 +270,7 @@ function ReviewQueue() {
       else if (key === 'k' && prevItem) select(prevItem.flag.id);
       else if (key === 'a') decide('accept');
       else if (key === 'r') decide('reject');
+      else if (key === 'c') decide('close');
       else if (key === 'u') undo();
       else return;
       e.preventDefault();
@@ -291,9 +305,9 @@ function ReviewQueue() {
               </Button>
             }
           >
-            {pending.outcome === 'accept'
-              ? t('staff.review.accepting', { name: pending.item.customer_name ?? pending.item.flag.household_id })
-              : t('staff.review.rejecting', { name: pending.item.customer_name ?? pending.item.flag.household_id })}
+            {t(`staff.review.${{ accept: 'accepting', reject: 'rejecting', close: 'closing' }[pending.outcome]}`, {
+              name: pending.item.customer_name ?? pending.item.flag.household_id,
+            })}
           </Notice>
         )}
         {result && !pending && <Notice tone="done">{result}</Notice>}
@@ -335,15 +349,28 @@ function ReviewQueue() {
           {selected && (
             <section ref={paneRef} className={`panel ${styles.pane}`} aria-label={t('staff.review.decision')}>
               <DecisionPane item={selected} />
-              <div className={styles.actions}>
-                <Button onClick={() => decide('accept')} icon="check">
-                  {t('staff.review.accept')}
-                </Button>
-                <Button variant="secondary" onClick={() => decide('reject')} icon="camera">
-                  {t('staff.review.reject')}
-                </Button>
-              </div>
-              <p className="text-small text-secondary">{t('staff.review.acceptNote')}</p>
+              {isFollowUp(selected) ? (
+                <>
+                  <div className={styles.actions}>
+                    <Button onClick={() => decide('close')} icon="check">
+                      {t('staff.review.close')}
+                    </Button>
+                  </div>
+                  <p className="text-small text-secondary">{t('staff.review.closeNote')}</p>
+                </>
+              ) : (
+                <>
+                  <div className={styles.actions}>
+                    <Button onClick={() => decide('accept')} icon="check">
+                      {t('staff.review.accept')}
+                    </Button>
+                    <Button variant="secondary" onClick={() => decide('reject')} icon="camera">
+                      {t('staff.review.reject')}
+                    </Button>
+                  </div>
+                  <p className="text-small text-secondary">{t('staff.review.acceptNote')}</p>
+                </>
+              )}
             </section>
           )}
         </div>

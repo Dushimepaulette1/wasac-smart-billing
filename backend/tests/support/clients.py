@@ -17,6 +17,8 @@ def _test_client(db, headers=None):
 
 def signed_in_client(db, username):
     """A client signed in as an existing staff user; the caller clears fastapi_app.dependency_overrides."""
-    from app.core.security import make_token
+    from app.models import StaffUser
+    from support.factories import staff_token
 
-    return _test_client(db, {"Authorization": f"Bearer {make_token(username)[0]}"})
+    user = db.query(StaffUser).filter(StaffUser.username == username).one()
+    return _test_client(db, {"Authorization": f"Bearer {staff_token(user)}"})

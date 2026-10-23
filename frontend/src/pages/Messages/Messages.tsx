@@ -35,7 +35,7 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
     return (
       <p className={`${styles.status} ${styles.checking}`}>
         <Icon name="clock" size={20} />
-        <span>{t('msg.status.open')}</span>
+        <span>{t(flag.reading_status === 'pending_review' ? 'msg.status.open' : 'msg.status.followUp')}</span>
       </p>
     );
   }

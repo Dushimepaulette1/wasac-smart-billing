@@ -15,7 +15,7 @@ from app.db.session import Base
 from app.vision.config import GuidanceConfig
 from app.vision.models import get_registry
 from support.clients import _test_client
-from support.factories import add_officer, household_token
+from support.factories import add_officer, household_token, staff_token
 from support.vision_fakes import registry
 
 
@@ -90,10 +90,8 @@ def db():
 @pytest.fixture
 def client(db):
     """Signed in as an officer, as the staff dashboard is."""
-    from app.core.security import make_token
-
-    add_officer(db)
-    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('officer1')[0]}"})
+    officer = add_officer(db)
+    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {staff_token(officer)}"})
     try:
         yield test_client
     finally:
@@ -103,10 +101,8 @@ def client(db):
 @pytest.fixture
 def as_admin(db):
     """Signed in as an admin (staff accounts, the SMS outbox)."""
-    from app.core.security import make_token
-
-    add_officer(db, username="admin1", full_name="Test Admin", role="admin")
-    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {make_token('admin1')[0]}"})
+    admin = add_officer(db, username="admin1", full_name="Test Admin", role="admin")
+    fastapi_app, test_client = _test_client(db, {"Authorization": f"Bearer {staff_token(admin)}"})
     try:
         yield test_client
     finally:

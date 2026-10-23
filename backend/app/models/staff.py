@@ -1,7 +1,7 @@
 """Staff accounts and the audit log of what staff do (app/services/audit.py writes it)."""
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 
 from app.db.session import Base
 
@@ -24,6 +24,17 @@ class StaffUser(Base):
     role = Column(String, nullable=False, default="officer")
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class StaffTemporaryPassword(Base):
+    """The account's password was set by an admin (new account or reset): until its owner
+    changes it, the account can only see itself and change the password.
+    (A table rather than a column: create_all does not add columns to an existing table.)"""
+
+    __tablename__ = "staff_temporary_passwords"
+
+    user_id = Column(Integer, ForeignKey("staff_users.id"), primary_key=True)
+    issued_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 class StaffAction(Base):

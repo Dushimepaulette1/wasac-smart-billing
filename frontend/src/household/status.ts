@@ -3,14 +3,15 @@
  * @description The household's state as told by its anomaly flags: whether a
  * reading is waiting for a WASAC officer, and how many messages are new.
  *
- * "New" is per device: messages created or decided after the household last
- * opened Messages on this phone. There is no server-side read state yet.
+ * "New" is per device and per meter: messages created or decided after
+ * Messages was last opened for that meter on this phone. There is no
+ * server-side read state yet.
  */
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { AnomalyFlag, AnomalyType } from '../api/types';
-import { currentAccount } from './session';
+import { currentAccount, useAccountId } from './session';
 
 /** Types a household gets a message for; NORMAL and BASELINE need none. */
 export const SHOWN_TYPES: readonly AnomalyType[] = [
@@ -24,9 +25,19 @@ export const SHOWN_TYPES: readonly AnomalyType[] = [
 
 const SEEN_KEY = 'wasac.messagesSeenAt';
 
+function seenKey(meterId = currentAccount()?.meter_id): string {
+  return `${SEEN_KEY}:${meterId ?? ''}`;
+}
+
+/** The flag holds a reading back from billing until an officer decides. (An open flag on a
+ *  reading that was already billed is follow-up work for WASAC; the household need not wait.) */
+export function holdsReading(flag: AnomalyFlag): boolean {
+  return flag.status === 'open' && flag.requires_staff_review && flag.reading_status === 'pending_review';
+}
+
 /** A reading the household sent is waiting for an officer's decision. */
 export function readingIsWaiting(flags: readonly AnomalyFlag[]): boolean {
-  return flags.some((f) => f.status === 'open' && f.requires_staff_review);
+  return flags.some(holdsReading);
 }
 
 export function shownMessages(flags: readonly AnomalyFlag[]): AnomalyFlag[] {
@@ -35,7 +46,7 @@ export function shownMessages(flags: readonly AnomalyFlag[]): AnomalyFlag[] {
 
 function seenAt(): number {
   try {
-    return Number(window.localStorage.getItem(SEEN_KEY)) || 0;
+    return Number(window.localStorage.getItem(seenKey())) || 0;
   } catch {
     return 0;
   }
@@ -45,7 +56,7 @@ const SEEN_EVENT = 'wasac:messages-seen';
 
 export function markMessagesSeen(now = Date.now()): void {
   try {
-    window.localStorage.setItem(SEEN_KEY, String(now));
+    window.localStorage.setItem(seenKey(), String(now));
   } catch {
     // Storage blocked: the count just stays until storage works.
   }
@@ -88,8 +99,10 @@ export function refreshHouseholdFlags(): void {
 export function useHouseholdFlags(): AnomalyFlag[] {
   const [flags, setFlags] = useState<AnomalyFlag[]>([]);
   const [, rerender] = useState(0);
+  const accountId = useAccountId(); // another meter chosen: load its flags
   useEffect(() => {
     let live = true;
+    setFlags([]);
     loadFlags()
       .then((data) => live && setFlags(data))
       .catch(() => undefined);
@@ -99,6 +112,6 @@ export function useHouseholdFlags(): AnomalyFlag[] {
       live = false;
       window.removeEventListener(SEEN_EVENT, onSeen);
     };
-  }, []);
+  }, [accountId]);
   return flags;
 }

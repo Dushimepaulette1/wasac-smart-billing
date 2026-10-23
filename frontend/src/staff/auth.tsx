@@ -3,7 +3,8 @@
  * @description Staff session: sign in, sign out, and the guard for staff
  * pages. The session lives in sessionStorage, so it ends when the browser
  * tab closes (safer on shared office computers) and is dropped as soon as
- * the backend rejects the token.
+ * the backend rejects the token (also after the password is changed or
+ * reset elsewhere). Someone on a temporary password can only open My account.
  */
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
@@ -42,6 +43,8 @@ function saveSession(session: Session | null): void {
 interface AuthValue {
   user: StaffUser | null;
   signIn: (username: string, password: string) => Promise<void>;
+  /** Carry on with the session /auth/password returns (the old token no longer works). */
+  renew: (result: LoginResponse) => void;
   signOut: () => void;
 }
 
@@ -60,9 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
-  const signIn = useCallback(
-    async (username: string, password: string) => {
-      const result: LoginResponse = await api.login(username, password);
+  const renew = useCallback(
+    (result: LoginResponse) => {
       const next = { token: result.access_token, expiresAt: result.expires_at, user: result.user };
       setStaffToken(next.token, signOut);
       saveSession(next);
@@ -71,10 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [signOut],
   );
 
+  const signIn = useCallback(
+    async (username: string, password: string) => renew(await api.login(username, password)),
+    [renew],
+  );
+
   // An expired or revoked token signs the person out on the next request.
   if (session) setStaffToken(session.token, signOut);
 
-  const value = useMemo(() => ({ user: session?.user ?? null, signIn, signOut }), [session, signIn, signOut]);
+  const value = useMemo(
+    () => ({ user: session?.user ?? null, signIn, renew, signOut }),
+    [session, signIn, renew, signOut],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -85,6 +95,7 @@ export function useAuth(): AuthValue {
 }
 
 const ROLE_ORDER: StaffRole[] = ['officer', 'supervisor', 'admin'];
+const ACCOUNT_PATH = '/staff/account';
 
 /** officer < supervisor < admin; mirrors role_at_least in backend/app/api/routes/staff_auth.py. */
 export function hasRole(user: StaffUser | null, role: StaffRole): boolean {
@@ -93,7 +104,8 @@ export function hasRole(user: StaffUser | null, role: StaffRole): boolean {
 }
 
 /** Staff pages: send anyone not signed in to the sign-in page, then back.
- * With `role`, someone without it goes to the overview (the server refuses them anyway). */
+ * With `role`, someone without it goes to the overview (the server refuses them anyway).
+ * On a temporary password, every page but My account goes to My account. */
 export function RequireStaff({ children, role }: { children: ReactNode; role?: StaffRole }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -101,6 +113,7 @@ export function RequireStaff({ children, role }: { children: ReactNode; role?: S
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/staff/sign-in?next=${next}`} replace />;
   }
+  if (user.must_change_password && location.pathname !== ACCOUNT_PATH) return <Navigate to={ACCOUNT_PATH} replace />;
   if (role && !hasRole(user, role)) return <Navigate to="/staff" replace />;
   return <>{children}</>;
 }

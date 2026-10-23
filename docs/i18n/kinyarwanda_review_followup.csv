@@ -1,0 +1,7 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"msg.status.followUp","Messages","Your bill was sent as usual. A WASAC officer may follow this up; you don't need to do anything.","Fagitire yawe yoherejwe nk'uko bisanzwe. Umukozi wa WASAC ashobora kubikurikirana; nta kindi usabwa gukora.","",""
+"staff.review.close","Staff dashboard","Close: followed up","Funga: byakurikiranywe","",""
+"staff.review.closeNote","Staff dashboard","This reading was already billed. Close it once you have followed up, for example by visiting the meter.","Iki gipimo cyamaze gukorerwa fagitire. Gifunge umaze kugikurikirana, urugero usura mubazi.","",""
+"staff.review.closing","Staff dashboard","Closing the follow-up for {name}…","Turimo gufunga ikurikirana rya {name}…","","{name}"
+"staff.review.closed","Staff dashboard","Closed the follow-up for {name}.","Ikurikirana rya {name} ryafunzwe.","","{name}"
+"staff.review.keys","Staff dashboard","Keys: J next, K previous, A accept, R reject, C close, U undo.","Utubuto: J ikurikira, K ibanziriza, A emeza, R anga, C funga, U subiza inyuma.","",""

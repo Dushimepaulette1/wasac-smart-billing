@@ -12,7 +12,9 @@ def test_when_staff_sign_in_should_return_a_token_that_opens_me(db, anon_client)
     r = anon_client.post("/auth/login", json={"username": " Officer1 ", "password": "correct horse"})
     assert r.status_code == 200
     body = r.json()
-    assert body["user"] == {"username": "officer1", "full_name": "Uwase Jeanne", "role": "officer"}
+    assert body["user"] == {
+        "username": "officer1", "full_name": "Uwase Jeanne", "role": "officer", "must_change_password": False,
+    }
     assert body["expires_at"] > time.time()
     me = anon_client.get("/auth/me", headers={"Authorization": f"Bearer {body['access_token']}"})
     assert me.json()["username"] == "officer1"
@@ -159,8 +161,45 @@ def test_when_a_password_is_reset_should_give_a_new_working_one(db, as_role, ano
 def test_when_staff_change_their_password_should_check_the_old_one_and_the_length(db, client, anon_client):
     assert client.post("/auth/password", json={"current_password": "wrong", "new_password": "a long new one"}).status_code == 400
     assert client.post("/auth/password", json={"current_password": "correct horse", "new_password": "short"}).status_code == 400
-    assert client.post("/auth/password", json={"current_password": "correct horse", "new_password": "a long new one"}).status_code == 204
+    assert client.post("/auth/password", json={"current_password": "correct horse", "new_password": "correct horse"}).status_code == 400
+    changed = client.post("/auth/password", json={"current_password": "correct horse", "new_password": "a long new one"})
+    assert changed.status_code == 200
     assert anon_client.post("/auth/login", json={"username": "officer1", "password": "a long new one"}).status_code == 200
+
+    # This session goes on with the new token; every session on the old password has ended.
+    assert client.get("/customers").status_code == 401
+    fresh = {"Authorization": f"Bearer {changed.json()['access_token']}"}
+    assert anon_client.get("/customers", headers=fresh).status_code == 200
+
+
+def test_when_an_admin_resets_a_password_should_end_that_persons_sessions(db, as_role, anon_client):
+    admin = as_role("admin")
+    add_officer(db, username="lost.phone")
+    old = anon_client.post("/auth/login", json={"username": "lost.phone", "password": "correct horse"}).json()
+    old_header = {"Authorization": f"Bearer {old['access_token']}"}
+    assert anon_client.get("/customers", headers=old_header).status_code == 200
+
+    admin.post("/auth/staff/lost.phone/reset-password")
+    assert anon_client.get("/customers", headers=old_header).status_code == 401
+    assert anon_client.get("/auth/me", headers=old_header).status_code == 401
+
+
+def test_when_signed_in_with_a_temporary_password_should_allow_only_changing_it(db, as_role, anon_client):
+    temp = as_role("admin").post("/auth/staff", json={
+        "username": "new.officer", "full_name": "New Officer", "role": "officer",
+    }).json()["temporary_password"]
+    login = anon_client.post("/auth/login", json={"username": "new.officer", "password": temp}).json()
+    assert login["user"]["must_change_password"] is True
+    header = {"Authorization": f"Bearer {login['access_token']}"}
+    assert anon_client.get("/auth/me", headers=header).json()["must_change_password"] is True
+    refused = anon_client.get("/customers", headers=header)
+    assert refused.status_code == 403 and "temporary password" in refused.json()["detail"]
+    assert anon_client.get("/api/anomaly/review-queue", headers=header).status_code == 403
+
+    changed = anon_client.post("/auth/password", headers=header,
+                               json={"current_password": temp, "new_password": "my own password"}).json()
+    assert changed["user"]["must_change_password"] is False
+    assert anon_client.get("/customers", headers={"Authorization": f"Bearer {changed['access_token']}"}).status_code == 200
 
 
 def test_when_making_temporary_passwords_should_be_readable_and_different():

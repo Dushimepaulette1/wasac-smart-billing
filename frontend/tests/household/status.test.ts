@@ -11,6 +11,8 @@ describe('household status', () => {
     expect(readingIsWaiting([makeFlag({ status: 'open', requires_staff_review: true })])).toBe(true);
     expect(readingIsWaiting([makeFlag({ status: 'resolved', requires_staff_review: true })])).toBe(false);
     expect(readingIsWaiting([makeFlag({ status: 'open', requires_staff_review: false })])).toBe(false);
+    // Billed already; the flag stays open only for WASAC's follow-up.
+    expect(readingIsWaiting([makeFlag({ status: 'open', reading_status: 'anomaly_flagged' })])).toBe(false);
   });
 
   it('when messages change after Messages was last opened, should count them as new', () => {

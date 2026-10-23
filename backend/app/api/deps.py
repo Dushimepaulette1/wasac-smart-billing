@@ -1,6 +1,8 @@
 """Who is asking? The checks routes depend on (FastAPI `Depends(...)`).
 
     require_staff        a valid staff token for an active account        -> StaffUser
+                         (issued since the last password change, and not on a temporary password)
+    require_signed_in    the same, but also on a temporary password: /auth/me, /auth/password
     require_role(role)   ... with this role or a higher one (officer < supervisor < admin)
     household_access     a household token (its phone's accounts) or a staff token -> Access
     meter_for            the meter, if the caller may see it (404 otherwise)
@@ -14,9 +16,9 @@ from typing import List, Optional
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.security import read_token
+from app.core.security import read_token, staff_token_matches
 from app.db.session import get_db
-from app.models import Customer, Meter, StaffUser
+from app.models import Customer, Meter, StaffTemporaryPassword, StaffUser
 from app.models.staff import ROLES
 
 SESSION_TTL = 30 * 24 * 60 * 60  # households stay signed in for 30 days on their phone
@@ -25,21 +27,40 @@ SUBJECT_PREFIX = "household:"
 
 # ---- Staff ------------------------------------------------------------------
 
-def require_staff(
+MUST_CHANGE_PASSWORD = "Change your temporary password first."
+
+
+def require_signed_in(
     authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> StaffUser:
-    """Dependency for staff-only routes: a valid Bearer token for an active user."""
+    """A valid Bearer token for an active user, issued since their password last changed."""
     scheme, _, token = (authorization or "").partition(" ")
     username = read_token(token) if scheme.lower() == "bearer" and token else None
     user = db.query(StaffUser).filter(StaffUser.username == username).first() if username else None
-    if not user or not user.is_active:
+    if not user or not user.is_active or not staff_token_matches(token, user.password_hash):
         raise HTTPException(
             status_code=401,
             detail="Sign in to continue.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+def has_temporary_password(db: Session, user: StaffUser) -> bool:
+    return db.get(StaffTemporaryPassword, user.id) is not None
+
+
+def require_staff(user: StaffUser = Depends(require_signed_in), db: Session = Depends(get_db)) -> StaffUser:
+    """Dependency for staff-only routes: signed in, and not still on a temporary password."""
+    if has_temporary_password(db, user):
+        raise HTTPException(status_code=403, detail=MUST_CHANGE_PASSWORD)
+    return user
+
+
+def staff_from_header(authorization: Optional[str], db: Session) -> StaffUser:
+    """require_staff, called from a route that also accepts other callers."""
+    return require_staff(require_signed_in(authorization, db), db)
 
 
 def role_at_least(user: StaffUser, role: str) -> bool:
@@ -106,10 +127,8 @@ def household_access(
         if not customers:
             raise _signed_out()
         return Access(phone=phone, customers=customers)
-    staff = db.query(StaffUser).filter(StaffUser.username == subject).first()
-    if not staff or not staff.is_active:
-        raise _signed_out()
-    return Access(staff=staff)
+    # The same checks as the staff dashboard (active, current password, not a temporary one).
+    return Access(staff=staff_from_header(authorization, db))
 
 
 def meter_for(db: Session, access: Access, meter_id: str) -> Meter:
