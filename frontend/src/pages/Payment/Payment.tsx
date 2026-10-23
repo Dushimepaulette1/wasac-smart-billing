@@ -6,19 +6,22 @@
  * through, so the household is told to check their bills before trying
  * again rather than being told they were not charged.
  *
- * Note: POST /bills/{id}/pay marks the bill paid and returns a transaction
- * id; there is no real MoMo prompt behind it yet, so none is promised here.
+ * With MTN Mobile Money keys, paying sends a PIN prompt to the household's
+ * phone: the page waits ("Approve the payment on your phone") and checks
+ * GET /payments/{id} every few seconds until MTN answers. Without keys the
+ * payment is simulated; a test payment says so on the receipt.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
 import RequestState, { errorMessage } from '../../components/RequestState/RequestState';
+import Progress from '../../components/Progress/Progress';
 import useRequest from '../../api/useRequest';
 import { api, ApiError } from '../../api/client';
-import type { BillSummary } from '../../api/types';
+import type { BillSummary, Payment as PaymentAttempt } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
 import { localDateIso } from '../../i18n/format';
 import { formatRwandanPhone } from '../../utils/phone';
@@ -35,7 +38,13 @@ interface Receipt {
   /** Null when the bill had already been paid (no new transaction). */
   transactionId: string | null;
   at: string;
+  /** Sandbox or simulated: no real money moved. */
+  test: boolean;
 }
+
+/** How often, and how long, to ask whether the household approved the MoMo prompt. */
+const POLL_MS = 3000;
+const POLL_LIMIT = 40; // 2 minutes
 
 async function loadPayment(customerId: string, billId: number): Promise<PaymentView> {
   const [bills, customer] = await Promise.all([api.getBills(customerId), api.getCustomer(customerId)]);
@@ -53,9 +62,44 @@ function Payment() {
   const billId = Number(params.get('bill'));
   const load = useRequest(loadPayment);
   const { run } = load;
-  const [state, setState] = useState<'ready' | 'paying' | 'paid' | 'unsure' | 'failed'>('ready');
+  const [state, setState] = useState<'ready' | 'paying' | 'waiting' | 'paid' | 'unsure' | 'failed' | 'declined'>('ready');
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState<PaymentAttempt | null>(null);
+  const polls = useRef(0);
+
+  /** Act on MTN's answer (or the simulated one). */
+  const settle = (p: PaymentAttempt) => {
+    setAttempt(p);
+    if (p.status === 'successful') {
+      setReceipt({ transactionId: p.already_paid ? null : p.transaction_id, at: localDateIso(), test: p.provider !== 'momo' });
+      setState('paid');
+    } else if (p.status === 'failed') {
+      setState('declined');
+    } else {
+      setState('waiting');
+    }
+  };
+
+  // Waiting for the household to approve the prompt on their phone: ask every few seconds.
+  useEffect(() => {
+    if (state !== 'waiting' || !attempt) return undefined;
+    const timer = window.setTimeout(async () => {
+      polls.current += 1;
+      if (polls.current > POLL_LIMIT) {
+        setState('unsure');
+        return;
+      }
+      try {
+        settle(await api.getPayment(attempt.id));
+      } catch {
+        setAttempt({ ...attempt }); // a dropped check: try again on the next tick
+      }
+    }, POLL_MS);
+    return () => window.clearTimeout(timer);
+    // settle only sets state; the next tick is scheduled by the new attempt object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, attempt]);
 
   useEffect(() => {
     run(customerId, billId);
@@ -76,11 +120,9 @@ function Payment() {
   const pay = async () => {
     setState('paying');
     setError(null);
+    polls.current = 0;
     try {
-      const result = await api.payBill(bill.bill_id);
-      // "Already paid" responses carry no transaction id.
-      setReceipt({ transactionId: 'transaction_id' in result ? result.transaction_id : null, at: localDateIso() });
-      setState('paid');
+      settle(await api.payBill(bill.bill_id));
     } catch (err) {
       setError(err);
       // No answer: the payment may or may not have gone through.
@@ -126,6 +168,16 @@ function Payment() {
             )}
           </dl>
         )}
+        {receipt?.test && <p className="text-small">{t('pay.testMode')}</p>}
+      </Screen>
+    );
+  }
+
+  if (state === 'waiting') {
+    return (
+      <Screen title={t('pay.waitingTitle')} lede={<p>{t('pay.waitingBody', { phone: formatRwandanPhone(phone), amount })}</p>}>
+        <Progress label={t('pay.waitingCheck')} />
+        {attempt?.provider === 'momo_sandbox' && <p className="text-small">{t('pay.sandboxNote')}</p>}
       </Screen>
     );
   }
@@ -153,7 +205,13 @@ function Payment() {
     >
       {state === 'unsure' && (
         <Notice tone="error" live>
-          {t('pay.unsure')}
+          {attempt ? t('pay.stillWaiting') : t('pay.unsure')}
+        </Notice>
+      )}
+      {state === 'declined' && (
+        <Notice tone="error" live title={t('pay.declinedTitle')}>
+          {t('pay.declinedBody')}
+          {attempt?.reason ? ` (${attempt.reason})` : ''}
         </Notice>
       )}
       {state === 'failed' && (

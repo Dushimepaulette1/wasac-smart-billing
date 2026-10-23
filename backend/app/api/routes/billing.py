@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
-from app.models import Bill, Customer, Meter, Reading, StaffUser
-from app.schemas import CustomerInfo, MeterCorrectionRequest
+from app.models import Bill, Customer, Meter, Payment, Reading, StaffUser
+from app.schemas import CustomerInfo, MeterCorrectionRequest, PaymentOut
 from app.services.audit import record
 from app.services.meter_correction import CorrectionError, correct_meter
+from app.services.payments import refresh, start_payment
 from app.services.reading_window import PENDING, TOO_SOON, reading_block
 
 router = APIRouter()
@@ -126,20 +128,29 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
     ]
 
 
-@router.post("/bills/{bill_id}/pay")
+@router.post("/bills/{bill_id}/pay", response_model=PaymentOut)
 async def pay_bill(bill_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
+    """Start paying a bill with MTN Mobile Money (simulated without MoMo keys). A pending answer means
+    the payer has a PIN prompt on their phone: check GET /payments/{id} until it is final."""
     bill = db.query(Bill).filter(Bill.bill_id == bill_id).first()
     if not bill or not access.owns_customer(bill.customer_id):
         raise HTTPException(status_code=404, detail="Bill not found")
     if bill.payment_status == "paid":
-        return {"message": "Bill already paid", "bill_id": bill_id}
+        done = (db.query(Payment).filter(Payment.bill_id == bill_id, Payment.status == "successful")
+                .order_by(Payment.id.desc()).first())
+        out = PaymentOut.model_validate(done) if done else PaymentOut(
+            id=0, bill_id=bill_id, provider="unknown", status="successful", amount=bill.amount_due, currency="RWF")
+        return out.model_copy(update={"already_paid": True})
+    customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first()
+    payment = await run_in_threadpool(start_payment, db, bill, customer.phone if customer else "")
+    return PaymentOut.model_validate(payment)
 
-    bill.payment_status = "paid"
-    db.commit()
-    return {
-        "success": True,
-        "bill_id": bill_id,
-        "transaction_id": f"MOMO-{bill_id:06d}-RW",
-        "amount_paid": bill.amount_due,
-        "message": "Payment successful",
-    }
+
+@router.get("/payments/{payment_id}", response_model=PaymentOut)
+async def get_payment(payment_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
+    """Where a payment stands; a pending one is checked with MTN first."""
+    payment = db.get(Payment, payment_id)
+    bill = db.get(Bill, payment.bill_id) if payment else None
+    if not payment or not bill or not access.owns_customer(bill.customer_id):
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return PaymentOut.model_validate(await run_in_threadpool(refresh, db, payment))

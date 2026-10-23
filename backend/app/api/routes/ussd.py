@@ -1,59 +1,34 @@
-from fastapi import APIRouter, Depends
+"""POST /ussd: the Africa's Talking USSD callback (menu in app/services/ussd_menu.py).
+
+Africa's Talking does not sign its USSD callbacks, so the callback URL carries a secret:
+    https://wasac-api.onrender.com/ussd?token=<USSD_CALLBACK_TOKEN>
+Without USSD_CALLBACK_TOKEN set, or with a wrong token, the endpoint refuses (403): nobody can
+send readings or start payments for someone else's phone number.
+"""
+import os
+import secrets
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models import Meter
-from app.anomaly.service import notify_household, submit_reading
-from app.services.reading_window import reading_block
-from app.schemas import USSDRequest
+from app.services.ussd_menu import handle
 
 router = APIRouter()
 
 
-@router.post("/submit-ussd")
-async def submit_ussd(body: USSDRequest, db: Session = Depends(get_db)):
-    """
-    USSD endpoint compatible with Africa's Talking callback format.
-    Returns a USSD menu response string.
-    """
-    phone = body.phone_number.strip()
-    raw_reading = body.reading_value.strip()
-
-    # Find meter by phone number
-    from app.models import Customer
-    customer = db.query(Customer).filter(Customer.phone == phone).first()
-    if not customer:
-        return {"response": "END Sorry, your phone number is not registered. Call WASAC at 1580."}
-
-    meter = db.query(Meter).filter(Meter.meter_id == customer.meter_id).first()
-    if not meter:
-        return {"response": "END No meter found for your account. Call WASAC at 1580."}
-
-    try:
-        submitted = float(raw_reading)
-    except ValueError:
-        return {"response": "END Invalid reading. Please enter numbers only, e.g. 00444"}
-
-    block = reading_block(db, meter)
-    if block:
-        return {"response": f"END {block.message}"}
-
-    sub = submit_reading(db, meter, customer.customer_id, submitted, method="ussd")
-    actions = notify_household(db, sub.anomaly)
-    anomaly = {**sub.anomaly.to_dict(), "actions": actions}
-
-    if sub.bill is None:
-        response = (
-            f"END Reading received: {submitted:.0f} m3\n"
-            f"It is being checked by WASAC before billing. We will SMS you."
-        )
-        return {"response": response, "anomaly": anomaly}
-
-    flag_msg = f"\n{sub.anomaly.message_for_household}" if sub.anomaly.is_anomaly else ""
-    response = (
-        f"END Reading received: {submitted:.0f} m3\n"
-        f"Consumption: {sub.consumption_m3:.1f} m3\n"
-        f"Bill: RWF {sub.bill.amount_due:,.0f}{flag_msg}\n"
-        f"Dial *225# to pay via Mobile Money."
-    )
-    return {"response": response, "anomaly": anomaly}
+@router.post("/ussd", response_class=PlainTextResponse)
+async def ussd_callback(
+    token: str = Query(default=""),
+    session_id: str = Form(default="", alias="sessionId"),
+    service_code: str = Form(default="", alias="serviceCode"),
+    phone_number: str = Form(alias="phoneNumber"),
+    text: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    expected = os.getenv("USSD_CALLBACK_TOKEN", "").strip()
+    if not expected or not secrets.compare_digest(token, expected):
+        raise HTTPException(status_code=403, detail="Unknown caller.")
+    return await run_in_threadpool(handle, db, phone_number, text)

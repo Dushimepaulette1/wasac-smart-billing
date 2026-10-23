@@ -230,21 +230,22 @@ export interface BillSummary {
 }
 
 /** app/api/routes/billing.py pay_bill: a new payment. */
-export interface PayBillSuccess {
-  success: true;
+/** schemas.PaymentOut: one attempt to pay a bill (POST /bills/{id}/pay, GET /payments/{id}). */
+export interface Payment {
+  id: number;
   bill_id: number;
-  transaction_id: string;
-  amount_paid: number;
-  message: string;
+  /** momo, momo_sandbox (test money), simulated (no MoMo keys yet: no money moves). */
+  provider: string;
+  /** pending: waiting for the payer's PIN on their phone. */
+  status: 'pending' | 'successful' | 'failed';
+  amount: number;
+  currency: string;
+  transaction_id: string | null;
+  /** Why it failed, in MTN's words. */
+  reason: string | null;
+  /** The bill was already paid before this request. */
+  already_paid: boolean;
 }
-
-/** app/api/routes/billing.py pay_bill: the bill was paid before (no transaction). */
-export interface PayBillAlreadyPaid {
-  message: 'Bill already paid';
-  bill_id: number;
-}
-
-export type PayBillResponse = PayBillSuccess | PayBillAlreadyPaid;
 
 // ---------------------------------------------------------------------------
 // Anomaly flags: /api/anomaly/*
@@ -416,19 +417,7 @@ export interface HealthResponse {
   timestamp: IsoDateTime;
 }
 
-/** schemas.USSDRequest */
-export interface UssdRequest {
-  phone_number: string;
-  reading_value: string;
-  session_id?: string | null;
-}
-
-/** app/api/routes/ussd.py submit_ussd (dict, no schema) */
-export interface UssdResponse {
-  /** Text for the phone screen, starting "END ". */
-  response: string;
-  anomaly?: AnomalyResult;
-}
+/** USSD is served to Africa's Talking (backend app/api/routes/ussd.py), not to this app. */
 
 /** FastAPI error body. `detail` is a string for HTTPException, a list for validation errors. */
 export interface ApiErrorBody {

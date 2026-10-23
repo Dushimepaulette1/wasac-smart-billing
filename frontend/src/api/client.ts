@@ -16,7 +16,7 @@ import type {
   CustomerInfo,
   GuideFrameResponse,
   LoginResponse,
-  PayBillResponse,
+  Payment,
   PhotoSubmitResponse,
   ResolveFlagResponse,
   ReviewItem,
@@ -239,10 +239,16 @@ export const api = {
     return request(`/customers/${encodeURIComponent(customerId)}/bills`);
   },
 
-  /** POST /bills/{id}/pay */
-  payBill(billId: number): Promise<PayBillResponse> {
+  /** POST /bills/{id}/pay: start paying (MTN MoMo sends a PIN prompt; simulated without keys). */
+  payBill(billId: number): Promise<Payment> {
     return request(`/bills/${encodeURIComponent(billId)}/pay`, { method: 'POST' });
   },
+
+  /** GET /payments/{id}: where a payment stands (pending, successful, failed). */
+  getPayment(paymentId: number): Promise<Payment> {
+    return request(`/payments/${encodeURIComponent(paymentId)}`);
+  },
+
 
   /** GET /api/anomaly/flags?household_id= (the household id is the meter id). */
   getHouseholdFlags(meterId: string): Promise<AnomalyFlag[]> {

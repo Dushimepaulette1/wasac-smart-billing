@@ -23,6 +23,14 @@ services:
         sync: false
       - key: AT_API_KEY
         sync: false
+      - key: MOMO_SUBSCRIPTION_KEY  # MTN MoMo Collections (unset: payments are simulated)
+        sync: false
+      - key: MOMO_API_USER
+        sync: false
+      - key: MOMO_API_KEY
+        sync: false
+      - key: USSD_CALLBACK_TOKEN    # secret in the Africa's Talking USSD callback URL
+        generateValue: true
       - key: WASAC_AUTH_SECRET      # signs sessions; generated once by Render
         generateValue: true
       - key: TRUSTED_PROXY_HOPS     # Render's proxy adds the caller's address last

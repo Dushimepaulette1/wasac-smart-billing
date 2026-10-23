@@ -19,7 +19,8 @@ const API_PATHS = [
   '/calculate-bill',
   '/customers',
   '/bills/',
-  '/submit-ussd',
+  '/payments/',
+  '/ussd',
   '/health',
   '/api/',
 ];

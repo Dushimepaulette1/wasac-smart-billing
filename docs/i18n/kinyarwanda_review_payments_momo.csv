@@ -1,0 +1,9 @@
+﻿key,screen,english,kinyarwanda,correction,placeholders
+"pay.waitingTitle","Payment","Approve the payment on your phone","Emeza kwishyura kuri telefoni yawe","",""
+"pay.waitingBody","Payment","MTN Mobile Money sent a request to {phone} to pay {amount}. Enter your MoMo PIN to approve it.","MTN Mobile Money yohereje kuri {phone} icyifuzo cyo kwishyura {amount}. Andika umubare w'ibanga wa MoMo kugira ngo ucyemeze.","","{amount} {phone}"
+"pay.waitingCheck","Payment","Waiting for MTN Mobile Money…","Dutegereje MTN Mobile Money…","",""
+"pay.sandboxNote","Payment","Test system: MTN approves test payments by itself within seconds, and no real money is taken.","Sisitemu y'igerageza: MTN yemeza ubwayo kwishyura kw'igerageza mu masegonda make, kandi nta mafaranga nyayo akoreshwa.","",""
+"pay.stillWaiting","Payment","MTN Mobile Money has not answered yet. If you approved the payment, the bill will show as paid soon: check your bills before you pay again.","MTN Mobile Money ntirasubiza. Niba mwemeje kwishyura, fagitire iragaragara ko yishyuwe vuba: banza urebe fagitire zawe mbere yo kongera kwishyura.","",""
+"pay.declinedTitle","Payment","The payment did not go through","Kwishyura ntibyakunze","",""
+"pay.declinedBody","Payment","Nothing was taken from your account. You can try again.","Nta mafaranga yavuye kuri konti yawe. Mushobora kongera kugerageza.","",""
+"pay.testMode","Payment","Test payment: no real money was taken.","Kwishyura kw'igerageza: nta mafaranga nyayo yakoreshejwe.","",""

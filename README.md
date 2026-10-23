@@ -18,7 +18,7 @@ A three-stage AI-assisted web platform for analog water meter reading and billin
 ┌──────────────────────────▼──────────────────────────────────────┐
 │                   FastAPI Backend (Port 8000)                   │
 │  POST /submit-photo   POST /confirm-reading   POST /calculate-bill │
-│  POST /submit-ussd    GET  /health                              │
+│  POST /ussd (USSD)    GET  /health                              │
 └──────┬───────────────────┬───────────────────┬──────────────────┘
        │                   │                   │
 ┌──────▼──────┐  ┌─────────▼──────┐  ┌────────▼────────┐
@@ -242,7 +242,7 @@ wasac-platform/
 │   │   │       ├── anomaly.py         # /api/anomaly/* (messages, review queue, decisions)
 │   │   │       ├── household_auth.py  # /household/* (SMS sign-in)
 │   │   │       ├── staff_auth.py      # /auth/* (staff sign-in, activity, accounts)
-│   │   │       ├── ussd.py            # /submit-ussd
+│   │   │       ├── ussd.py            # /ussd (Africa's Talking USSD menu)
 │   │   │       └── health.py          # /health
 │   │   ├── core/                # config.py (settings), security.py (passwords, tokens), ratelimit.py
 │   │   ├── db/                  # session.py (connection), init_db.py (tables), seed.py (local samples)
@@ -275,6 +275,29 @@ wasac-platform/
 │   └── wasac_meter_reading_pipeline.ipynb
 └── README.md
 ```
+
+### Paying with MTN Mobile Money
+
+`POST /bills/{id}/pay` starts a payment (`backend/app/services/payments.py`). With MoMo keys it uses
+MTN's Collections **Request to Pay**: MTN sends a PIN prompt to the household's phone, the app
+waits ("Approve the payment on your phone") and checks `GET /payments/{id}` every 3 s; on success
+the bill is marked paid once and an SMS receipt is sent; a declined payment takes nothing and can
+be tried again; a pending attempt is reused, never sent twice. Without keys, payments are
+simulated and the receipt says "Test payment".
+
+Sandbox setup: sign up at momodeveloper.mtn.com, subscribe to **Collections**, put its primary
+key in `backend/.env` as `MOMO_SUBSCRIPTION_KEY`, run `python scripts/momo_sandbox_setup.py` (it
+creates the API user and key and adds them to `.env`), then copy the three `MOMO_` values to
+Render. The sandbox uses test money in EUR and approves by itself.
+
+### USSD for basic phones
+
+`POST /ussd` is the Africa's Talking USSD callback (`backend/app/services/ussd_menu.py`):
+Kinyarwanda first (9 for English), 1 send a reading (8 digits, then confirm), 2 my bill, 3 pay
+my bill (MoMo prompt). The same rules apply as in the app. The callback URL must carry the
+secret `?token=<USSD_CALLBACK_TOKEN>` (Render generates it); without it the endpoint refuses, so
+nobody can act for someone else's number. In the Africa's Talking sandbox: USSD → create a
+channel → callback `https://wasac-api.onrender.com/ussd?token=<the token>`.
 
 ### Installable app (PWA)
 
@@ -359,6 +382,8 @@ next one opens 25 days later. The app says why and when; staff can always enter 
 | `SMS_OUTBOX` | `1` | Keep sandbox SMS for admins to read under **Sent SMS** (the sandbox reaches no real phone) |
 | `MIN_DAYS_BETWEEN_READINGS` | `25` | Days between accepted readings (`0` turns the rule off, e.g. for testing) |
 | `LOCATION_SAVE_MAX_ACCURACY_M` | `100` | How precise a first photo must be to become the meter's location |
+| `MOMO_SUBSCRIPTION_KEY`, `MOMO_API_USER`, `MOMO_API_KEY` | unset (simulated payments) | MTN MoMo Collections |
+| `USSD_CALLBACK_TOKEN` | unset (USSD off) | Secret in the Africa's Talking USSD callback URL |
 
 **Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
 "Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for

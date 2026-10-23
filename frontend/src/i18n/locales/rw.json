@@ -391,5 +391,13 @@
   "staff.correct.incomplete": "Hitamo urugo, hanyuma wandike igipimo (kuva kuri 0 kugeza kuri 99999.999 m³) n'impamvu.",
   "staff.correct.pending": "Hari igipimo cy'uru rugo gitegereje mu bigomba kugenzurwa. Banza ugifateho icyemezo.",
   "staff.correct.done": "{meter} ubu yerekana {reading}. Igipimo gikurikiraho kizagereranywa na cyo.",
-  "staff.activity.kind.meter_corrected": "Yakosoye igipimo cya mubazi"
+  "staff.activity.kind.meter_corrected": "Yakosoye igipimo cya mubazi",
+  "pay.waitingTitle": "Emeza kwishyura kuri telefoni yawe",
+  "pay.waitingBody": "MTN Mobile Money yohereje kuri {phone} icyifuzo cyo kwishyura {amount}. Andika umubare w'ibanga wa MoMo kugira ngo ucyemeze.",
+  "pay.waitingCheck": "Dutegereje MTN Mobile Money…",
+  "pay.sandboxNote": "Sisitemu y'igerageza: MTN yemeza ubwayo kwishyura kw'igerageza mu masegonda make, kandi nta mafaranga nyayo akoreshwa.",
+  "pay.stillWaiting": "MTN Mobile Money ntirasubiza. Niba mwemeje kwishyura, fagitire iragaragara ko yishyuwe vuba: banza urebe fagitire zawe mbere yo kongera kwishyura.",
+  "pay.declinedTitle": "Kwishyura ntibyakunze",
+  "pay.declinedBody": "Nta mafaranga yavuye kuri konti yawe. Mushobora kongera kugerageza.",
+  "pay.testMode": "Kwishyura kw'igerageza: nta mafaranga nyayo yakoreshejwe."
 }
