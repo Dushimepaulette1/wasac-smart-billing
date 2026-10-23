@@ -155,3 +155,46 @@ def test_when_a_household_lists_its_flags_should_include_the_reading_outcome(cli
     client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"})
     flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
     assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["rejected"]
+
+
+def test_when_the_same_reading_is_sent_twice_should_store_and_bill_it_once(client, db, household):
+    customer_id, last = household
+    first = confirm(client, customer_id, last + 12)  # a retry or a double tap
+    again = client.post("/confirm-reading", json={
+        "customer_id": customer_id, "meter_id": METER, "confirmed_reading": str(round(last + 12, 3)),
+    })
+    assert first["bill_id"] and again.status_code == 409 and "just sent" in again.json()["detail"]
+    assert db.query(Reading).filter(Reading.meter_id == METER, Reading.submitted_value == round(last + 12, 3)).count() == 1
+    assert db.query(Bill).count() == 1
+
+
+def test_when_two_officers_decide_the_same_reading_should_bill_it_once(client, db, household):
+    customer_id, last = household
+    flag_id = confirm(client, customer_id, last + 200)["anomaly"]["flag_id"]
+    assert client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "accept"}).status_code == 200
+    second = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "accept"})
+    assert second.status_code == 409 and "already decided" in second.json()["detail"]
+    assert len(bills_for(db, reading_for(db, flag_id).reading_id)) == 1
+
+
+def test_when_a_second_bill_is_added_for_a_reading_should_be_refused_by_the_database(db):
+    from sqlalchemy.exc import IntegrityError
+
+    db.add(Reading(meter_id="MTR-U", submitted_value=1.0, validation_status="valid"))
+    db.flush()
+    reading_id = db.query(Reading.reading_id).filter(Reading.meter_id == "MTR-U").scalar()
+    db.add_all([Bill(reading_id=reading_id, amount_due=1000), Bill(reading_id=reading_id, amount_due=1000)])
+    with pytest.raises(IntegrityError):
+        db.commit()
+
+
+def test_when_an_older_database_lacks_the_bill_index_should_add_it():
+    from sqlalchemy import create_engine, inspect, text
+    from app.db.init_db import add_late_indexes
+
+    engine = create_engine("sqlite://")
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE bills (bill_id INTEGER PRIMARY KEY, reading_id INTEGER)"))
+    add_late_indexes(engine)
+    add_late_indexes(engine)  # every start-up: no error the second time
+    assert any(i["name"] == "uq_bills_reading_id" and i["unique"] for i in inspect(engine).get_indexes("bills"))

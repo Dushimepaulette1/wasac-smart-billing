@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.models import AnomalyFlag, FLAG_STATUS_RESOLVED
 from app.anomaly.location import env_float
 from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message, sms_household
-from app.anomaly.service import household_phone
+from app.anomaly.service import household_phone, lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
 from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
 from app.services.billing import build_bill
@@ -45,7 +45,7 @@ def _accept(db: Session, reading: Reading) -> Bill:
     if newer_confirmed:
         raise ReviewError(409, "A newer reading for this meter is already confirmed; reject this one instead.")
 
-    meter = db.get(Meter, reading.meter_id)
+    meter = lock_meter(db, reading.meter_id)
     # Accepting a lower reading (e.g. a replaced meter) resets the baseline and bills nothing for this period.
     consumption = max(0.0, reading.submitted_value - meter.last_reading)
     reading.validation_status = READING_VALID
@@ -79,8 +79,20 @@ def _save_meter_location(db: Session, reading: Reading) -> bool:
 
 
 def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Resolution:
-    """Close a flag. A flag on a pending reading needs an outcome; other flags must not have one."""
-    reading = db.get(Reading, flag.reading_id) if flag.reading_id else None
+    """Close a flag. A flag on a pending reading needs an outcome; other flags must not have one.
+
+    The flag and its reading are read again under a row lock, so when two officers decide at once
+    the second sees the first's decision (409) instead of billing the reading a second time."""
+    flag = (
+        db.query(AnomalyFlag).filter(AnomalyFlag.id == flag.id).with_for_update().populate_existing().one()
+    )
+    reading = (
+        db.query(Reading).filter(Reading.reading_id == flag.reading_id).with_for_update().populate_existing().first()
+        if flag.reading_id
+        else None
+    )
+    if outcome is not None and flag.status == FLAG_STATUS_RESOLVED:
+        raise ReviewError(409, "Another officer has already decided this reading.")
     pending = reading is not None and reading.validation_status == READING_PENDING
 
     if pending and outcome is None:

@@ -16,7 +16,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.anomaly.service import notify_household, submit_reading
+from app.anomaly.service import ReadingRefused, notify_household, submit_reading
 from app.models import Bill, Customer, Meter
 from app.services.payments import start_payment
 from app.services.reading_window import PENDING, reading_block
@@ -31,6 +31,7 @@ TEXT = {
         "bad_reading": "Andika imibare 8 gusa, urugero 00565846. Ongera ugerageze.",
         "confirm": "Igipimo: {reading} m3\n1. Emeza\n2. Hagarika",
         "cancelled": "Byahagaritswe. Nta cyoherejwe.",
+        "duplicate": "Iki gipimo cyoherejwe ubu. Reba fagitire zawe mbere yo kongera kucyohereza.",
         "pending": "Igipimo giheruka kiracyagenzurwa. Muzohereza ikindi nyuma y'icyemezo.",
         "too_soon": "Igipimo cy'uku kwezi cyakiriwe. Igikurikiraho ni guhera ku wa {date}.",
         "billed": "Murakoze. Igipimo: {reading} m3. Fagitire: RWF {amount}. Kanda 3 kuri menu kugira ngo wishyure.",
@@ -53,6 +54,7 @@ TEXT = {
         "bad_reading": "Type 8 numbers only, for example 00565846. Please try again.",
         "confirm": "Reading: {reading} m3\n1. Confirm\n2. Cancel",
         "cancelled": "Cancelled. Nothing was sent.",
+        "duplicate": "This reading was just sent. Check your bill before sending it again.",
         "pending": "Your last reading is still being checked. You can send a new one after the decision.",
         "too_soon": "This month's reading is in. The next one opens on {date}.",
         "billed": "Thank you. Reading: {reading} m3. Bill: RWF {amount}. Choose 3 in the menu to pay.",
@@ -124,7 +126,14 @@ def handle(db: Session, phone_number: str, text: str) -> str:
             return _con(t["confirm"].format(reading=f"{reading:.3f}"))
         if rest[1] != "1":
             return _end(t["cancelled"])
-        sub = submit_reading(db, meter, customer.customer_id, reading, method="ussd")
+        try:
+            sub = submit_reading(db, meter, customer.customer_id, reading, method="ussd", household=True)
+        except ReadingRefused as refused:
+            # Sent from another phone or the app while this session was open, or sent twice.
+            if refused.block is None:
+                return _end(t["duplicate"])
+            return _end(t["pending"] if refused.block.reason == PENDING
+                        else t["too_soon"].format(date=f"{refused.block.opens_on:%d/%m/%Y}"))
         notify_household(db, sub.anomaly)
         if sub.bill is None:
             return _end(t["held"])
