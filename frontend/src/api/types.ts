@@ -64,6 +64,8 @@ export type GuidanceCode =
 
 /** schemas.PhotoSubmitResponse */
 export interface PhotoSubmitResponse {
+  /** Send back with /confirm-reading so the officer checking the reading sees this photo. */
+  photo_id?: string | null;
   /** "unreadable": no reading suggested; offer typing the numbers. */
   status: 'readable' | 'unreadable';
   /** Raw digit-reader output, e.g. "565846"; null when no reading. */
@@ -307,6 +309,13 @@ export interface ReviewItem {
   sector: string | null;
   /** Up to six accepted readings, oldest first. */
   history: HistoryPoint[];
+  reading_id?: number | null;
+  /** The photo is kept: GET /api/anomaly/readings/{reading_id}/photo. */
+  photo_available?: boolean;
+  /** What the photo reader read, 8 digits. */
+  reader_digits?: string | null;
+  /** The household changed the reader's digits before sending. */
+  edited_by_household?: boolean | null;
 }
 
 // ---------------------------------------------------------------------------

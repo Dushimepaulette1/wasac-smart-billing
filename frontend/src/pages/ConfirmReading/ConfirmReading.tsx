@@ -79,7 +79,13 @@ function ConfirmReading() {
     setState('sending');
     setError(null);
     try {
-      const result = await api.confirmReading({ customerId, meterId, cells, evidence: submission.evidence ?? undefined });
+      const result = await api.confirmReading({
+        customerId,
+        meterId,
+        cells,
+        evidence: submission.evidence ?? undefined,
+        photoId: submission.photoId,
+      });
       refreshHouseholdFlags(); // a new message or a waiting reading may follow
       if (result.bill_id) {
         leaving.current = true;

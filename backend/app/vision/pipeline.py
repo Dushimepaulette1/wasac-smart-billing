@@ -5,11 +5,14 @@ from typing import Dict, List, Optional
 
 from app.vision.config import GuidanceConfig
 from app.vision.guidance import Measurements, guidance_codes, is_no_meter, measure_region, summarise_detections
-from app.vision.image_io import bgr_to_pil, jpeg_base64, load_bgr
+from app.vision.image_io import bgr_to_pil, jpeg_base64, jpeg_bytes, load_bgr
 from app.vision.models import ModelRegistry
 from wasac_preprocessing import crop_box, detect, display_box
 
 BOX_METHODS = ("window", "digits")
+# The copy of the photo kept for reviewers (app/services/photo_evidence.py): enough to read the wheels.
+EVIDENCE_LONG_SIDE = 1280
+EVIDENCE_JPEG_QUALITY = 75
 
 
 @dataclass
@@ -28,9 +31,13 @@ class PhotoResult:
     thumbnail_jpeg_base64: Optional[str] = None
     measurements: dict = field(default_factory=dict)
     timings_ms: Dict[str, float] = field(default_factory=dict)
+    # The photo as decoded (rotation fixed), for reviewers; not sent back to the phone.
+    evidence_jpeg: Optional[bytes] = field(default=None, repr=False)
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        out = asdict(self)
+        out.pop("evidence_jpeg")
+        return out
 
 
 @dataclass
@@ -103,6 +110,7 @@ def analyze_photo(data: bytes, registry: ModelRegistry, cfg: GuidanceConfig) -> 
         result.thumbnail_jpeg_base64 = jpeg_base64(crop, cfg.thumbnail_max_width, cfg.thumbnail_jpeg_quality)
         clock.lap("thumbnail")
 
+    result.evidence_jpeg = jpeg_bytes(img, EVIDENCE_LONG_SIDE, EVIDENCE_JPEG_QUALITY)
     result.quality_score = m.quality_score
     result.guidance = guidance_codes(m, cfg, has_detections=has_detections)
     result.offer_manual_entry = result.reading_digits is None

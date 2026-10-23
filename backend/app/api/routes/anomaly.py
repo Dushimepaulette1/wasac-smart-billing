@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED
 from app.anomaly.review import ReviewError, resolve_flag
 from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
+from app.services.photo_evidence import photo_for_reading
 from app.models import StaffUser
 from app.api.deps import household_access
 from app.api.deps import require_staff, staff_from_header
@@ -123,6 +124,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             .limit(6)
             .all()
         )
+        photo = photo_for_reading(db, reading.reading_id) if reading else None
         items.append(ReviewItem(
             # reading_status tells the two kinds apart: pending_review needs accept or reject;
             # an already-billed reading (valid, anomaly_flagged) only needs closing after follow-up.
@@ -135,9 +137,23 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             customer_id=customer.customer_id if customer else None,
             customer_name=customer.name if customer else None,
             sector=customer.sector if customer else None,
+            reading_id=reading.reading_id if reading else None,
+            photo_available=bool(photo and photo.image_jpeg),
+            reader_digits=photo.reader_digits if photo else None,
+            edited_by_household=photo.edited if photo else None,
+            reader_models=photo.models if photo else None,
             history=[
                 HistoryPoint(date=r.submission_time, reading_m3=r.submitted_value, consumption_m3=r.implied_consumption)
                 for r in reversed(history)
             ],
         ))
     return items
+
+
+@router.get("/readings/{reading_id}/photo", responses={200: {"content": {"image/jpeg": {}}}})
+async def reading_photo(reading_id: int, db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)):
+    """The photo a reading came from, for the officer checking it. Staff only; never cached."""
+    photo = photo_for_reading(db, reading_id)
+    if not photo or not photo.image_jpeg:
+        raise HTTPException(status_code=404, detail="No photo kept for this reading")
+    return Response(photo.image_jpeg, media_type="image/jpeg", headers={"Cache-Control": "private, no-store"})

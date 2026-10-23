@@ -92,6 +92,11 @@ class Access:
     phone: Optional[str] = None
     customers: List[Customer] = field(default_factory=list)
 
+    @property
+    def owner(self) -> str:
+        """Who sent something, as stored with it (photo_reads.owner)."""
+        return f"staff:{self.staff.username}" if self.staff is not None else f"{SUBJECT_PREFIX}{self.phone}"
+
     def owns_customer(self, customer_id: str) -> bool:
         return self.staff is not None or any(c.customer_id == customer_id for c in self.customers)
 

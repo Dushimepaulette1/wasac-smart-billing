@@ -8,18 +8,20 @@
     household_code.py  household_codes (SMS sign-in)
     sms_outbox.py      sms_outbox (sandbox SMS, for admins)
     payment.py         payments (MTN Mobile Money attempts)
+    photo_read.py      photo_reads (the photo and what the reader saw, for reviewers)
 """
 from app.models.anomaly_flag import FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, AnomalyFlag
 from app.models.bill import Bill
 from app.models.household import Customer, Meter
 from app.models.household_code import HouseholdCode
 from app.models.payment import Payment
+from app.models.photo_read import PhotoRead
 from app.models.reading import Reading, ReadingEvidence
 from app.models.sms_outbox import SmsOutbox
 from app.models.staff import ROLES, StaffAction, StaffTemporaryPassword, StaffUser
 
 __all__ = [
     "AnomalyFlag", "Bill", "Customer", "FLAG_STATUS_OPEN", "FLAG_STATUS_RESOLVED", "HouseholdCode",
-    "Meter", "Payment", "ROLES", "Reading", "ReadingEvidence", "SmsOutbox", "StaffAction",
+    "Meter", "Payment", "PhotoRead", "ROLES", "Reading", "ReadingEvidence", "SmsOutbox", "StaffAction",
     "StaffTemporaryPassword", "StaffUser",
 ]

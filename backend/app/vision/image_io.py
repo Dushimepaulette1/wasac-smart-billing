@@ -31,6 +31,18 @@ def bgr_to_pil(img_bgr: np.ndarray) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
 
 
+def jpeg_bytes(img_bgr: np.ndarray, max_long_side: int, quality: int) -> bytes:
+    """The image as a JPEG, its long side shrunk to max_long_side."""
+    h, w = img_bgr.shape[:2]
+    scale = max_long_side / max(h, w)
+    if scale < 1:
+        img_bgr = cv2.resize(img_bgr, (max(1, round(w * scale)), max(1, round(h * scale))), interpolation=cv2.INTER_AREA)
+    ok, buf = cv2.imencode(".jpg", img_bgr, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    if not ok:
+        raise BadImage("Could not encode the photo")
+    return buf.tobytes()
+
+
 def jpeg_base64(img_bgr: np.ndarray, max_width: int, quality: int) -> str:
     h, w = img_bgr.shape[:2]
     if w > max_width:

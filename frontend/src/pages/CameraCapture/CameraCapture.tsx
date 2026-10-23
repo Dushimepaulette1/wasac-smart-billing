@@ -172,6 +172,7 @@ function CameraCapture() {
     submission.setReadResult(result.predicted_reading, result.confidence, {
       crop: thumbnailUrl(result),
       checkNumbers: result.guidance.includes('CHECK_NUMBERS') || result.needs_check,
+      photoId: result.photo_id ?? null,
     });
     navigate('/submit/confirm');
   };

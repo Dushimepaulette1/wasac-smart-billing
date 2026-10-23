@@ -75,3 +75,9 @@ class ReviewItem(BaseModel):
     customer_name: Optional[str] = None
     sector: Optional[str] = None
     history: List[HistoryPoint] = []
+    # The photo the reading came from (GET /api/anomaly/readings/{reading_id}/photo), if kept.
+    reading_id: Optional[int] = None
+    photo_available: bool = False
+    reader_digits: Optional[str] = None          # what the photo reader read
+    edited_by_household: Optional[bool] = None   # the household changed those digits
+    reader_models: Optional[str] = None

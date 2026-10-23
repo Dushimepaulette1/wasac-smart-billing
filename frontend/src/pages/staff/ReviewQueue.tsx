@@ -51,6 +51,38 @@ interface Pending {
   outcome: Outcome;
 }
 
+/** The meter photo the reading came from, fetched with the staff token (an <img src> cannot send it). */
+function ReadingPhoto({ readingId, name }: { readingId: number; name: string }) {
+  const { t } = useI18n();
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    let made: string | null = null;
+    setUrl(null);
+    setFailed(false);
+    api
+      .readingPhoto(readingId)
+      .then((blob) => {
+        if (!live) return;
+        made = URL.createObjectURL(blob);
+        setUrl(made);
+      })
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+      if (made) URL.revokeObjectURL(made);
+    };
+  }, [readingId]);
+  if (failed) return <p className="text-small text-secondary">{t('staff.review.photoFailed')}</p>;
+  if (!url) return <p className="text-small text-secondary">{t('staff.review.photoLoading')}</p>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className={styles.photo}>
+      <img src={url} alt={t('staff.review.photoAlt', { name })} />
+    </a>
+  );
+}
+
 function DecisionPane({ item }: { item: ReviewItem }) {
   const { t, volume, date } = useI18n();
   const labels = useCounterLabels();
@@ -108,6 +140,15 @@ function DecisionPane({ item }: { item: ReviewItem }) {
                 <dd className={ratio >= 2 ? styles.strong : undefined}>{t('staff.review.times', { n: ratio.toFixed(1) })}</dd>
               </div>
             )}
+            {item.reader_digits && (
+              <div>
+                <dt>{t('staff.review.readerRead')}</dt>
+                <dd>
+                  {formatReading(cellsFromCubicMetres(Number(item.reader_digits) / 1000))} m³
+                  {item.edited_by_household && <span className={styles.strong}> · {t('staff.review.edited')}</span>}
+                </dd>
+              </div>
+            )}
             {item.reading_confidence !== null && (
               <div>
                 <dt>{t('staff.review.confidence')}</dt>
@@ -142,7 +183,11 @@ function DecisionPane({ item }: { item: ReviewItem }) {
               </div>
             )}
           </dl>
-          <p className="text-small text-secondary">{t('staff.review.noPhoto')}</p>
+          {item.photo_available && item.reading_id ? (
+            <ReadingPhoto readingId={item.reading_id} name={item.customer_name ?? item.flag.household_id} />
+          ) : (
+            <p className="text-small text-secondary">{t('staff.review.noPhoto')}</p>
+          )}
         </section>
 
         <section className={styles.block} aria-labelledby="history-title">

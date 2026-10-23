@@ -38,11 +38,14 @@ export interface Submission {
   evidence: PhotoEvidence | null;
   /** The customer the draft was started for. */
   owner?: string | null;
+  /** /submit-photo's id for the photo, sent with the reading for the officer who may check it. */
+  photoId?: string | null;
 }
 
 export interface ReadExtras {
   crop?: string | null;
   checkNumbers?: boolean;
+  photoId?: string | null;
 }
 
 export interface SubmissionValue extends Submission {
@@ -115,6 +118,7 @@ export function SubmissionProvider({ children, initial }: { children: ReactNode;
       manual: false,
       crop: extras.crop ?? null,
       checkNumbers: extras.checkNumbers ?? false,
+      photoId: extras.photoId ?? null,
     }));
   }, [own]);
 
