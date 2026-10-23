@@ -217,8 +217,8 @@ export const api = {
 
   // ---- Phone alerts (web push) -------------------------------------------------
 
-  /** GET /household/push/key: the server's public key, or 404 when alerts are not set up. */
-  pushKey(): Promise<{ public_key: string }> {
+  /** GET /household/push/key: the server's public key, or null when alerts are not set up. */
+  pushKey(): Promise<{ public_key: string | null }> {
     return request('/household/push/key');
   },
 

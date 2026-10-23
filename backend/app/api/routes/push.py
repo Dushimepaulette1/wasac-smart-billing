@@ -1,6 +1,6 @@
 """Phone alerts (web push) for signed-in households (app/services/push.py).
 
-    GET  /household/push/key          the public key the browser subscribes with (404: alerts off)
+    GET  /household/push/key          the public key the browser subscribes with (null: alerts off)
     POST /household/push/subscribe    this browser's subscription, for the signed-in phone
     POST /household/push/unsubscribe  stop alerts to this browser
 """
@@ -38,10 +38,8 @@ def _household(access: Access) -> str:
 
 @router.get("/key")
 async def push_key():
-    key = push.public_key()
-    if not key:
-        raise HTTPException(status_code=404, detail="Alerts are not set up.")
-    return {"public_key": key}
+    """200 either way, so a phone asking before alerts are set up logs no error."""
+    return {"public_key": push.public_key()}
 
 
 @router.post("/subscribe", status_code=204)

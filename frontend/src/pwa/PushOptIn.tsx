@@ -37,6 +37,7 @@ function PushOptIn() {
     (async () => {
       try {
         const { public_key } = await api.pushKey();
+        if (!public_key) throw new Error('alerts are not set up');
         const registration = await navigator.serviceWorker.ready;
         const existing = await registration.pushManager.getSubscription();
         if (!live) return;
