@@ -215,6 +215,23 @@ export const api = {
     });
   },
 
+  // ---- Phone alerts (web push) -------------------------------------------------
+
+  /** GET /household/push/key: the server's public key, or 404 when alerts are not set up. */
+  pushKey(): Promise<{ public_key: string }> {
+    return request('/household/push/key');
+  },
+
+  /** POST /household/push/subscribe: send alerts for this phone's accounts to this browser. */
+  pushSubscribe(subscription: PushSubscriptionJSON): Promise<void> {
+    return request('/household/push/subscribe', { method: 'POST', json: subscription });
+  },
+
+  /** POST /household/push/unsubscribe: stop alerts to this browser. */
+  pushUnsubscribe(endpoint: string): Promise<void> {
+    return request('/household/push/unsubscribe', { method: 'POST', json: { endpoint } });
+  },
+
   // ---- Household sign-in --------------------------------------------------
 
   /** POST /household/request-code: the same answer whether or not the number is registered. */

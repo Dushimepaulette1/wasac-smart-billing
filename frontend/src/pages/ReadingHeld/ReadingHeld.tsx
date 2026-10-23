@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
+import Icon from '../../components/Icon/Icon';
 import MeterCounter from '../../components/MeterCounter/MeterCounter';
 import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
@@ -47,6 +48,11 @@ function ReadingHeld() {
         </Button>
       }
     >
+      <div className={styles.hero} aria-hidden="true">
+        <span className={styles.clock}>
+          <Icon name="clock" size={36} />
+        </span>
+      </div>
       <Notice tone="held" live title={t('held.checkingTitle')}>
         {t('held.checkingBody')}
       </Notice>

@@ -16,6 +16,41 @@
 
 .message {
   gap: var(--space-3);
+  animation: enter var(--motion-slow) var(--ease-out) both;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.typeIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.leakIcon {
+  background: var(--clay-soft);
+  color: var(--clay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message {
+    animation: none;
+  }
 }
 
 .checkTitle {
@@ -43,9 +78,13 @@
   margin-top: 4px;
 }
 
-/* Brass on the light panel (6.7:1), as for every held reading. */
+/* Being checked: calm amber, as for every held reading. */
 .checking {
-  color: var(--brass);
+  padding: var(--space-3) var(--space-4);
+  border-top: 0;
+  border-radius: var(--radius-field);
+  background: var(--held-soft);
+  color: var(--held);
   font-weight: var(--weight-bold);
 }
 

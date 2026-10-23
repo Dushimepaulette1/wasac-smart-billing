@@ -1,7 +1,7 @@
 /**
  * @file Overview.tsx
- * @description Staff overview: what needs a decision now, money owed, and
- * every household at a glance.
+ * @description Staff overview: a welcome banner that says what needs a decision now, four
+ * figures, open issues by type as a bar chart, what is waiting, and every household at a glance.
  */
 
 import { Link } from 'react-router-dom';
@@ -31,41 +31,61 @@ function Overview() {
   }
 
   const { queue, openFlags, households, unpaidAmount, unpaidCount } = data.data;
+  // Open issues by type, largest first (one series: bars in one colour, values labelled).
+  const byType = Object.entries(
+    openFlags.reduce<Record<string, number>>((acc, f) => ({ ...acc, [f.anomaly_type]: (acc[f.anomaly_type] ?? 0) + 1 }), {}),
+  ).sort((a, b) => b[1] - a[1]);
+  const most = Math.max(1, ...byType.map(([, n]) => n));
 
   return (
     <StaffLayout title={t('staff.nav.overview')} lede={lede} reviewCount={queue.length}>
+      <section className={`${styles.welcome} imigongo-band`} aria-label={t('staff.overview.summary')}>
+        <div>
+          <p className={styles.welcomeTitle}>
+            {queue.length ? t('staff.overview.welcomeWaiting', { count: queue.length }) : t('staff.overview.welcomeClear')}
+          </p>
+          <p className="text-secondary">{t('staff.overview.welcomeBody')}</p>
+        </div>
+        {queue.length > 0 && (
+          <Link to="/staff/review" className={styles.welcomeCta}>
+            {t('staff.overview.openQueue')}
+            <Icon name="arrowRight" size={18} />
+          </Link>
+        )}
+      </section>
+
       <section className={styles.stats} aria-label={t('staff.overview.summary')}>
         <Link to="/staff/review" className={`panel ${styles.stat} ${queue.length ? styles.attention : ''}`}>
-          <span className={styles.statLabel}>
-            <Icon name="queue" size={18} />
-            {t('staff.stat.toReview')}
+          <span className={styles.statIcon} aria-hidden="true">
+            <Icon name="queue" size={20} />
           </span>
+          <span className={styles.statLabel}>{t('staff.stat.toReview')}</span>
           <span className={styles.statValue}>{queue.length}</span>
           <span className={styles.statNote}>{queue.length ? t('staff.stat.openQueue') : t('staff.stat.nothingWaiting')}</span>
         </Link>
         <div className={`panel ${styles.stat}`}>
-          <span className={styles.statLabel}>
-            <Icon name="alert" size={18} />
-            {t('staff.stat.openFlags')}
+          <span className={styles.statIcon} aria-hidden="true">
+            <Icon name="alert" size={20} />
           </span>
+          <span className={styles.statLabel}>{t('staff.stat.openFlags')}</span>
           <span className={styles.statValue}>{openFlags.length}</span>
           <span className={styles.statNote}>{t('staff.stat.openFlagsNote')}</span>
         </div>
         <div className={`panel ${styles.stat}`}>
-          <span className={styles.statLabel}>
-            <Icon name="households" size={18} />
-            {t('staff.nav.households')}
+          <span className={styles.statIcon} aria-hidden="true">
+            <Icon name="households" size={20} />
           </span>
+          <span className={styles.statLabel}>{t('staff.nav.households')}</span>
           <span className={styles.statValue}>{households.length}</span>
           <span className={styles.statNote}>
             {t('staff.stat.flaggedHouseholds', { count: households.filter((h) => h.anomaly_flagged).length })}
           </span>
         </div>
         <div className={`panel ${styles.stat}`}>
-          <span className={styles.statLabel}>
-            <Icon name="bills" size={18} />
-            {t('staff.stat.unpaid')}
+          <span className={styles.statIcon} aria-hidden="true">
+            <Icon name="bills" size={20} />
           </span>
+          <span className={styles.statLabel}>{t('staff.stat.unpaid')}</span>
           <span className={styles.statValue}>{rwf(unpaidAmount)}</span>
           <span className={styles.statNote}>{t('staff.stat.unpaidNote', { count: unpaidCount })}</span>
         </div>
@@ -97,7 +117,31 @@ function Overview() {
           )}
         </section>
 
-        <section className="panel" aria-labelledby="households-title">
+        <section className="panel" aria-labelledby="issues-title">
+          <div className={styles.panelHead}>
+            <h2 id="issues-title" className="panel-title">
+              {t('staff.overview.issuesTitle')}
+            </h2>
+            <span className="chip">{t('staff.overview.issuesOpen', { count: openFlags.length })}</span>
+          </div>
+          {byType.length === 0 ? (
+            <p className={styles.empty}>{t('staff.overview.issuesNone')}</p>
+          ) : (
+            <ul className={styles.issueBars}>
+              {byType.map(([type, n]) => (
+                <li key={type} className={styles.issueRow}>
+                  <span className={styles.issueName}>{t(ISSUE_KEY[type as keyof typeof ISSUE_KEY])}</span>
+                  <span className={styles.issueTrack} aria-hidden="true">
+                    <span className={styles.issueBar} style={{ width: `${(n / most) * 100}%` }} />
+                  </span>
+                  <span className={styles.issueValue}>{n}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className={`panel ${styles.wide}`} aria-labelledby="households-title">
           <div className={styles.panelHead}>
             <h2 id="households-title" className="panel-title">
               {t('staff.nav.households')}

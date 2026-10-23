@@ -1,8 +1,7 @@
 /**
  * @file Screen.tsx
- * @description Layout for every household page, on the gradient stage:
- * site header, then the page heading (step, serif title, lede) with the
- * main action beside it, then the content (usually light panels).
+ * @description Layout for every household page: site header, then the page heading
+ * (back, step, title, lede) with the main action beside it, then the content (panels).
  *
  * Wide screens: the action sits under the heading, where the eye already is.
  * Phones: the action is pinned to the bottom within thumb reach, above the
@@ -65,12 +64,17 @@ function Screen({ title, step, lede, back, action, nav = false, immersive = fals
 
       <main className={styles.main}>
         <div className={styles.head}>
-          {isDemo && <p className={`${styles.demo} text-small`}>{t('demo.label')}</p>}
-          {back && (
-            <button type="button" className={styles.back} onClick={goBack}>
-              <Icon name="back" size={20} />
-              <span>{t('action.back')}</span>
-            </button>
+          {(back || isDemo) && (
+            <div className={styles.topRow}>
+              {back && (
+                <button type="button" className={styles.back} onClick={goBack}>
+                  <Icon name="back" size={18} />
+                  <span>{t('action.back')}</span>
+                </button>
+              )}
+              {/* A label, not a button: this household's data is made up for trying the app. */}
+              {isDemo && <span className={`${styles.demo} chip chip-held`}>{t('demo.label')}</span>}
+            </div>
           )}
           {step && <p className={`${styles.step} text-small`}>{step}</p>}
           <h1 ref={headingRef} tabIndex={-1} className={`${styles.title} page-title`}>

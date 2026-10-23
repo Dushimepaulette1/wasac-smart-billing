@@ -12,7 +12,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
-import Icon from '../../components/Icon/Icon';
+import Icon, { type IconName } from '../../components/Icon/Icon';
 import Button from '../../components/Button/Button';
 import RequestState from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
@@ -81,9 +81,18 @@ function Message({ flag }: { flag: AnomalyFlag }) {
   const when = date(flag.created_at);
   const leak = HIGH_USE_TYPES.includes(type);
 
+  const icon: IconName = leak ? 'trend' : type === 'LOCATION_CHECK' ? 'globe' : type === 'METER_STUCK' ? 'gauge' : 'alert';
   return (
     <article className={`panel ${styles.message}`}>
-      <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
+      <div className={styles.head}>
+        <span className={`${styles.typeIcon} ${leak ? styles.leakIcon : ''}`} aria-hidden="true">
+          <Icon name={icon} size={22} />
+        </span>
+        <div className={styles.headText}>
+          <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
+          <p className="text-small text-secondary num">{when}</p>
+        </div>
+      </div>
 
       <p>{t(noticedKey(flag), { date: when })}</p>
 

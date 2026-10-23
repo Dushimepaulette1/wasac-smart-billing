@@ -1,8 +1,9 @@
-# WASAC Smart Water Billing Platform
+# Mubazi: water billing for WASAC customers
 
-A three-stage AI-assisted web platform for analog water meter reading and billing in Kigali, Rwanda. Combines **MobileNetV2** image quality classification, **CRNN** digit sequence recognition, and **Isolation Forest** anomaly detection with a React web interface and FastAPI backend.
+**Mubazi** (Kinyarwanda for the water meter) is a three-stage AI-assisted web platform for analog
+water meter reading and billing in Kigali, Rwanda, for WASAC households and staff. Combines **MobileNetV2** image quality classification, **CRNN** digit sequence recognition, and **Isolation Forest** anomaly detection with a React web interface and FastAPI backend.
 
-**GitHub Repository:** PLACEHOLDER — to be added
+**GitHub Repository:** https://github.com/Dushimepaulette1/wasac-smart-billing
 
 ---
 

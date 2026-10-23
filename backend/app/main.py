@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="WASAC Smart Water Billing Platform",
+    title="Mubazi API (WASAC water billing)",
     description=(
         "AI-assisted water meter reading and billing for Kigali, Rwanda. "
         "Pipeline: YOLOv8 number-window crop → MobileNetV2 quality gate → "

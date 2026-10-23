@@ -1,5 +1,6 @@
 /**
- * MeterCounter: 5 black m³ cells + 3 red litre cells in a brass bezel.
+ * MeterCounter: 5 black m³ cells + 3 red litre cells in a graphite bezel, shaded like the
+ * drums of a real meter.
  * Cell size, gaps and the unit row are all driven by the custom properties
  * on .large / .small, so the unit labels line up under their groups.
  *
@@ -48,12 +49,26 @@
 }
 
 .bezel {
+  position: relative;
   display: flex;
   gap: var(--group-gap);
   padding: var(--bezel-pad);
-  border: var(--bezel-border) solid var(--brass);
+  border: var(--bezel-border) solid var(--bezel);
   border-radius: var(--radius-bezel);
-  background: var(--glass);
+  background: linear-gradient(180deg, #3A3F4B 0%, #1F232C 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 28px -14px rgba(0, 0, 0, 0.55);
+}
+
+/* Glass over the wheels: a soft highlight across the top half. */
+.bezel::after {
+  content: '';
+  position: absolute;
+  inset: var(--bezel-pad);
+  border-radius: var(--radius-cell);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 46%);
+  pointer-events: none;
 }
 
 .group {
@@ -77,12 +92,13 @@
   overflow: hidden;
 }
 
+/* Each wheel is a drum: darker at top and bottom where it curves away. */
 .cubicMetre {
-  background: var(--wheel-black);
+  background: linear-gradient(180deg, #000 0%, #26272B 22%, var(--wheel-black) 50%, #26272B 78%, #000 100%);
 }
 
 .litre {
-  background: var(--litre-red);
+  background: linear-gradient(180deg, #5E0910 0%, #C21A27 24%, var(--litre-red) 50%, #C21A27 76%, #5E0910 100%);
 }
 
 /* An empty wheel window while typing: a short bar where the digit goes. */
@@ -107,14 +123,15 @@
   z-index: 1;
 }
 
-/* The one movement in the app: a digit settles into its wheel window. */
+/* A digit rolls into its wheel window, as on the meter. */
 .settle {
-  animation: settle var(--motion-digit) ease-out;
+  animation: settle calc(var(--motion-digit) * 2) var(--ease-out);
 }
 
 @keyframes settle {
   from {
-    transform: translateY(-4px);
+    transform: translateY(-60%);
+    opacity: 0;
   }
 }
 
@@ -150,7 +167,8 @@
   column-gap: var(--group-gap);
   padding-inline: calc(var(--bezel-border) + var(--bezel-pad));
   margin-top: var(--space-1);
-  color: var(--color-text-secondary);
+  color: var(--text-2);
+  font-weight: var(--weight-medium);
   text-align: center;
 }
 

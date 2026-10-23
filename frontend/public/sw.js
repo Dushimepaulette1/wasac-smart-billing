@@ -1,4 +1,5 @@
-/* WASAC service worker: the app opens fast and works on a weak connection.
+/* Mubazi service worker: the app opens fast and works on a weak connection, and shows phone
+ * alerts (web push) when an officer decides a reading.
  *
  *   pages      network first, but after NAV_TIMEOUT_MS (or offline) the saved copy of the app
  *              is shown, so the app always opens; a fresh copy replaces it when it arrives
@@ -9,9 +10,12 @@
  *              is on another origin; on the laptop tunnel it is same-origin, so those paths are
  *              listed and skipped too)
  *
+ *   push       { title, body, url } from the server (backend/app/services/push.py): shown as a
+ *              notification; tapping it opens or focuses the app at url
+ *
  * Bump VERSION when the precache list changes. Registered from src/pwa/registerServiceWorker.ts.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `wasac-shell-${VERSION}`;
 const ASSETS = 'wasac-assets';
 const ASSET_LIMIT = 80;
@@ -29,6 +33,40 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((names) => Promise.all(names.filter((n) => n !== SHELL && n !== ASSETS).map((n) => caches.delete(n))))
       .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Mubazi', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/favicon-32.png',
+      tag: data.tag || 'mubazi',
+      renotify: true,
+      data: { url: data.url || '/messages' },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || '/messages', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const open = windows.find((w) => w.url.startsWith(self.location.origin));
+      if (open) {
+        open.navigate(url);
+        return open.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
   );
 });
 

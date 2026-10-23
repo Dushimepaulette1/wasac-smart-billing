@@ -7,6 +7,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
+import Icon from '../../components/Icon/Icon';
 import RequestState from '../../components/RequestState/RequestState';
 import useRequest from '../../api/useRequest';
 import { api } from '../../api/client';
@@ -54,16 +55,19 @@ function BillHistory() {
       {empty && <p className="measure">{waiting ? t('history.checking') : t('history.empty')}</p>}
 
       {list.length > 0 && (
-        <ul className={`panel ${styles.list}`}>
-          {list.map((bill) => {
+        <ul className={styles.list}>
+          {list.map((bill, i) => {
             const paid = bill.payment_status === 'paid';
             return (
-              <li key={bill.bill_id}>
+              <li key={bill.bill_id} className={`enter enter-${Math.min(i + 1, 4)}`}>
                 <Link to={`/bill?id=${bill.bill_id}`} className={styles.row}>
+                  <span className={`${styles.icon} ${paid ? styles.paidIcon : ''}`} aria-hidden="true">
+                    <Icon name={paid ? 'check' : 'bills'} size={22} />
+                  </span>
                   <span className={`${styles.month} num`}>{label(bill)}</span>
                   <span className={`${styles.amount} num`}>{rwf(bill.amount_due)}</span>
-                  <span className="num text-secondary">{volume(bill.consumption_m3)}</span>
-                  <span className={`${styles.status} ${paid ? '' : styles.unpaid}`}>
+                  <span className={`${styles.volume} num`}>{volume(bill.consumption_m3)}</span>
+                  <span className={`${styles.status} chip ${paid ? 'chip-ok' : 'chip-held'}`}>
                     {paid ? t('bill.paid') : t('bill.unpaid')}
                   </span>
                 </Link>
