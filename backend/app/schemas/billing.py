@@ -23,7 +23,7 @@ class TariffBreakdown(BaseModel):
 
 
 class BillCalculateRequest(BaseModel):
-    consumption_m3: float
+    consumption_m3: float = Field(ge=0, le=99_999.999, allow_inf_nan=False)
 
 
 class CustomerInfo(BaseModel):
@@ -49,7 +49,7 @@ class CustomerInfo(BaseModel):
 
 class MeterCorrectionRequest(BaseModel):
     """Staff set a meter's current reading (a replaced meter, or a wrong record)."""
-    reading_m3: float = Field(ge=0, le=99_999.999)
+    reading_m3: float = Field(ge=0, le=99_999.999, allow_inf_nan=False)
     reason: str = Field(min_length=3, max_length=200)
 
 

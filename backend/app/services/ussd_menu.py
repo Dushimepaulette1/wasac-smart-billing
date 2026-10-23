@@ -20,6 +20,7 @@ from app.anomaly.service import notify_household, submit_reading
 from app.models import Bill, Customer, Meter
 from app.services.payments import start_payment
 from app.services.reading_window import PENDING, reading_block
+from app.utils.meter_value import parse_meter_value
 from app.utils.phone import normalize_phone
 
 TEXT = {
@@ -83,11 +84,7 @@ def parse_reading(typed: str) -> Optional[float]:
     typed = typed.strip()
     if typed.isdigit() and len(typed) == 8:
         return int(typed) / 1000
-    try:
-        value = float(typed.replace(",", "."))
-    except ValueError:
-        return None
-    return value if 0 <= value <= 99_999.999 and "." in typed.replace(",", ".") else None
+    return parse_meter_value(typed) if "." in typed or "," in typed else None
 
 
 def _latest_bill(db: Session, customer: Customer, unpaid_only: bool = False) -> Optional[Bill]:
