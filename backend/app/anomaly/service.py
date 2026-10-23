@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Sequence
 
 from sqlalchemy.orm import Session
@@ -18,10 +18,37 @@ from app.anomaly.statuses import (
     PENDING_REVIEW_TYPES,
     READING_FLAGGED,
     READING_PENDING,
+    READING_REJECTED,
     READING_VALID,
 )
 from app.models import Bill, Customer, Meter, Reading
 from app.services.billing import build_bill
+from app.services.reading_window import ReadingBlock, reading_block
+
+# The same value for the same meter again within this time is a retry or a double tap, not a reading.
+DUPLICATE_WINDOW = timedelta(minutes=2)
+
+
+class ReadingRefused(Exception):
+    """The reading was not stored: the household must wait (block), or it was just sent (duplicate)."""
+
+    def __init__(self, message: str, block: Optional[ReadingBlock] = None):
+        super().__init__(message)
+        self.message = message
+        self.block = block
+
+
+def lock_meter(db: Session, meter_id: str) -> Meter:
+    """The meter row, locked until commit (Postgres SELECT ... FOR UPDATE; SQLite has no row
+    locks and runs one writer at a time anyway). Two readings or decisions for one meter then
+    run one after the other, each seeing the other's last_reading, never the same old baseline."""
+    return (
+        db.query(Meter)
+        .filter(Meter.meter_id == meter_id)
+        .with_for_update()
+        .populate_existing()
+        .one()
+    )
 
 
 @dataclass
@@ -203,14 +230,39 @@ def submit_reading(
     reading_m3: float,
     method: str,
     evidence: Optional[PhotoEvidence] = None,
+    household: bool = False,
 ) -> Submission:
     """Store a household reading, score it, and either confirm and bill it or hold it for staff review.
+
+    The meter is locked first, then the checks run: a household (household=True) must be allowed
+    to send a reading now (app/services/reading_window.py), and nobody may send the same value
+    twice within DUPLICATE_WINDOW. Either raises ReadingRefused with nothing stored.
 
     Held readings (MISREAD_SUSPECTED, SPIKE, anything below the last confirmed reading, or a photo
     whose location or source needs checking, see app/anomaly/location.py) are not billed and do not move
     meters.last_reading. Commits; call notify_household afterwards.
     """
     now = datetime.utcnow()
+    meter = lock_meter(db, meter.meter_id)
+    if household:
+        block = reading_block(db, meter, now)
+        if block:
+            db.rollback()
+            raise ReadingRefused(block.message, block)
+    duplicate = (
+        db.query(Reading.reading_id)
+        .filter(
+            Reading.meter_id == meter.meter_id,
+            Reading.submitted_value == reading_m3,
+            Reading.submission_time > now - DUPLICATE_WINDOW,
+            Reading.validation_status != READING_REJECTED,
+        )
+        .first()
+    )
+    if duplicate:
+        db.rollback()
+        raise ReadingRefused("This reading was just sent. Check your bills and messages before sending it again.")
+
     consumption = reading_m3 - meter.last_reading
     reading = Reading(
         meter_id=meter.meter_id,

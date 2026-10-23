@@ -7,12 +7,12 @@ from app.anomaly.location import PhotoEvidence
 from app.db.session import get_db
 from app.models import Customer
 from app.services import billing
-from app.services.reading_window import reading_block
+from app.services.photo_evidence import attach, save_photo_read
 from app.utils.meter_value import parse_meter_value
 from app.core.ratelimit import MAX_UPLOAD_BYTES
-from app.anomaly.service import notify_household, submit_reading
+from app.anomaly.service import ReadingRefused, notify_household, submit_reading
 from app.vision.image_io import BadImage
-from app.vision.models import ModelRegistry, get_registry
+from app.vision.models import LOADED, ModelRegistry, get_registry
 from app.vision.pipeline import analyze_photo, guide_frame
 from app.schemas import (
     AnomalyResultSchema,
@@ -43,17 +43,22 @@ async def _read_upload(file: UploadFile, limit: int) -> bytes:
 async def submit_photo(
     file: UploadFile = File(...),
     models: ModelRegistry = Depends(get_registry),
-    _access: Access = Depends(household_access),
+    db: Session = Depends(get_db),
+    access: Access = Depends(household_access),
 ):
-    """Read a meter photo. Guidance codes never block; offer_manual_entry means no reading is suggested."""
+    """Read a meter photo. Guidance codes never block; offer_manual_entry means no reading is suggested.
+    The photo is kept for the officer who may check the reading (app/services/photo_evidence.py)."""
     data = await _read_upload(file, MAX_PHOTO_BYTES)
     try:
         result = await run_in_threadpool(analyze_photo, data, models, models.guidance_config())
     except BadImage as e:
         raise HTTPException(status_code=422, detail=str(e))
+    used = ", ".join(s.detail for s in models.status.values() if s.state == LOADED)
+    photo_id = save_photo_read(db, access.owner, result, used)
     payload = result.to_dict()
     payload.pop("measurements")
     return PhotoSubmitResponse(
+        photo_id=photo_id,
         status="readable" if result.reading_digits else "unreadable",
         predicted_reading=result.raw_digits,
         confidence=result.confidence_min,
@@ -95,12 +100,6 @@ async def confirm_reading(
     if submitted is None:
         raise HTTPException(status_code=422, detail="Reading must be a number like 00565.846")
 
-    if access.staff is None:
-        block = reading_block(db, meter)
-        if block:
-            # 409: the app shows its own words for block.reason (see GET /customers/{id}).
-            raise HTTPException(status_code=409, detail=block.message)
-
     evidence = None
     if access.staff is None:
         where = body.location
@@ -110,7 +109,13 @@ async def confirm_reading(
             lng=where.lng if where else None,
             accuracy_m=where.accuracy_m if where else None,
         )
-    sub = submit_reading(db, meter, body.customer_id, submitted, method="camera", evidence=evidence)
+    try:
+        sub = submit_reading(db, meter, body.customer_id, submitted, method="camera", evidence=evidence,
+                             household=access.staff is None)
+    except ReadingRefused as refused:
+        # 409: the app shows its own words for a block's reason (see GET /customers/{id}).
+        raise HTTPException(status_code=409, detail=refused.message)
+    attach(db, body.photo_id, access.owner, sub.reading, f"{round(submitted * 1000):08d}")
     actions = notify_household(db, sub.anomaly)
     anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
 

@@ -73,6 +73,24 @@ def trained_model_on_disk(demo_model, config):
     return demo_model
 
 
+@pytest.fixture(autouse=True)
+def no_real_database(monkeypatch):
+    """Nothing in a test may reach the database in backend/.env (Neon): code that opens its own
+    session or uses the engine directly (health, init_db, scripts) gets an empty in-memory one."""
+    from app.db import init_db, session
+
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    monkeypatch.setattr(session, "engine", engine)
+    monkeypatch.setattr(init_db, "engine", engine)
+    monkeypatch.setattr(session, "SessionLocal", sessionmaker(bind=engine, autoflush=False))
+    from app.api.routes import health
+    from app.db import seed
+    for module in (health, seed):  # they import SessionLocal by name
+        monkeypatch.setattr(module, "SessionLocal", session.SessionLocal)
+    yield
+    engine.dispose()
+
+
 @pytest.fixture
 def db():
     engine = create_engine(
