@@ -10,7 +10,10 @@ from app.vision.pipeline import analyze_photo, guide_frame
 
 @pytest.fixture(scope="module")
 def real():
-    return ModelRegistry().load()
+    registry = ModelRegistry().load()
+    if not registry.ready:  # e.g. CI: the weights are private and never in the repository
+        pytest.skip("model files not present")
+    return registry
 
 
 def jpeg(img):
