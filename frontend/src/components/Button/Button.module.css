@@ -1,5 +1,6 @@
-/* Colours come from the surface (stage or panel): on the dark stage the
-   primary is a solid light pill with dark text; on a panel, solid ink. */
+/* primary: a navy pill with a soft navy shadow, the one main action on a screen.
+   secondary: a ghost pill with a 2px border. text: a quiet underlined action.
+   Colours come from the surface's roles, so the same button works on white, navy and ink. */
 .button {
   display: inline-flex;
   align-items: center;
@@ -7,32 +8,47 @@
   gap: var(--space-2);
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-6);
-  border: 1.5px solid transparent;
+  border: 2px solid transparent;
   border-radius: var(--radius-button);
-  font-family: var(--font-numbers);
+  font-family: var(--font-text);
   font-size: var(--size-body);
   line-height: 1.25;
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-semibold);
   text-align: center;
   text-decoration: none;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition:
+    transform var(--motion) var(--ease-reveal),
+    box-shadow var(--motion) var(--ease-reveal),
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 
 .primary {
   min-height: var(--button-height);
+  padding-inline: var(--space-8);
   background: var(--color-action);
   color: var(--color-on-action);
+  box-shadow: var(--button-shadow);
 }
 
-/* Thin outlined pill, as in the reference. */
+.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--button-shadow), 0 16px 32px -14px rgba(29, 75, 130, 0.45);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
 .secondary {
   min-height: var(--button-height);
+  padding-inline: var(--space-8);
   background: transparent;
   border-color: var(--color-outline);
   color: var(--color-text);
 }
 
-.secondary:hover {
+.secondary:hover:not(:disabled) {
   border-color: var(--color-text);
 }
 
@@ -42,7 +58,11 @@
   color: var(--color-text);
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.25em;
+  text-underline-offset: 0.3em;
+}
+
+.text:hover:not(:disabled) {
+  color: var(--color-emphasis);
 }
 
 .fullWidth {
@@ -51,24 +71,12 @@
 
 .button:disabled {
   cursor: default;
+  opacity: 0.6;
+  box-shadow: none;
 }
 
-.primary:disabled {
-  opacity: 0.72;
-}
-
-.secondary:disabled,
-.text:disabled {
-  opacity: 0.72;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button {
-    transition: none;
-  }
-}
-
-/* Busy: a thin arc in the text colour, turning calmly. Reduced motion: a still ring. */
+/* Busy: a thin arc in the text colour. A busy button keeps its full colour, so it reads as
+   working. */
 .spinner {
   flex: none;
   width: 18px;
@@ -76,7 +84,7 @@
   border: 2px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
-  animation: turn 0.9s linear infinite;
+  animation: turn 0.8s linear infinite;
 }
 
 @keyframes turn {
@@ -85,16 +93,21 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
-    border-right-color: currentColor;
-    opacity: 0.6;
-  }
-}
-
-/* A busy button keeps its full colour (not the faded disabled look), so it reads as working. */
 .button[aria-busy='true'] {
   opacity: 1;
   cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .primary:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
 }

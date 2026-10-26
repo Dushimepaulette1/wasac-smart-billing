@@ -1,12 +1,13 @@
 /**
  * @file SiteHeader.tsx
- * @description The header on every page: the Mubazi name in text (no logo
+ * @description The header on every page: the Mubazi mark and name (no logo
  * until approved assets exist), the household navigation on wider screens,
  * and the language switcher. On phones the navigation moves to the bottom.
  */
 
 import { Link, NavLink } from 'react-router-dom';
 import Icon from '../Icon/Icon';
+import { LogoMark } from '../Logo/Logo';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -78,6 +79,7 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
+          <LogoMark />
           <span className={styles.wordmark}>Mubazi</span>
           <span className={styles.tagline}>{t('brand.tagline')}</span>
         </Link>
@@ -88,6 +90,10 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
           {links && <Bell />}
           <LanguageSwitcher />
           <ThemeToggle />
+          {/* The one call to action: sign in (public pages) or read the meter (households). */}
+          <Link to={links ? '/submit/camera' : '/home'} className={styles.cta}>
+            {links ? t('header.read') : t('header.signIn')}
+          </Link>
         </div>
       </div>
     </header>

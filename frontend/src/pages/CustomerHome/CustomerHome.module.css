@@ -97,3 +97,29 @@
     display: none;
   }
 }
+
+/* The bill due: the ink card that leads the page. */
+.billCard {
+  gap: var(--space-3);
+}
+
+.billLabel {
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-semibold);
+}
+
+.billAmount {
+  font-family: var(--font-display);
+  font-size: clamp(3.25rem, 2.4rem + 3.6vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.billActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-4);
+}

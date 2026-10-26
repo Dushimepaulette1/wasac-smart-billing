@@ -35,7 +35,7 @@ function Overview() {
   return (
     <StaffLayout title={t('staff.nav.overview')} lede={lede} reviewCount={queue.length}>
       <section className={styles.stats} aria-label={t('staff.overview.summary')}>
-        <Link to="/staff/review" className={`panel ${styles.stat} ${queue.length ? styles.attention : ''}`}>
+        <Link to="/staff/review" className={`panel ${styles.stat} ${queue.length ? `panel-ink ${styles.attention}` : ''}`}>
           <span className={styles.statLabel}>
             <Icon name="queue" size={18} />
             {t('staff.stat.toReview')}

@@ -1,37 +1,15 @@
-/* Messages in the flow of a screen. Colours follow the surface (stage or
-   panel); tone is carried by icon and words, never colour alone. */
+/* Messages in the flow of a screen: a card on the surface's own colours, with the tone's
+   icon. Tone is carried by icon and words, never colour alone. */
 .notice {
   display: grid;
   grid-template-columns: 24px 1fr;
   gap: var(--space-3);
-  padding: var(--space-5);
-  border-radius: 16px;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-card);
   background: var(--panel-bg);
-  color: var(--ink);
   box-shadow: var(--panel-shadow);
-  --color-text: var(--ink);
-  --color-text-secondary: var(--ink-2);
-  --color-action: var(--ink);
-  --color-on-action: var(--mist);
-  --color-outline: var(--ink);
-  --focus-gap: var(--mist);
-  --focus-color: var(--ink);
-}
-
-/* Dark theme: the navy panel surface, as for .panel (base.css). */
-:global(:root:not([data-theme='light'])) .notice {
-  --ink: var(--mist);
-  --ink-2: var(--haze);
-  --brass: #E2C27A;
-  --color-text: var(--mist);
-  --color-text-secondary: var(--haze);
-  --color-action: var(--mist);
-  --color-on-action: #0A1426;
-  --color-outline: rgba(244, 247, 251, 0.6);
-  --focus-gap: var(--panel-dark);
-  --focus-color: var(--ice);
-  background: var(--panel-dark);
-  border: 1px solid var(--panel-dark-border);
+  color: var(--color-text);
 }
 
 .icon {
@@ -49,22 +27,30 @@
   font-weight: var(--weight-bold);
 }
 
+.text {
+  color: var(--color-text-secondary);
+}
+
+.body > .text:first-child {
+  color: var(--color-text);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
   gap: var(--space-2) var(--space-4);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .actions > [data-variant='text']:first-child {
   margin-left: calc(-1 * var(--space-2));
 }
 
-/* Errors: a light card with an ink edge, so it stands out on any surface. */
+/* Errors: an ink edge, so it stands out on any surface. */
 .error {
-  box-shadow: inset 4px 0 0 var(--ink), var(--panel-shadow);
+  box-shadow: inset 4px 0 0 var(--color-text), var(--panel-shadow);
 }
 
 /* Held: brass edge and title. Calm, never alarming. */
@@ -77,15 +63,20 @@
   color: var(--brass);
 }
 
-/* Advice and confirmations: no card, just icon and words in the surface's
-   own colours. */
-.info,
-.done,
-:global(:root:not([data-theme='light'])) .info,
-:global(:root:not([data-theme='light'])) .done {
+/* Advice: the soft accent background. Confirmations: no card, icon and words only. */
+.info {
+  border-color: transparent;
+  background: var(--color-accent-bg);
+  box-shadow: none;
+}
+
+.info .icon {
+  color: var(--color-emphasis);
+}
+
+.done {
   padding: 0;
   border: 0;
   background: none;
   box-shadow: none;
-  color: var(--color-text);
 }

@@ -438,3 +438,26 @@ this design stays, with these changes:
 - **Demo data:** a small tinted label, not an outlined pill that looked like a button.
 - **Alerts:** a bell with a count in the header, a banner on Home when an officer accepts or
   rejects a reading, and optional phone alerts (web push) in the account panel.
+
+---
+
+## 9. "Navy and Ink" (26/10/2026)
+
+The client supplied an editorial design system ("Red Sun": coral and ink, Instrument Serif and
+Manrope, large radii, glass header, ambient light, fade-up motion, bento grids) and asked for it
+in their own navy instead of coral. Built in `src/styles/tokens.css` and `base.css`:
+
+- **Colour:** Navy #1D4B82 for actions and the italic emphasis line (white on it 8.8:1); Ink
+  #0B2244 for text and dark cards (15.8:1 on white); Mist #EEF3F9 as the soft accent background.
+  Dark theme "night": #040A16 page, #0B1A33 cards, Sky #8DB6E3 actions (ink on it 8.8:1).
+- **Type:** Instrument Serif (regular and italic only, never faux bold) for headlines, the
+  second line italic in navy; Manrope for everything else.
+- **Shape and depth:** 30 px pill buttons with a soft navy shadow, 2 px ghost buttons, 24-64 px
+  container radii, a frosted glass header (80% white, 12 px blur), two soft ambient circles.
+- **Motion:** every entrance fades up from a 2-degree turn on cubic-bezier(0.16, 1, 0.3, 1);
+  sections on the landing page reveal on scroll (`src/components/Reveal`). Off with reduced motion.
+- **Mark:** a navy square turned 3 degrees with a white italic "M" (12 degrees on hover); sky
+  blue on ink surfaces (sidebar, footer).
+- **Landing:** centred hero with badge, value list beside a dark preview of the app, a bento
+  grid (one large, one dark, three standard cards), a navy call to action with a dot grid, and
+  an ink footer. Home leads with an ink card for the bill due; the staff sidebar is ink.

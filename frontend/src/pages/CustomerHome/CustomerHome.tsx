@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
@@ -105,16 +105,8 @@ function CustomerHome() {
       {t('home.read')}
     </Button>
   );
-  const action = due ? (
-    <>
-      {readButton}
-      <Button fullWidth onClick={() => navigate(`/payment?bill=${due.bill_id}`)}>
-        {t('pay.action', { amount: rwf(due.amount_due) })}
-      </Button>
-    </>
-  ) : (
-    readButton
-  );
+  // The bill due has its own card (with the pay button); the pinned action is for reading.
+  const action = readButton;
 
   let title = t('home.readPrompt');
   if (due) title = t('home.billDue', { month: month(due.created_at), amount: rwf(due.amount_due) });
@@ -126,11 +118,7 @@ function CustomerHome() {
       step={customer.name}
       title={title}
       lede={
-        due ? (
-          <Link to={`/bill?id=${due.bill_id}`} className={styles.link}>
-            {t('home.seeBill')}
-          </Link>
-        ) : checking ? (
+        due ? null : checking ? (
           <p>{t('home.checkingBody')}</p>
         ) : opensOn ? (
           <p>{t('home.readingInBody', { date: date(opensOn) })}</p>
@@ -140,6 +128,23 @@ function CustomerHome() {
       action={action}
     >
       {decision && <DecisionBanner flag={decision} meterId={meterId} />}
+
+      {due && (
+        <section className={`panel panel-ink ${styles.billCard}`} aria-labelledby="due-title">
+          <p id="due-title" className={styles.billLabel}>
+            {t('home.billFor', { month: month(due.created_at) })}
+          </p>
+          <p className={styles.billAmount}>{rwf(due.amount_due)}</p>
+          <div className={styles.billActions}>
+            <Button onClick={() => navigate(`/payment?bill=${due.bill_id}`)}>
+              {t('pay.action', { amount: rwf(due.amount_due) })}
+            </Button>
+            <Button variant="text" onClick={() => navigate(`/bill?id=${due.bill_id}`)}>
+              {t('home.seeBill')}
+            </Button>
+          </div>
+        </section>
+      )}
 
       {((checking && due) || highUse) && (
         <div className={styles.notices}>

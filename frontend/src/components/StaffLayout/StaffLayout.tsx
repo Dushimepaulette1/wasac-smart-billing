@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Icon, { type IconName } from '../Icon/Icon';
+import { LogoMark } from '../Logo/Logo';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -143,7 +144,10 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
 
       <aside id="staff-sidebar" className={styles.sidebar} aria-label={t('staff.sidebar')} {...(!wide && !drawerOpen ? { hidden: true } : {})}>
         <div className={styles.brand}>
-          <span className={styles.wordmark}>Mubazi</span>
+          <span className={styles.brandRow}>
+            <LogoMark size={isCollapsed ? 32 : 34} />
+            {!isCollapsed && <span className={styles.wordmark}>Mubazi</span>}
+          </span>
           {!isCollapsed && <span className={styles.brandSub}>{t('staff.appName')}</span>}
         </div>
 

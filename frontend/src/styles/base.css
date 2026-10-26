@@ -1,7 +1,8 @@
 /**
  * @file base.css
- * @description Reset, the gradient stage, panels and base typography.
- * Element selectors only reset; spacing comes from classes and CSS Modules.
+ * @description Reset, the page ("stage") with its ambient light, panels and ink cards, base
+ * typography and the reveal animation. Element selectors only reset; spacing comes from
+ * classes and CSS Modules.
  */
 
 *,
@@ -18,40 +19,40 @@ html {
 
 body {
   margin: 0;
-  /* Inter: the l with a tail, so l, I and 1 never look alike. */
-  font-feature-settings: 'cv05';
   min-height: 100vh;
   background: var(--stage-base);
   color: var(--color-text);
-  /* Plain zero for every number in text; IDs opt back in with .code. */
-  font-family: var(--font-numbers);
+  font-family: var(--font-text);
   font-size: var(--size-body);
   line-height: var(--leading-body);
   font-weight: var(--weight-regular);
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: var(--color-accent-bg);
+  color: var(--color-text);
+}
+
 /* --------------------------------------------------------------------------
-   The stage: static layered radial gradients on a navy base. No blur, no
-   canvas, no animation; one paint, so cheap phones render it instantly.
-   Fixed behind the page (a pseudo-element, not background-attachment,
-   which mobile browsers repaint on scroll).
+   The stage: the page, with two large soft circles of navy light (top right, bottom left).
+   Radial gradients, not filter: blur(), so cheap phones paint it once. Fixed behind the
+   page (a pseudo-element, not background-attachment, which phones repaint on scroll).
    -------------------------------------------------------------------------- */
 .stage {
   position: relative;
   isolation: isolate;
-  box-sizing: border-box;
   min-height: 100vh;
   min-height: 100dvh;
-  /* Installed app, edge to edge: the gradient (::before, fixed) runs behind the status bar and
-     round the corners, while everything on it starts inside the safe area. */
+  /* Installed app, edge to edge: the page runs behind the status bar, content starts inside
+     the safe area. */
   padding-top: var(--safe-top);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
 }
 
-/* Installed app: a backdrop exactly the height of the status bar, so content scrolling up
-   never shows behind the clock and battery. 0 px tall in a browser tab. */
+/* Installed app: a strip the height of the status bar, so content scrolling up never shows
+   behind the clock and battery. 0 px tall in a browser tab. */
 .stage::after {
   content: '';
   position: fixed;
@@ -65,11 +66,11 @@ body {
 }
 
 /* iPhone (only iOS Safari matches this): its installed-app status bar text is always white, so
-   the strip behind it stays night-blue in the light theme too. Android colours its icons from
-   theme-color (src/theme/theme.ts) and keeps the page colour above. */
+   in the light theme the strip behind it is ink. Android colours its icons from theme-color
+   (src/theme/theme.ts) and keeps the page colour. */
 @supports (-webkit-touch-callout: none) {
   :root[data-theme='light'] .stage::after {
-    background: var(--night);
+    background: var(--navy-ink);
   }
 }
 
@@ -79,102 +80,87 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(62% 55% at 18% 100%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 72%),
-    radial-gradient(48% 42% at 70% 30%, rgba(29, 75, 130, 0.55) 0%, rgba(29, 75, 130, 0) 70%),
-    radial-gradient(36% 30% at 96% 4%, rgba(58, 104, 160, 0.3) 0%, rgba(58, 104, 160, 0) 70%),
-    linear-gradient(168deg, #03070f 0%, #06122a 46%, var(--deep) 100%);
+    radial-gradient(circle 520px at 100% 0%, var(--ambient) 0%, transparent 100%),
+    radial-gradient(circle 460px at 0% 100%, var(--ambient) 0%, transparent 100%),
+    var(--stage-base);
 }
 
-/* Landing: the glow rises behind the centred headline, as in the reference. */
+/* Landing: brighter light behind the centred headline. */
 .stage-hero::before {
   background:
-    radial-gradient(55% 48% at 50% 108%, rgba(108, 160, 214, 0.4) 0%, rgba(108, 160, 214, 0) 74%),
-    radial-gradient(42% 40% at 38% 46%, rgba(29, 75, 130, 0.6) 0%, rgba(29, 75, 130, 0) 72%),
-    radial-gradient(34% 34% at 78% 22%, rgba(58, 104, 160, 0.34) 0%, rgba(58, 104, 160, 0) 70%),
-    linear-gradient(180deg, #03070f 0%, #06122a 50%, var(--deep) 100%);
-}
-
-/* Light theme: the same composition at dawn. */
-:root[data-theme='light'] .stage::before {
-  background:
-    radial-gradient(62% 55% at 18% 100%, rgba(108, 160, 214, 0.38) 0%, rgba(108, 160, 214, 0) 72%),
-    radial-gradient(48% 42% at 72% 26%, rgba(150, 188, 230, 0.5) 0%, rgba(150, 188, 230, 0) 70%),
-    radial-gradient(40% 34% at 96% 2%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(168deg, #F7FAFD 0%, #EBF1F8 50%, #D6E3F2 100%);
-}
-
-:root[data-theme='light'] .stage-hero::before {
-  background:
-    radial-gradient(55% 48% at 50% 108%, rgba(108, 160, 214, 0.42) 0%, rgba(108, 160, 214, 0) 74%),
-    radial-gradient(42% 40% at 34% 40%, rgba(150, 188, 230, 0.5) 0%, rgba(150, 188, 230, 0) 72%),
-    radial-gradient(34% 34% at 80% 18%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(180deg, #F7FAFD 0%, #EBF1F8 52%, #D6E3F2 100%);
+    radial-gradient(circle 640px at 92% 6%, var(--ambient) 0%, transparent 100%),
+    radial-gradient(circle 560px at 6% 72%, var(--ambient) 0%, transparent 100%),
+    var(--stage-base);
 }
 
 /* --------------------------------------------------------------------------
-   Panels: light surfaces floating on the stage. Anything read carefully
-   (readings, money, forms, errors) goes on one. Roles switch to dark ink.
+   Panels: white cards (navy in the dark theme) with a hairline border and a soft shadow.
+   Anything read carefully (readings, money, forms, errors) goes on one.
    -------------------------------------------------------------------------- */
 .panel {
-  --color-text:           var(--ink);
-  --color-text-secondary: var(--ink-2);
-  --color-surface:        var(--paper);
-  --color-action:         var(--ink);
-  --color-on-action:      var(--mist);
-  --color-outline:        var(--ink);
-  --color-held:           var(--brass);
-  --color-rule:           var(--line);
-  --focus-gap:            var(--mist);
-  --focus-color:          var(--ink);
-
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-6);
+  border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
   background: var(--panel-bg);
   box-shadow: var(--panel-shadow);
   color: var(--color-text);
 }
 
-/* Dark theme: panels are a navy surface with light text, so forms, readings and tables
-   follow the theme instead of staying white. Everything inside reads these roles. */
-:root:not([data-theme='light']) .panel {
-  --ink:                  var(--mist);
-  --ink-2:                var(--haze);
-  --line:                 rgba(195, 210, 230, 0.16);
-  --brass:                #E2C27A;
-  --row-hover:            rgba(195, 210, 230, 0.07);
-  --color-text:           var(--mist);
-  --color-text-secondary: var(--haze);
-  --color-surface:        var(--panel-dark);
-  --color-action:         var(--mist);
-  --color-on-action:      var(--ink-dark, #0A1426);
-  --color-outline:        rgba(244, 247, 251, 0.6);
-  --color-held:           #E2C27A;
-  --color-rule:           rgba(195, 210, 230, 0.16);
-  --focus-gap:            var(--panel-dark);
-  --focus-color:          var(--ice);
-  background: var(--panel-dark);
-  border: 1px solid var(--panel-dark-border);
-}
-
 @media (min-width: 768px) {
   .panel {
-    padding: var(--space-8);
+    padding: var(--space-10);
   }
 }
 
-/* A quieter surface for secondary details that are short and not
-   critical, kept on the dark stage. */
+/* An ink card: solid deep navy with white text and sky-blue accents, for the one figure or
+   message that leads a page (the bill due, the queue waiting). */
+.panel-ink {
+  --color-text:           #FFFFFF;
+  --color-text-secondary: var(--ink-card-soft);
+  --color-action:         #FFFFFF;
+  --color-on-action:      var(--navy-ink);
+  --color-emphasis:       var(--ink-card-accent);
+  --color-outline:        rgba(255, 255, 255, 0.24);
+  --color-rule:           rgba(255, 255, 255, 0.12);
+  --color-held:           #E2C27A;
+  --ink:                  #FFFFFF;
+  --ink-2:                var(--ink-card-soft);
+  --line:                 rgba(255, 255, 255, 0.12);
+  --brass:                #E2C27A;
+  --focus-gap:            var(--ink-card);
+  --focus-color:          #FFFFFF;
+  --button-shadow:        0 10px 24px -10px rgba(0, 0, 0, 0.5);
+  border-color: transparent;
+  background: var(--ink-card);
+  color: #FFFFFF;
+}
+
+/* A quieter surface for short secondary details: the soft accent background, no shadow. */
 .panel-quiet {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-6);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-card);
   background: var(--quiet-bg);
+}
+
+/* A small rounded label (status, demo tag). Never interactive. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-accent-bg);
+  color: var(--color-emphasis);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: var(--weight-semibold);
 }
 
 /* --------------------------------------------------------------------------
@@ -228,6 +214,14 @@ button, input, select, textarea {
   color: inherit;
 }
 
+/* Bare fields follow the theme; :where() keeps this at zero specificity, so a component's own
+   field styles win. */
+:where(input:not([type='checkbox'], [type='radio'], [type='range']), select, textarea) {
+  background-color: var(--field-bg);
+  color: var(--field-text);
+  border-color: var(--field-border);
+}
+
 button {
   cursor: pointer;
 }
@@ -237,42 +231,58 @@ a {
   text-underline-offset: 0.2em;
 }
 
-/* One focus style everywhere; its colours follow the surface. The outline
-   keeps focus visible in Windows high-contrast mode. */
+/* One focus style everywhere; its colours follow the surface. The outline keeps focus visible
+   in Windows high-contrast mode. */
 :focus-visible {
   outline: 3px solid transparent;
   box-shadow: var(--focus-ring);
 }
 
 /* --------------------------------------------------------------------------
-   Type scale. Sentence case only.
+   Type scale. Sentence case only. Headlines are Instrument Serif at regular weight, set
+   tight; <em> inside one is the italic, navy line of emphasis.
    -------------------------------------------------------------------------- */
 .display {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-display);
-  line-height: 1.02;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--size-section);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
 .page-title {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-page-title);
-  line-height: 1.08;
-  font-weight: 500;
-  letter-spacing: -0.005em;
+  line-height: 1.02;
+  font-weight: 400;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
 .panel-title {
-  font-variant-numeric: lining-nums;
   font-family: var(--font-display);
   font-size: var(--size-panel-title);
-  line-height: 1.15;
-  font-weight: 600;
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.display em,
+.section-title em,
+.page-title em,
+.panel-title em {
+  font-style: italic;
+  color: var(--color-emphasis);
 }
 
 .text-small {
@@ -305,9 +315,21 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* Letter-and-number codes keep the slashed zero, so 0 and O stay distinct. */
+/* Letter-and-number codes (meter IDs). */
 .code {
   font-family: var(--font-text);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: 0.01em;
+}
+
+/* Small uppercase label, tracked wide: trust bars and section kickers only. */
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 .measure {
@@ -333,4 +355,52 @@ a {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Reveal: things arrive by fading up from a slight 2-degree turn, on one curve
+   (cubic-bezier(0.16, 1, 0.3, 1)). .reveal runs once on load; src/components/Reveal adds
+   .is-visible on scroll. Reduced motion: no movement.
+   -------------------------------------------------------------------------- */
+.reveal {
+  animation: reveal var(--motion-hero) var(--ease-reveal) both;
+}
+
+.reveal-1 { animation-delay: 80ms; }
+.reveal-2 { animation-delay: 160ms; }
+.reveal-3 { animation-delay: 240ms; }
+.reveal-4 { animation-delay: 320ms; }
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) rotate(2deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.on-scroll {
+  opacity: 0;
+  transform: translateY(28px) rotate(2deg);
+  transition: opacity var(--motion-hero) var(--ease-reveal), transform var(--motion-hero) var(--ease-reveal);
+}
+
+.on-scroll.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+
+  .on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
