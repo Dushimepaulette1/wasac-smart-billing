@@ -373,6 +373,79 @@
   color: var(--ink-card-accent);
 }
 
+/* Phones: the three small features as rows in one card. */
+@media (max-width: 767px) {
+  .card {
+    min-height: 0;
+    padding: var(--space-6);
+    border-radius: 32px;
+  }
+
+  .cardTitle {
+    margin-top: var(--space-5);
+    font-size: 1.75rem;
+  }
+
+  .cardBackIcon {
+    width: 140px;
+    height: 140px;
+    right: -16px;
+    bottom: -20px;
+  }
+
+  .smallGroup {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2) var(--space-6);
+    border: 1px solid var(--panel-border);
+    border-radius: 32px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+  }
+
+  .smallCard {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding: var(--space-5) 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .smallCard + .smallCard {
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .smallCard .cardIcon {
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    border-radius: 14px;
+  }
+
+  .smallCard .cardTitle {
+    margin: 0 0 var(--space-1);
+    font-size: 1.45rem;
+  }
+}
+
+/* Wider: the group disappears and its three cards sit in the grid like the others. */
+@media (min-width: 768px) {
+  .smallGroup {
+    display: contents;
+  }
+
+  .smallText {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}
+
 /* --------------------------------------------------------------------------
    Call to action: a solid navy block with a fine white dot grid.
    -------------------------------------------------------------------------- */
@@ -492,11 +565,6 @@
   gap: var(--space-3);
 }
 
-/* On ink, the mark is sky blue. */
-.footerLogo > span:first-child {
-  background: var(--sky);
-  color: var(--navy-ink);
-}
 
 .footerName {
   color: #FFFFFF;

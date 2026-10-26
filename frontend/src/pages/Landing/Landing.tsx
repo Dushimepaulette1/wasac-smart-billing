@@ -84,7 +84,6 @@ function Landing() {
         {/* Hero */}
         <section className={styles.hero} aria-labelledby="landing-title">
           <p className={`${styles.heroBadge} badge reveal`}>
-            <Icon name="sparkle" size={16} />
             {t('landing.eyebrow')}
           </p>
           <h1 id="landing-title" className={`${styles.title} display reveal reveal-1`}>
@@ -149,15 +148,20 @@ function Landing() {
               <h3 className={styles.cardTitle}>{t('landing.featureLeakTitle')}</h3>
               <p className={styles.cardText}>{t('landing.featureLeak')}</p>
             </Reveal>
-            {SMALL_FEATURES.map((f) => (
-              <Reveal key={f.title} className={styles.card}>
-                <span className={styles.cardIcon}>
-                  <Icon name={f.icon} size={24} />
-                </span>
-                <h3 className={styles.cardTitle}>{t(f.title)}</h3>
-                <p className={styles.cardText}>{t(f.text)}</p>
-              </Reveal>
-            ))}
+            {/* Phones: one card with three rows. Wider: three cards in the grid. */}
+            <Reveal className={styles.smallGroup}>
+              {SMALL_FEATURES.map((f) => (
+                <div key={f.title} className={`${styles.card} ${styles.smallCard}`}>
+                  <span className={styles.cardIcon}>
+                    <Icon name={f.icon} size={22} />
+                  </span>
+                  <div className={styles.smallText}>
+                    <h3 className={styles.cardTitle}>{t(f.title)}</h3>
+                    <p className={styles.cardText}>{t(f.text)}</p>
+                  </div>
+                </div>
+              ))}
+            </Reveal>
           </div>
         </section>
 
@@ -182,7 +186,7 @@ function Landing() {
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
-            <span className={styles.footerLogo}>
+            <span className={`${styles.footerLogo} on-ink`}>
               <LogoMark />
               <span className={styles.footerName}>Mubazi</span>
             </span>

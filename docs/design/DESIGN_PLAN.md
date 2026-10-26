@@ -461,3 +461,12 @@ in their own navy instead of coral. Built in `src/styles/tokens.css` and `base.c
 - **Landing:** centred hero with badge, value list beside a dark preview of the app, a bento
   grid (one large, one dark, three standard cards), a navy call to action with a dot grid, and
   an ink footer. Home leads with an ink card for the bill due; the staff sidebar is ink.
+
+**Update (26/10/2026):** text is now **Josefin Sans** (variable 100-700, sized a step up for its
+small x-height, nudged down 0.09-0.18em in pills and fields where it sits high); headlines stay
+Instrument Serif. Icons are **Lucide** (ISC, inline SVG, 1.75 stroke;
+`src/components/Icon/LICENSE-lucide.txt`). The mark is redrawn as an SVG monogram: a deep navy
+tile, a geometric white "M" at one stroke weight and a sky-blue point under it (inverted on ink
+surfaces and in the dark theme); no tilt. The app icons use the same drawing. "Water billing" no
+longer sits beside the name. On phones the three small feature cards on the landing page are
+grouped into one card of rows.

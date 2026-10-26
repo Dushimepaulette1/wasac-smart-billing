@@ -35,19 +35,6 @@
   letter-spacing: -0.02em;
 }
 
-.tagline {
-  padding-left: var(--space-3);
-  border-left: 1px solid var(--color-rule);
-  color: var(--stage-soft);
-  font-size: var(--size-small);
-  font-weight: var(--weight-medium);
-}
-
-@media (max-width: 899px) {
-  .tagline {
-    display: none;
-  }
-}
 
 /* Household links: header on wide screens, bottom bar on phones. */
 .nav {
@@ -172,6 +159,7 @@
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
+  padding-top: 0.18em; /* Josefin Sans sits high */
   transition: transform var(--motion) var(--ease-reveal);
 }
 

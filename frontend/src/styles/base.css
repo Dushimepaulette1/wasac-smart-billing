@@ -404,3 +404,14 @@ a {
     transition: none;
   }
 }
+
+/* Josefin Sans sits high in its line box: nudge text in pills and fields down so it looks
+   centred (buttons, the header call to action, selects, badges). */
+:where([data-variant] > span, .badge) {
+  position: relative;
+  top: 0.09em;
+}
+
+:where(select, input) {
+  padding-top: 0.18em;
+}

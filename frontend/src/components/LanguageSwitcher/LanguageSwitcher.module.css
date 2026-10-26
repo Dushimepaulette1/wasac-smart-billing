@@ -20,6 +20,7 @@
   color: var(--color-text);
   font-size: var(--size-small);
   cursor: pointer;
+  padding-top: 0.18em; /* Josefin Sans sits high */
 }
 
 .select option {

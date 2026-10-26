@@ -344,9 +344,3 @@
 .sidebar[hidden] {
   display: none;
 }
-
-/* On the ink sidebar the mark is sky blue, so it stands out in both themes. */
-.brandRow > span:first-child {
-  background: var(--sky);
-  color: var(--navy-ink);
-}

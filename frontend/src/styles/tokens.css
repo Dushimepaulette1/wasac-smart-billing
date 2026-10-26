@@ -3,7 +3,7 @@
  * @description Design tokens: "Navy and Ink", an editorial style.
  * Two navies do all the work: Navy (#1D4B82) for actions and emphasis, Ink (#0B2244) for text
  * and dark cards, with Mist (#EEF3F9) as the soft background accent. Large serif headlines
- * (Instrument Serif, the second line italic in Navy), Manrope for everything else, generous
+ * (Instrument Serif, the second line italic in Navy), Josefin Sans for everything else, generous
  * radii, soft ambient light. Values and contrast checks: docs/design/DESIGN_PLAN.md.
  *
  * Light is the reference theme: a white page with white cards. Dark is "night": the same
@@ -38,18 +38,18 @@
   --paper:       #FFFFFF;
 
   /* ------------------------------------------------------------------------
-     Type: Instrument Serif for headlines, Manrope for everything else,
+     Type: Instrument Serif for headlines, Josefin Sans for everything else,
      Barlow Condensed for counter digits.
      ------------------------------------------------------------------------ */
   --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --font-text: 'Manrope', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-text: 'Josefin Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-numbers: var(--font-text);
   --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
 
-  --size-small: 14px;        --leading-small: 21px;
-  --size-body-staff: 15px;   --leading-body-staff: 23px;
-  --size-body: 16px;         --leading-body: 27px;
-  --size-lead: 18px;         --leading-lead: 30px;
+  --size-small: 15px;        --leading-small: 22px;
+  --size-body-staff: 16px;   --leading-body-staff: 24px;
+  --size-body: 17px;         --leading-body: 28px;
+  --size-lead: 19px;         --leading-lead: 31px;
   --size-title: 22px;        --leading-title: 30px;
   --size-display: clamp(3.4rem, 2rem + 6vw, 7.5rem);      /* landing hero */
   --size-section: clamp(2.6rem, 1.8rem + 3.4vw, 4.5rem);  /* landing sections */
