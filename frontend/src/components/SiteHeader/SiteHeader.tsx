@@ -12,7 +12,6 @@ import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
 import { unreadCount, useHouseholdFlags } from '../../household/status';
-import useScrolled from './useScrolled';
 import styles from './SiteHeader.module.css';
 
 export const HOUSEHOLD_LINKS = [
@@ -76,10 +75,9 @@ function Bell() {
 
 function SiteHeader({ links = true }: SiteHeaderProps) {
   const { t } = useI18n();
-  const scrolled = useScrolled();
   const onSignIn = /sign-in/.test(useLocation().pathname);
   return (
-    <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
+    <header className={styles.header}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
           <LogoMark />

@@ -233,8 +233,8 @@
 }
 
 .topbar {
-  position: sticky;
-  top: var(--safe-top);
+  /* Part of the page: no background, no line, scrolls away with the content. */
+  position: relative;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -242,14 +242,6 @@
   min-height: 68px;
   padding: var(--space-2) var(--gutter);
   background: transparent;
-  transition: background-color 240ms ease;
-}
-
-/* Same as the page at the top; a soft blur once content scrolls under it. No line. */
-.topbarScrolled {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 .menuButton {
