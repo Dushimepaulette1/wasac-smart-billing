@@ -51,26 +51,22 @@ body {
   padding-right: var(--safe-right);
 }
 
-/* Installed app: a strip the height of the status bar, so content scrolling up never shows
-   behind the clock and battery. 0 px tall in a browser tab. */
-.stage::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
-  height: var(--safe-top);
-  background: var(--stage-base);
-  pointer-events: none;
-}
-
-/* iPhone (only iOS Safari matches this): its installed-app status bar text is always white, so
-   in the light theme the strip behind it is ink. Android colours its icons from theme-color
-   (src/theme/theme.ts) and keeps the page colour. */
+/* Installed app: the page's own background runs up behind the status bar (no strip), so the
+   screen is one surface to the top edge. Android colours its status icons from theme-color
+   (src/theme/theme.ts). iPhone (only iOS Safari matches the @supports below) always draws its
+   status bar text in white, so in the light theme it gets an ink strip to stay readable; it is
+   0 px tall in a browser tab. */
 @supports (-webkit-touch-callout: none) {
   :root[data-theme='light'] .stage::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    height: var(--safe-top);
     background: var(--navy-ink);
+    pointer-events: none;
   }
 }
 

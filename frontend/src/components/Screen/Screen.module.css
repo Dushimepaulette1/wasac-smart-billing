@@ -8,7 +8,7 @@
   width: 100%;
   max-width: var(--width-site);
   margin-inline: auto;
-  padding: var(--space-4) var(--gutter) var(--space-16);
+  padding: var(--space-2) var(--gutter) var(--space-16);
 }
 
 .head {
