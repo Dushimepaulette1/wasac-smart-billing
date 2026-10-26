@@ -22,6 +22,7 @@ import { hasRole, useAuth } from '../../staff/auth';
 import type { StaffRole } from '../../api/types';
 import { api } from '../../api/client';
 import useRequest from '../../api/useRequest';
+import useScrolled from '../SiteHeader/useScrolled';
 import styles from './StaffLayout.module.css';
 
 const COLLAPSED_KEY = 'wasac.sidebarCollapsed';
@@ -70,6 +71,7 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
   const { t } = useI18n();
   const { user, signOut } = useAuth();
   const wide = useMedia(WIDE);
+  const scrolled = useScrolled();
   // Pages that already load the queue pass their count; others load it here.
   const queueCount = useRequest(
     () => api.reviewQueue().then((q) => q.length),
@@ -204,7 +206,7 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
       </aside>
 
       <div className={styles.content}>
-        <header className={styles.topbar}>
+        <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ''}`}>
           <button
             ref={menuButtonRef}
             type="button"

@@ -128,8 +128,10 @@ function StaffSignIn() {
         </form>
 
         <Link to="/" className={styles.back}>
-          <Icon name="back" size={18} />
-          {t('signin.backHome')}
+          <span className={styles.backCircle} aria-hidden="true">
+            <Icon name="back" size={18} />
+          </span>
+          <span className={styles.backLabel}>{t('signin.backHome')}</span>
         </Link>
       </main>
     </div>

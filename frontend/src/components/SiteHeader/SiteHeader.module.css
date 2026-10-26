@@ -1,12 +1,23 @@
-/* Fixed glass bar: white at 80% with a 12px blur, a hairline underneath. */
+/* Sticky, and the same as the page at the top: no background, no line. Once content scrolls
+   under it, a soft glass blur keeps it readable (still no line). */
 .header {
   position: sticky;
   top: var(--safe-top);
   z-index: 20;
-  border-bottom: 1px solid var(--color-rule);
+  background: transparent;
+  transition: background-color 240ms ease, -webkit-backdrop-filter 240ms ease, backdrop-filter 240ms ease;
+}
+
+.scrolled {
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header {
+    transition: none;
+  }
 }
 
 .inner {

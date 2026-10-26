@@ -5,13 +5,14 @@
  * and the language switcher. On phones the navigation moves to the bottom.
  */
 
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import Icon from '../Icon/Icon';
 import { LogoMark } from '../Logo/Logo';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
 import { unreadCount, useHouseholdFlags } from '../../household/status';
+import useScrolled from './useScrolled';
 import styles from './SiteHeader.module.css';
 
 export const HOUSEHOLD_LINKS = [
@@ -75,8 +76,10 @@ function Bell() {
 
 function SiteHeader({ links = true }: SiteHeaderProps) {
   const { t } = useI18n();
+  const scrolled = useScrolled();
+  const onSignIn = /sign-in/.test(useLocation().pathname);
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
           <LogoMark />
@@ -89,10 +92,13 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
           {links && <Bell />}
           <LanguageSwitcher />
           <ThemeToggle />
-          {/* The one call to action: sign in (public pages) or read the meter (households). */}
-          <Link to={links ? '/submit/camera' : '/home'} className={styles.cta}>
-            {links ? t('header.read') : t('header.signIn')}
-          </Link>
+          {/* The one call to action: sign in (public pages) or read the meter (households).
+              Not on the sign-in pages themselves. */}
+          {!onSignIn && (
+            <Link to={links ? '/submit/camera' : '/home'} className={styles.cta}>
+              {links ? t('header.read') : t('header.signIn')}
+            </Link>
+          )}
         </div>
       </div>
     </header>
