@@ -15,7 +15,6 @@ import Icon from '../Icon/Icon';
 import SiteHeader from '../SiteHeader/SiteHeader';
 import HouseholdNav from '../HouseholdNav/HouseholdNav';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useHousehold } from '../../household/session';
 import styles from './Screen.module.css';
 
 interface ScreenProps {
@@ -43,7 +42,6 @@ interface ScreenProps {
 function Screen({ title, emphasis, step, lede, back, action, nav = false, immersive = false, narrow = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const isDemo = useHousehold().account?.is_demo ?? false;
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Move focus to the new page's title so screen readers announce it,
@@ -67,12 +65,12 @@ function Screen({ title, emphasis, step, lede, back, action, nav = false, immers
 
       <main className={styles.main}>
         <div className={styles.head}>
-          {/* A label, not a button: this household's data is made up for trying the app. */}
-          {isDemo && <p className={`${styles.demo} badge`}>{t('demo.label')}</p>}
           {back && (
             <button type="button" className={styles.back} onClick={goBack}>
-              <Icon name="back" size={20} />
-              <span>{t('action.back')}</span>
+              <span className={styles.backCircle} aria-hidden="true">
+                <Icon name="back" size={18} />
+              </span>
+              <span className={styles.backLabel}>{t('action.back')}</span>
             </button>
           )}
           {step && <p className={`${styles.step} badge`}>{step}</p>}

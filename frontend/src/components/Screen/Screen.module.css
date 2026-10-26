@@ -30,34 +30,55 @@
   }
 }
 
+/* Back: an outlined circle with the arrow, and the word beside it. */
 .back {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-height: var(--tap-min);
-  margin-left: calc(-1 * var(--space-2));
-  padding: 0 var(--space-3) 0 var(--space-2);
+  padding: 0 var(--space-4) 0 0;
   border: 0;
   border-radius: var(--radius-button);
   background: none;
-  color: var(--stage-soft);
-  font-size: var(--size-body);
-  font-weight: var(--weight-bold);
+  color: var(--stage-strong);
+  font-size: var(--size-small);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
 }
 
-.back:hover {
-  color: var(--stage-strong);
+.backCircle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--color-outline);
+  border-radius: 50%;
+  transition: background-color 200ms ease, border-color 200ms ease, transform 300ms var(--ease-reveal);
+}
+
+.backLabel {
+  position: relative;
+  top: 0.09em; /* Josefin Sans sits high */
+}
+
+.back:hover .backCircle {
+  border-color: transparent;
+  background: var(--color-accent-bg);
+  transform: translateX(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backCircle {
+    transition: none;
+  }
+
+  .back:hover .backCircle {
+    transform: none;
+  }
 }
 
 .step {
   margin: 0;
-}
-
-/* "Demo data": small and quiet, but never missing while a DEMO- household is shown. */
-.demo {
-  margin: 0;
-  background: rgba(226, 194, 122, 0.16);
-  color: var(--color-held);
 }
 
 .title {
