@@ -57,7 +57,8 @@ await step('02 sign in with code', p, async () => {
   await p.getByText('Your meter', { exact: true }).waitFor({ timeout: 30000 });
 });
 await step('03 open the camera', p, async () => {
-  await p.getByRole('button', { name: 'Read your meter' }).click();
+  // Phones read the meter from the bottom bar's raised Read button.
+  await p.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Read' }).click();
   await p.waitForURL(/submit\/camera/);
   await p.locator('video').waitFor({ timeout: 30000 });
 });
