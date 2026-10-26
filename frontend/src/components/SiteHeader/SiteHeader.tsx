@@ -81,7 +81,6 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
         <Link to="/" className={styles.brand}>
           <LogoMark />
           <span className={styles.wordmark}>Mubazi</span>
-          <span className={styles.tagline}>{t('brand.tagline')}</span>
         </Link>
 
         {links && <HeaderLinks />}

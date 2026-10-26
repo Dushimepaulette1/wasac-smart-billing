@@ -144,7 +144,7 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
 
       <aside id="staff-sidebar" className={styles.sidebar} aria-label={t('staff.sidebar')} {...(!wide && !drawerOpen ? { hidden: true } : {})}>
         <div className={styles.brand}>
-          <span className={styles.brandRow}>
+          <span className={`${styles.brandRow} on-ink`}>
             <LogoMark size={isCollapsed ? 32 : 34} />
             {!isCollapsed && <span className={styles.wordmark}>Mubazi</span>}
           </span>
