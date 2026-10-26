@@ -7,41 +7,41 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: clamp(var(--space-20), 10vw, 160px);
   width: 100%;
   max-width: var(--width-site);
   margin-inline: auto;
-  padding: 0 var(--gutter) var(--space-10);
+  padding: 0 var(--gutter) clamp(var(--space-16), 8vw, 120px);
 }
 
+/* --------------------------------------------------------------------------
+   Hero: centred, a badge, two serif lines (the second italic, navy), two pills.
+   -------------------------------------------------------------------------- */
 .hero {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-5);
-  min-height: min(72vh, 680px);
-  padding: var(--space-16) 0 var(--space-12);
+  gap: var(--space-6);
+  padding-top: clamp(var(--space-16), 10vw, 140px);
   text-align: center;
-  animation: rise var(--motion-hero) cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* The one eyebrow on the page, as in the reference. */
-.eyebrow {
-  color: var(--stage-soft);
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+.heroBadge {
+  margin: 0;
 }
 
 .title {
-  max-width: 17ch;
+  max-width: 14ch;
   color: var(--stage-strong);
 }
 
+/* The italic line always starts on its own line. */
+.titleLine {
+  display: block;
+}
+
 .lede {
-  max-width: 44ch;
+  max-width: 42rem;
   color: var(--stage-soft);
 }
 
@@ -49,70 +49,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-3) var(--space-4);
-  margin-top: var(--space-4);
-}
-
-.account {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap-min);
-  color: var(--stage-soft);
-  font-size: var(--size-small);
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--space-6);
-}
-
-.account:hover {
-  color: var(--stage-strong);
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-/* The three real steps of a reading, along the bottom of the stage. */
-.steps {
-  border-top: 1px solid var(--color-rule);
-  padding-top: var(--space-8);
-}
-
-.stepList {
-  display: grid;
-  gap: var(--space-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-@media (min-width: 768px) {
-  .stepList {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-8);
-  }
-}
-
-.step {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-4);
-  color: var(--stage-soft);
-}
-
-.stepNumber {
-  flex: none;
-  font-family: var(--font-display);
-  font-size: 2rem;
-  line-height: 1;
-  font-variant-numeric: lining-nums;
-  color: var(--stage-strong);
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 @media (max-width: 479px) {
@@ -122,9 +60,479 @@
   }
 }
 
-/* Install the app (Android button, iPhone hint): quiet, under the account link. */
 .install {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* --------------------------------------------------------------------------
+   Value: copy and feature list on the left, the app preview on the right.
+   -------------------------------------------------------------------------- */
+.value {
+  display: grid;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+@media (min-width: 960px) {
+  .value {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-16);
+  }
+}
+
+.valueCopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  color: var(--stage-strong);
+}
+
+.valueList {
+  display: grid;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.valueItem {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.valueIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--color-accent-bg);
+  color: var(--color-emphasis);
+}
+
+.valueTitle {
+  display: block;
+  margin-bottom: 2px;
+  font-size: var(--size-lead);
+  font-weight: var(--weight-bold);
+}
+
+.valueText {
+  display: block;
   color: var(--stage-soft);
+}
+
+/* The app preview: a dark window with a white app inside. */
+.preview {
+  position: relative;
+  padding: var(--space-6);
+  border-radius: 40px;
+  background: var(--navy-ink);
+  box-shadow: 0 40px 80px -40px rgba(11, 34, 68, 0.6);
+}
+
+:global(:root[data-theme='dark']) .preview {
+  background: #13294D;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) var(--space-8);
+  border-radius: 24px;
+  background: #FFFFFF;
+}
+
+.windowBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-2);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #E3E8F0;
+}
+
+.dot:nth-child(1) { background: #F2B8B0; }
+.dot:nth-child(2) { background: #F4D9A1; }
+.dot:nth-child(3) { background: #B7DCC4; }
+
+.address {
+  flex: 1;
+  height: 10px;
+  margin-left: var(--space-3);
+  border-radius: 999px;
+  background: #EEF1F6;
+}
+
+.skeleton {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: #EEF1F6;
+}
+
+.skeletonTitle {
+  width: 45%;
+  height: 14px;
+  background: #E1E7F0;
+}
+
+.skeletonShort {
+  width: 60%;
+}
+
+.meter {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) var(--space-3);
+  border-radius: 18px;
+  background: var(--navy-mist);
+  /* The counter's unit labels need ink here, whatever the theme. */
+  --color-text-secondary: #4E5D75;
+  --text-2: #4E5D75;
+}
+
+.blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.blockSoft,
+.blockGrey {
+  height: 64px;
+  border-radius: 16px;
+}
+
+.blockSoft {
+  background: var(--navy-mist);
+}
+
+.blockGrey {
+  background: #F2F4F7;
+}
+
+/* The status bar across the bottom of the window: glass over the app. */
+.statusBar {
+  position: absolute;
+  left: var(--space-10);
+  right: var(--space-10);
+  bottom: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 32px -16px rgba(11, 34, 68, 0.4);
+  color: #0B2244;
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #1F8A55;
+  color: #FFFFFF;
+}
+
+.statusText {
+  margin-right: auto;
+  font-size: var(--size-small);
+  font-weight: var(--weight-bold);
+}
+
+.tag {
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: #0B2244;
+  color: #FFFFFF;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@media (max-width: 479px) {
+  .statusBar {
+    left: var(--space-4);
+    right: var(--space-4);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Features: a bento grid. One large card over two columns, one dark card, then three.
+   -------------------------------------------------------------------------- */
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.featuresTitle {
+  max-width: 16ch;
+  color: var(--stage-strong);
+}
+
+.bento {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 768px) {
+  .bento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cardLarge {
+    grid-column: span 2;
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 240px;
+  padding: var(--space-8);
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: 48px;
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+  color: var(--color-text);
+}
+
+.cardIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: auto;
+  border-radius: 18px;
+  background: var(--color-accent-bg);
+  color: var(--color-emphasis);
+  transition: background-color var(--motion) ease, color var(--motion) ease;
+}
+
+.card:hover .cardIcon {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+
+.cardTitle {
+  margin-top: var(--space-6);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.cardText {
+  max-width: 38ch;
+  color: var(--color-text-secondary);
+}
+
+/* The large card's big icon, at 5% behind the text. */
+.cardBackIcon {
+  position: absolute;
+  right: -20px;
+  bottom: -30px;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.cardDark {
+  border-color: transparent;
+  background: var(--ink-card);
+  color: #FFFFFF;
+}
+
+.cardDark .cardText {
+  color: var(--ink-card-soft);
+}
+
+.cardDark .cardIcon,
+.cardDark:hover .cardIcon {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-card-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Call to action: a solid navy block with a fine white dot grid.
+   -------------------------------------------------------------------------- */
+.cta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: clamp(var(--space-12), 8vw, 112px) var(--space-6);
+  overflow: hidden;
+  border-radius: 64px;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.2) 1.2px, transparent 1.6px) 0 0 / 30px 30px,
+    var(--navy);
+  color: #FFFFFF;
   text-align: center;
+}
+
+.ctaTitle {
+  max-width: 12ch;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 2rem + 5vw, 6.5rem);
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.ctaTitle em {
+  display: block;
+  font-style: italic;
+  color: var(--ice);
+}
+
+.ctaText {
+  max-width: 36rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--size-lead);
+  line-height: var(--leading-lead);
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--button-height);
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: var(--radius-button);
+  background: #FFFFFF;
+  color: var(--navy);
+  font-weight: var(--weight-bold);
+  box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.45);
+  transition: transform var(--motion) var(--ease-reveal);
+  --focus-gap: var(--navy);
+  --focus-color: #FFFFFF;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+}
+
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-8);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   Footer: deep ink, a brand column and three link columns.
+   -------------------------------------------------------------------------- */
+.footer {
+  padding: var(--space-16) var(--gutter) var(--space-8);
+  padding-bottom: calc(var(--space-8) + var(--safe-bottom));
+  background: var(--navy-ink);
+  color: rgba(255, 255, 255, 0.72);
+  --focus-gap: var(--navy-ink);
+  --focus-color: #FFFFFF;
+}
+
+:global(:root[data-theme='dark']) .footer {
+  background: #07142A;
+}
+
+.footerInner {
+  display: grid;
+  gap: var(--space-10);
+  max-width: var(--width-site);
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .footerInner {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+.footerBrand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 32ch;
+}
+
+.footerLogo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* On ink, the mark is sky blue. */
+.footerLogo > span:first-child {
+  background: var(--sky);
+  color: var(--navy-ink);
+}
+
+.footerName {
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+}
+
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.footerCol h4 {
+  margin-bottom: var(--space-1);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+}
+
+.footerCol a {
+  width: fit-content;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+}
+
+.footerCol a:hover {
+  color: #FFFFFF;
+  text-decoration: underline;
+}
+
+.footerBottom {
+  max-width: var(--width-site);
+  margin: var(--space-12) auto 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: var(--size-small);
 }

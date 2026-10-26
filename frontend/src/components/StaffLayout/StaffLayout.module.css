@@ -37,6 +37,16 @@
   border-right: 1px solid var(--color-rule);
   background: var(--sidebar-bg);
   transition: width 180ms ease;
+  /* An ink panel in both themes: its own light-on-ink roles. */
+  --stage-strong: #FFFFFF;
+  --stage-soft: rgba(255, 255, 255, 0.68);
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+  --color-rule: rgba(255, 255, 255, 0.1);
+  --color-outline: rgba(255, 255, 255, 0.24);
+  --color-held: #E2C27A;
+  --focus-gap: var(--sidebar-bg);
+  --focus-color: #FFFFFF;
+  border-right-color: transparent;
 }
 
 .collapsed .sidebar {
@@ -60,9 +70,15 @@
 }
 
 .wordmark {
-  font-size: 1.6rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 1.7rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.brandRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .collapsed .wordmark {
@@ -97,7 +113,7 @@
   min-height: var(--tap-min);
   padding: 0 var(--space-3);
   border: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: none;
   color: var(--stage-soft);
   font-size: var(--size-body-staff);
@@ -144,16 +160,13 @@
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--color-held);
-  color: var(--ink);
+  color: #0A1426;
   font-size: 13px;
   font-weight: var(--weight-bold);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-:root[data-theme='light'] .count {
-  color: #FFFFFF;
-}
 
 .collapsed .count {
   position: absolute;
@@ -191,7 +204,7 @@
   height: 36px;
   border-radius: 50%;
   background: var(--stage-strong);
-  color: var(--stage-base);
+  color: var(--navy-ink);
   font-weight: var(--weight-bold);
 }
 
@@ -229,7 +242,9 @@
   min-height: 68px;
   padding: var(--space-2) var(--gutter);
   border-bottom: 1px solid var(--color-rule);
-  background: var(--sidebar-bg);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .menuButton {
@@ -296,7 +311,7 @@
     padding-top: calc(var(--space-5) + var(--safe-top));
     padding-bottom: calc(var(--space-5) + var(--safe-bottom));
     padding-left: calc(var(--space-3) + var(--safe-left));
-    background: var(--stage-bar);
+    background: var(--sidebar-bg);
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
     animation: slide 180ms ease-out;
   }
@@ -328,4 +343,10 @@
    leave the closed drawer covering the page on narrow screens. */
 .sidebar[hidden] {
   display: none;
+}
+
+/* On the ink sidebar the mark is sky blue, so it stands out in both themes. */
+.brandRow > span:first-child {
+  background: var(--sky);
+  color: var(--navy-ink);
 }

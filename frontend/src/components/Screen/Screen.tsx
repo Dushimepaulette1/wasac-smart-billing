@@ -20,6 +20,8 @@ import styles from './Screen.module.css';
 
 interface ScreenProps {
   title: string;
+  /** A second line under the title, set in italic navy (the editorial emphasis). */
+  emphasis?: string;
   /** "Step 2 of 3", shown above the title in the submit flow. */
   step?: string;
   /** A sentence under the title. */
@@ -38,7 +40,7 @@ interface ScreenProps {
   children: ReactNode;
 }
 
-function Screen({ title, step, lede, back, action, nav = false, immersive = false, narrow = false, children }: ScreenProps) {
+function Screen({ title, emphasis, step, lede, back, action, nav = false, immersive = false, narrow = false, children }: ScreenProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const isDemo = useHousehold().account?.is_demo ?? false;
@@ -48,10 +50,10 @@ function Screen({ title, step, lede, back, action, nav = false, immersive = fals
   // unless something on the page already took focus (such as the meter
   // counter opening for typing). Child effects run first, so check.
   useEffect(() => {
-    document.title = `${title} | ${t('app.name')}`;
+    document.title = `${emphasis ? `${title} ${emphasis}` : title} | ${t('app.name')}`;
     const active = document.activeElement;
     if (!active || active === document.body) headingRef.current?.focus({ preventScroll: true });
-  }, [title, t]);
+  }, [title, emphasis, t]);
 
   const goBack = () => (typeof back === 'string' ? navigate(back) : navigate(-1));
 
@@ -66,16 +68,22 @@ function Screen({ title, step, lede, back, action, nav = false, immersive = fals
       <main className={styles.main}>
         <div className={styles.head}>
           {/* A label, not a button: this household's data is made up for trying the app. */}
-          {isDemo && <p className={`${styles.demo} text-small`}>{t('demo.label')}</p>}
+          {isDemo && <p className={`${styles.demo} badge`}>{t('demo.label')}</p>}
           {back && (
             <button type="button" className={styles.back} onClick={goBack}>
               <Icon name="back" size={20} />
               <span>{t('action.back')}</span>
             </button>
           )}
-          {step && <p className={`${styles.step} text-small`}>{step}</p>}
+          {step && <p className={`${styles.step} badge`}>{step}</p>}
           <h1 ref={headingRef} tabIndex={-1} className={`${styles.title} page-title`}>
             {title}
+            {emphasis && (
+              <>
+                {' '}
+                <em className={styles.emphasis}>{emphasis}</em>
+              </>
+            )}
           </h1>
           {lede && <div className={`${styles.lede} text-lead`}>{lede}</div>}
           {action && (

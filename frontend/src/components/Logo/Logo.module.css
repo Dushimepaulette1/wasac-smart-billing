@@ -1,0 +1,31 @@
+.mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 10px;
+  background: var(--navy);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1;
+  padding-bottom: 0.06em;
+  transform: rotate(3deg);
+  transition: transform 300ms var(--ease-reveal);
+}
+
+:global(:root[data-theme='dark']) .mark {
+  background: var(--sky);
+  color: var(--navy-ink);
+}
+
+a:hover .mark,
+a:focus-visible .mark {
+  transform: rotate(12deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    transition: none;
+  }
+}

@@ -1,97 +1,64 @@
 /**
  * @file tokens.css
- * @description Design tokens: "deep water at night".
- * A navy stage lit by static blue glows; anything read carefully sits on a
- * light panel. Values and contrast checks: docs/design/DESIGN_PLAN.md.
+ * @description Design tokens: "Navy and Ink", an editorial style.
+ * Two navies do all the work: Navy (#1D4B82) for actions and emphasis, Ink (#0B2244) for text
+ * and dark cards, with Mist (#EEF3F9) as the soft background accent. Large serif headlines
+ * (Instrument Serif, the second line italic in Navy), Manrope for everything else, generous
+ * radii, soft ambient light. Values and contrast checks: docs/design/DESIGN_PLAN.md.
  *
- * Colour roles (--color-*) are set twice: for the dark stage here, and for
- * light panels in .panel (base.css). Components only use roles, so the same
- * Button or Notice works on either surface.
+ * Light is the reference theme: a white page with white cards. Dark is "night": the same
+ * layout on #040A16 with navy cards. Components use the roles (--color-*, --stage-*, --panel-*),
+ * so every surface, field and table follows the theme.
  */
 
 :root {
   /* ------------------------------------------------------------------------
      Palette
      ------------------------------------------------------------------------ */
-  --night:  #040A16; /* page base, behind the gradient */
-  --deep:   #0B2244; /* lower stage */
-  --tide:   #1D4B82; /* mid-blue glow */
-  --glow:   #6CA0D6; /* luminous glow, used at 40% alpha */
-  --ice:    #BFD7F0; /* focus ring and highlights on dark */
-  --mist:   #F4F7FB; /* headlines on dark; panel surface. 7.2:1 on the lightest glow */
-  --haze:   #C3D2E6; /* body text on dark. 5.1:1 on the lightest glow */
-  --ink:    #0A1426; /* text on panels. 17:1 on mist */
-  --ink-2:  #45516A; /* secondary text on panels. 7.4:1 on mist */
-  --line:   #D5DEEA; /* hairlines inside panels */
+  --navy:      #1D4B82; /* primary: buttons, emphasis. White on it 8.8:1 */
+  --navy-ink:  #0B2244; /* ink: text and dark cards. 15.8:1 on white */
+  --navy-mist: #EEF3F9; /* soft accent background */
+  --night:     #040A16; /* dark theme page */
+  --night-2:   #0B1A33; /* dark theme cards */
+  --sky:       #8DB6E3; /* dark theme primary; ink text on it 8.8:1 */
+
+  --glow:   #6CA0D6;
+  --ice:    #BFD7F0;
+  --mist:   #F4F7FB;
+  --haze:   #C3D2E6;
+  --ink:    #0B2244;
+  --ink-2:  #4E5D75; /* secondary text: 6.7:1 on white, 6.0:1 on mist */
+  --line:   rgba(11, 34, 68, 0.08);
 
   /* The meter itself: counter only. Red is never used for anything else. */
   --wheel-black: #000000;
   --litre-red:   #A3111F;
-  --brass:       #6E5414; /* counter bezel and "held" state. 6.7:1 on mist */
-  --glass:       #E3EAF3; /* counter window */
-  --paper:       #FFFFFF; /* digits on counter cells */
+  --brass:       #6E5414; /* counter bezel and "held" state. 7.1:1 on white */
+  --glass:       #E3EAF3;
+  --paper:       #FFFFFF;
 
   /* ------------------------------------------------------------------------
-     Roles on the dark stage (panels override these)
+     Type: Instrument Serif for headlines, Manrope for everything else,
+     Barlow Condensed for counter digits.
      ------------------------------------------------------------------------ */
-  --color-text:           var(--mist);
-  --color-text-secondary: var(--haze);
-  --color-surface:        transparent;
-  --color-action:         var(--mist);   /* solid light button */
-  --color-on-action:      var(--ink);
-  --color-outline:        rgba(244, 247, 251, 0.72); /* thin outlined pill */
-  --color-held:           #E2C27A;       /* held text on dark: 8.9:1 on --deep */
-  --color-rule:           rgba(195, 210, 230, 0.18);
-  --focus-gap:            var(--night);
-  --focus-color:          var(--ice);
-
-  /* Stage surfaces (switch with the theme) */
-  --stage-base:       var(--night);
-  --stage-base-clear: rgba(4, 10, 22, 0);
-  --stage-strong:     var(--mist);  /* headlines, wordmark */
-  --stage-soft:       var(--haze);  /* body text on the stage */
-  --stage-bar:        #06122a;      /* phone navigation bar */
-  --panel-bg:         var(--mist);
-  --panel-shadow:     none;
-  --quiet-bg:         rgba(6, 18, 42, 0.55);
-  --row-hover:        #E3EAF3;
-  --sidebar-bg:       rgba(5, 14, 32, 0.82);
-  --sidebar-active:   rgba(191, 215, 240, 0.12);
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23C3D2E6' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
-
-  /* Dark theme panels: a navy surface, not a light card (see .panel in base.css). */
-  --panel-dark:        #0C1D38;  /* haze on it 11.6:1, mist 15.6:1 */
-  --panel-dark-border: rgba(195, 210, 230, 0.14);
-
-  /* Usage bars other than the current one. */
-  --bar-muted: #5B7CA6;
-
-  /* Form fields, by theme. */
-  --field-bg:     #081830;
-  --field-border: rgba(195, 210, 230, 0.32);
-  --field-text:   var(--mist);
-  color-scheme: dark;
-
-  /* ------------------------------------------------------------------------
-     Type: Source Serif 4 for headlines only, Inter for everything else
-     (plain zero, tabular figures), Barlow Condensed for counter digits.
-     ------------------------------------------------------------------------ */
-  --font-display: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
-  --font-text: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-text: 'Manrope', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-numbers: var(--font-text);
   --font-counter: 'Barlow Condensed Digits', 'Arial Narrow', sans-serif-condensed, sans-serif;
 
-  /* Bringhurst's scale; display sizes grow with the viewport. */
-  --size-small: 14px;        --leading-small: 20px;
+  --size-small: 14px;        --leading-small: 21px;
   --size-body-staff: 15px;   --leading-body-staff: 23px;
-  --size-body: 16px;         --leading-body: 26px;
-  --size-lead: 20px;         --leading-lead: 30px;
-  --size-title: 24px;        --leading-title: 32px;
-  --size-display: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem); /* landing hero */
-  --size-page-title: clamp(1.85rem, 1.5rem + 1.4vw, 2.6rem); /* app pages */
-  --size-panel-title: 1.4rem;
+  --size-body: 16px;         --leading-body: 27px;
+  --size-lead: 18px;         --leading-lead: 30px;
+  --size-title: 22px;        --leading-title: 30px;
+  --size-display: clamp(3.4rem, 2rem + 6vw, 7.5rem);      /* landing hero */
+  --size-section: clamp(2.6rem, 1.8rem + 3.4vw, 4.5rem);  /* landing sections */
+  --size-page-title: clamp(2.5rem, 1.9rem + 2.4vw, 4rem); /* app pages */
+  --size-panel-title: 1.9rem;
 
   --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
   --weight-bold: 700;
 
   --measure-household: 62ch;
@@ -111,10 +78,9 @@
   --space-12: 48px;
   --space-16: 64px;
   --space-20: 80px;
+  --space-24: 96px;
 
-  /* The screen's unsafe edges (notch, status bar, rounded corners, home bar). They are 0 in a
-     browser tab; an installed app is drawn edge to edge (viewport-fit=cover in index.html), so
-     the background fills the whole screen while content stays inside these insets. */
+  /* The screen's unsafe edges (notch, status bar, home bar): 0 in a browser tab. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -122,71 +88,126 @@
 
   --gutter: clamp(16px, 4vw, 40px);
   --gutter-household: var(--gutter);
-  --gutter-staff: 24px;
-  --width-site: 1180px;
-  --header-height: 72px;
+  --gutter-staff: 28px;
+  --width-site: 1200px;
+  --header-height: 76px;
   --nav-height: 64px;
 
-  /* ------------------------------------------------------------------------
-     Size of things people touch.
-     ------------------------------------------------------------------------ */
   --tap-min: 48px;
-  --button-height: 52px;
+  --button-height: 54px;
 
-  /* ------------------------------------------------------------------------
-     Radii by object.
-     ------------------------------------------------------------------------ */
+  /* Radii: large everywhere (never a sharp corner on a container). */
   --radius-cell: 3px;     /* counter wheel windows */
-  --radius-bezel: 10px;   /* counter body */
-  --radius-button: 999px; /* pills, as in the reference */
-  --radius-panel: 20px;
-  --radius-field: 12px;
+  --radius-bezel: 12px;   /* counter body */
+  --radius-button: 30px;
+  --radius-panel: 32px;
+  --radius-card: 24px;
+  --radius-field: 16px;
+  --radius-hero: 48px;
 
   --focus-ring: 0 0 0 2px var(--focus-gap), 0 0 0 5px var(--focus-color);
 
-  /* One counter digit settling; one orchestrated moment on the landing hero. */
+  /* Motion: one curve for every entrance. */
+  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-digit: 120ms;
-  --motion-hero: 700ms;
+  --motion-hero: 1000ms;
+  --motion: 300ms;
+
+  /* ------------------------------------------------------------------------
+     Roles: light theme (the reference). Dark theme below.
+     ------------------------------------------------------------------------ */
+  --color-text:           var(--navy-ink);
+  --color-text-secondary: var(--ink-2);
+  --color-surface:        #FFFFFF;
+  --color-action:         var(--navy);
+  --color-on-action:      #FFFFFF;
+  --color-emphasis:       var(--navy);  /* the italic headline line */
+  --color-outline:        rgba(11, 34, 68, 0.12); /* 2px ghost border */
+  --color-held:           var(--brass);
+  --color-rule:           rgba(11, 34, 68, 0.08);
+  --color-accent-bg:      var(--navy-mist);
+  --focus-gap:            #FFFFFF;
+  --focus-color:          var(--navy);
+
+  --stage-base:       #FFFFFF;
+  --stage-base-clear: rgba(255, 255, 255, 0);
+  --stage-strong:     var(--navy-ink);
+  --stage-soft:       var(--ink-2);
+  --stage-bar:        rgba(255, 255, 255, 0.92);
+  --panel-bg:         #FFFFFF;
+  --panel-border:     rgba(11, 34, 68, 0.06);
+  --panel-shadow:     0 1px 2px rgba(11, 34, 68, 0.04), 0 24px 48px -28px rgba(11, 34, 68, 0.22);
+  --button-shadow:    0 10px 24px -8px rgba(29, 75, 130, 0.35);
+  --glass-bg:         rgba(255, 255, 255, 0.8);
+  --ink-card:         var(--navy-ink);  /* dark cards: white text */
+  --ink-card-soft:    rgba(255, 255, 255, 0.68);
+  --ink-card-accent:  var(--sky);
+  --ambient:          rgba(29, 75, 130, 0.1);
+  --quiet-bg:         var(--navy-mist);
+  --row-hover:        var(--navy-mist);
+  --sidebar-bg:       var(--navy-ink);
+  --sidebar-active:   rgba(29, 75, 130, 0.08);
+  --field-bg:         #FFFFFF;
+  --field-border:     rgba(11, 34, 68, 0.16);
+  --field-text:       var(--navy-ink);
+  --bar-muted:        #A9BEDA;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%234E5D75' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: light;
 }
 
 /* --------------------------------------------------------------------------
-   Light theme: morning over the water. Pale ice-blue stage with the same
-   blue glows; white panels lifted by a soft blue shadow; ink text.
-   Contrast at the deepest glow (#AECAE7): ink 10.9:1, --stage-soft 5.4:1.
+   Dark theme ("night"): the same layout on #040A16, navy cards, sky-blue actions.
+   Contrast: text 18.4:1 on the page, secondary 8.6:1 on cards, ink on sky 8.8:1.
    -------------------------------------------------------------------------- */
-:root[data-theme='light'] {
-  --color-text:           var(--ink);
-  --color-text-secondary: #3C4860;
-  --color-action:         var(--ink);
-  --color-on-action:      #FFFFFF;
-  --color-outline:        rgba(10, 20, 38, 0.55);
-  --color-held:           var(--brass);
-  --color-rule:           rgba(10, 20, 38, 0.12);
-  --focus-gap:            #F4F7FB;
-  --focus-color:          var(--ink);
+:root[data-theme='dark'] {
+  --ink:    #F4F7FB;
+  --ink-2:  #A9B8CE;
+  --line:   rgba(195, 210, 230, 0.12);
+  --brass:  #E2C27A;
 
-  --stage-base:       #EEF3F9;
-  --stage-base-clear: rgba(238, 243, 249, 0);
-  --stage-strong:     var(--ink);
-  --stage-soft:       #3C4860;
-  --stage-bar:        #FFFFFF;
-  --panel-bg:         #FFFFFF;
-  --panel-shadow:     0 1px 2px rgba(10, 20, 38, 0.05), 0 18px 40px -20px rgba(29, 75, 130, 0.3);
-  --quiet-bg:         rgba(255, 255, 255, 0.55);
-  --row-hover:        #EEF3F9;
-  --sidebar-bg:       rgba(255, 255, 255, 0.86);
-  --sidebar-active:   rgba(29, 75, 130, 0.09);
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%233C4860' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
-  --bar-muted:    #9AB0CC;
-  --field-bg:     #FFFFFF;
-  --field-border: #B9C6D8;
-  --field-text:   var(--ink);
-  color-scheme: light;
+  --color-text:           #F4F7FB;
+  --color-text-secondary: #A9B8CE;
+  --color-surface:        var(--night-2);
+  --color-action:         var(--sky);
+  --color-on-action:      #04122B;
+  --color-emphasis:       var(--sky);
+  --color-outline:        rgba(244, 247, 251, 0.16);
+  --color-held:           #E2C27A;
+  --color-rule:           rgba(195, 210, 230, 0.12);
+  --color-accent-bg:      rgba(141, 182, 227, 0.1);
+  --focus-gap:            var(--night);
+  --focus-color:          var(--sky);
+
+  --stage-base:       var(--night);
+  --stage-base-clear: rgba(4, 10, 22, 0);
+  --stage-strong:     #F4F7FB;
+  --stage-soft:       #A9B8CE;
+  --stage-bar:        rgba(11, 26, 51, 0.92);
+  --panel-bg:         var(--night-2);
+  --panel-border:     rgba(195, 210, 230, 0.1);
+  --panel-shadow:     0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  --button-shadow:    0 10px 24px -10px rgba(141, 182, 227, 0.35);
+  --glass-bg:         rgba(4, 10, 22, 0.72);
+  --ink-card:         #13294D;
+  --ink-card-soft:    rgba(244, 247, 251, 0.7);
+  --ink-card-accent:  var(--sky);
+  --ambient:          rgba(108, 160, 214, 0.12);
+  --quiet-bg:         rgba(141, 182, 227, 0.08);
+  --row-hover:        rgba(195, 210, 230, 0.06);
+  --sidebar-bg:       #07142A;
+  --sidebar-active:   rgba(141, 182, 227, 0.12);
+  --field-bg:         #081530;
+  --field-border:     rgba(195, 210, 230, 0.22);
+  --field-text:       #F4F7FB;
+  --bar-muted:        #3E5F8A;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23A9B8CE' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-digit: 0ms;
     --motion-hero: 0ms;
+    --motion: 0ms;
   }
 }

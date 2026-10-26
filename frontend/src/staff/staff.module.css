@@ -24,9 +24,11 @@
 }
 
 .statValue {
-  font-size: 2rem;
-  line-height: 1.15;
-  font-weight: var(--weight-bold);
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -37,7 +39,11 @@
 
 /* The figure that needs attention gets the held (brass) edge. */
 .attention {
-  box-shadow: inset 4px 0 0 var(--brass), var(--panel-shadow);
+  /* The ink card (panel-ink) carries it; its note in sky blue. */
+}
+
+.attention .statNote {
+  color: var(--ink-card-accent);
 }
 
 .grid {
