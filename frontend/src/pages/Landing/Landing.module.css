@@ -26,6 +26,13 @@
   text-align: center;
 }
 
+@media (max-width: 599px) {
+  .hero {
+    gap: var(--space-5);
+    padding-top: var(--space-6);
+  }
+}
+
 .heroBadge {
   margin: 0;
 }
