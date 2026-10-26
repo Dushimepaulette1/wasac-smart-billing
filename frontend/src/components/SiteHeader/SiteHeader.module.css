@@ -1,23 +1,9 @@
-/* Sticky, and the same as the page at the top: no background, no line. Once content scrolls
-   under it, a soft glass blur keeps it readable (still no line). */
+/* Part of the page: the page's own background, no line, and it scrolls away with the content
+   (never a box behind it). */
 .header {
-  position: sticky;
-  top: var(--safe-top);
+  position: relative;
   z-index: 20;
   background: transparent;
-  transition: background-color 240ms ease, -webkit-backdrop-filter 240ms ease, backdrop-filter 240ms ease;
-}
-
-.scrolled {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .header {
-    transition: none;
-  }
 }
 
 .inner {
