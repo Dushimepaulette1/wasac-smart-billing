@@ -26,3 +26,13 @@ class AnomalyFlag(Base):
     status = Column(String, default=FLAG_STATUS_OPEN, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     resolved_at = Column(DateTime, nullable=True)
+
+
+class MessageDismissal(Base):
+    """The household deleted this message from its Messages list. The flag itself stays for staff
+    and the audit trail; only the household's view hides it."""
+
+    __tablename__ = "message_dismissals"
+
+    flag_id = Column(Integer, ForeignKey("anomaly_flags.id"), primary_key=True)
+    dismissed_at = Column(DateTime, nullable=False, default=datetime.utcnow)

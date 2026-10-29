@@ -9,7 +9,7 @@ import type { Payment as PaymentAttempt } from '../../src/api/types';
 
 vi.mock('../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/api/client')>();
-  return { ...actual, api: { ...actual.api, getBills: vi.fn(), getCustomer: vi.fn(), payBill: vi.fn(), getPayment: vi.fn() } };
+  return { ...actual, api: { ...actual.api, getBills: vi.fn(), getCustomer: vi.fn(), payBill: vi.fn(), getPayment: vi.fn(), submitPaymentReference: vi.fn() } };
 });
 
 const BILL = makeBill({ bill_id: 19, amount_due: 12400.5, payment_status: 'unpaid' });
@@ -104,5 +104,30 @@ describe('Payment', () => {
     renderPayment();
     expect(await screen.findByText('This bill is already paid.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Pay/ })).not.toBeInTheDocument();
+  });
+
+  it('when paying by MoMo Pay, should show the code to dial, then wait for WASAC instead of saying paid', async () => {
+    const pending = attempt({ provider: 'momo_pay', ussd_code: '*182*8*1*123456*12401#', pay_code: '123456', reference: '19' });
+    vi.mocked(api.payBill).mockResolvedValue(pending);
+    vi.mocked(api.submitPaymentReference).mockResolvedValue({ ...pending, transaction_id: 'MP12345678' });
+    renderPayment();
+    const pay = await screen.findByRole('button', { name: 'Pay RWF 12,401' });
+    await act(async () => fireEvent.click(pay));
+
+    expect(screen.getByRole('heading', { name: 'Pay with MoMo Pay' })).toBeInTheDocument();
+    expect(screen.getByText('*182*8*1*123456*12401#')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dial now' })).toHaveAttribute('href', 'tel:*182*8*1*123456*12401%23');
+    expect(screen.queryByRole('heading', { name: 'Paid' })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('2. Enter the transaction ID'), { target: { value: 'no!' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Send for checking' })));
+    expect(screen.getByText(/exactly as it is in MTN's SMS/)).toBeInTheDocument();
+    expect(api.submitPaymentReference).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('2. Enter the transaction ID'), { target: { value: 'MP12345678' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Send for checking' })));
+    expect(api.submitPaymentReference).toHaveBeenCalledWith(5, 'MP12345678');
+    expect(screen.getAllByText("We're checking your payment").length).toBeGreaterThan(0);
+    expect(screen.queryByRole('heading', { name: 'Paid' })).not.toBeInTheDocument();
   });
 });

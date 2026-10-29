@@ -29,6 +29,8 @@ services:
         sync: false
       - key: MOMO_API_KEY
         sync: false
+      - key: MOMO_PAY_CODE          # WASAC's MoMo Pay merchant code (USSD payment without the API)
+        sync: false
       - key: VAPID_PUBLIC_KEY       # phone alerts; make with scripts/make_vapid_keys.py
         sync: false
       - key: VAPID_PRIVATE_KEY

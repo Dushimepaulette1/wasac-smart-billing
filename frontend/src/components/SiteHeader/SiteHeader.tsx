@@ -5,13 +5,16 @@
  * and the language switcher. On phones the navigation moves to the bottom.
  */
 
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../Icon/Icon';
 import { LogoMark } from '../Logo/Logo';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useI18n } from '../../i18n/I18nProvider';
 import { unreadCount, useHouseholdFlags } from '../../household/status';
+import { useHousehold } from '../../household/session';
+import { formatRwandanPhone } from '../../utils/phone';
 import styles from './SiteHeader.module.css';
 
 export const HOUSEHOLD_LINKS = [
@@ -73,11 +76,76 @@ function Bell() {
   );
 }
 
+/** The household's account: which number is signed in, switch meter, sign out. */
+function AccountMenu() {
+  const { t } = useI18n();
+  const household = useHousehold();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on Escape or a click outside.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [open]);
+
+  if (!household.signedIn) return null;
+  const signOut = () => {
+    setOpen(false);
+    household.signOut();
+    navigate('/sign-in', { replace: true });
+  };
+  return (
+    <div className={styles.account} ref={ref}>
+      <button
+        type="button"
+        className={styles.bell}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t('header.account')}
+        title={t('header.account')}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <Icon name="user" size={20} />
+      </button>
+      {open && (
+        <div className={styles.menu} role="menu">
+          <p className={styles.menuWho}>
+            <span className="text-small text-secondary">{t('header.signedInWith')}</span>
+            <span className="num">{formatRwandanPhone(household.phone)}</span>
+          </p>
+          {household.accounts.length > 1 && (
+            <button type="button" role="menuitem" className={styles.menuItem}
+              onClick={() => { setOpen(false); navigate('/sign-in?switch=1'); }}>
+              <Icon name="households" size={18} />
+              {t('home.switchMeter')}
+            </button>
+          )}
+          <button type="button" role="menuitem" className={styles.menuItem} onClick={signOut}>
+            <Icon name="logout" size={18} />
+            {t('home.signOut')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SiteHeader({ links = true }: SiteHeaderProps) {
   const { t } = useI18n();
   const onSignIn = /sign-in/.test(useLocation().pathname);
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${links ? styles.household : ''}`}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
           <LogoMark />
@@ -90,6 +158,7 @@ function SiteHeader({ links = true }: SiteHeaderProps) {
           {links && <Bell />}
           <LanguageSwitcher />
           <ThemeToggle />
+          {links && <AccountMenu />}
           {/* The one call to action: sign in (public pages) or read the meter (households).
               Not on the sign-in pages themselves. */}
           {!onSignIn && (

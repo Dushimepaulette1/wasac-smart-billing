@@ -39,3 +39,47 @@
   text-align: right;
   overflow-wrap: anywhere;
 }
+
+/* MoMo Pay by USSD: the code to dial, large and tappable. */
+.stepLabel {
+  font-weight: var(--weight-bold);
+}
+
+.ussd {
+  display: block;
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--color-accent-bg);
+  color: var(--color-emphasis);
+  font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2rem);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.codeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.txInput {
+  width: 100%;
+  min-height: 54px;
+  padding: 0.18em var(--space-4) 0;
+  border: 2px solid var(--field-border);
+  border-radius: var(--radius-field);
+  background: var(--field-bg);
+  color: var(--field-text);
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.txInput:focus {
+  outline: none;
+  border-color: var(--color-action);
+}

@@ -54,15 +54,43 @@ class MeterCorrectionRequest(BaseModel):
 
 
 class PaymentOut(BaseModel):
-    """One attempt to pay a bill. status: pending (waiting for the payer's PIN), successful, failed."""
+    """One attempt to pay a bill. status: pending (waiting for the payer's PIN, or for an officer to
+    check a MoMo Pay payment), successful, failed."""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     bill_id: int
-    provider: str                 # momo, momo_sandbox, simulated
+    provider: str                 # momo, momo_sandbox, momo_pay, simulated
     status: str
     amount: float
     currency: str
     transaction_id: Optional[str] = None
     reason: Optional[str] = None
     already_paid: bool = False
+    # momo_pay: what to dial (None until MOMO_PAY_CODE is set), WASAC's merchant code, and the
+    # reference to quote (the bill number).
+    ussd_code: Optional[str] = None
+    pay_code: Optional[str] = None
+    reference: Optional[str] = None
+
+
+class PaymentReference(BaseModel):
+    """The transaction ID from MTN's SMS after paying by MoMo Pay."""
+    transaction_id: str = Field(min_length=4, max_length=40, pattern=r"^[A-Za-z0-9.\-]+$")
+
+
+class PaymentDecline(BaseModel):
+    reason: str = Field(min_length=3, max_length=120)
+
+
+class PaymentToCheck(BaseModel):
+    """A MoMo Pay payment waiting for an officer, for the staff Payments page."""
+    id: int
+    bill_id: int
+    customer_id: str
+    customer_name: str
+    meter_id: Optional[str] = None
+    amount: float
+    transaction_id: Optional[str] = None
+    created_at: datetime
+    submitted_at: datetime

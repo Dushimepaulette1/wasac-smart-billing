@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.anomaly.service import ReadingRefused, notify_household, submit_reading
 from app.models import Bill, Customer, Meter
-from app.services.payments import start_payment
+from app.services.payments import MOMO_PAY, start_payment, ussd_code
 from app.services.reading_window import PENDING, reading_block
 from app.utils.meter_value import parse_meter_value
 from app.utils.phone import normalize_phone
@@ -45,6 +45,8 @@ TEXT = {
         "pay_prompt": "Emeza kwishyura kuri telefoni yawe ukoresheje umubare w'ibanga wa MoMo.",
         "pay_done": "Fagitire yishyuwe. Murakoze.",
         "pay_failed": "Kwishyura ntibyakunze. Nta mafaranga yakuweho. Ongera ugerageze.",
+        "pay_code": "Ishyura RWF {amount} ukoresheje MoMo Pay: kanda {code}. Nyuma, ohereza nimero y'igikorwa (transaction ID) muri porogaramu Mubazi.",
+        "pay_code_missing": "Ishyura ukoresheje MoMo Pay ya WASAC, hanyuma wohereze nimero y'igikorwa muri porogaramu Mubazi.",
         "bad_choice": "Ihitamo ritaribyo. Ongera ugerageze.",
     },
     "en": {
@@ -68,6 +70,8 @@ TEXT = {
         "pay_prompt": "Approve the payment on your phone with your MoMo PIN.",
         "pay_done": "Bill paid. Thank you.",
         "pay_failed": "The payment did not go through. Nothing was taken. Please try again.",
+        "pay_code": "Pay RWF {amount} by MoMo Pay: dial {code}. Then enter the transaction ID in the Mubazi app.",
+        "pay_code_missing": "Pay with WASAC's MoMo Pay code, then enter the transaction ID in the Mubazi app.",
         "bad_choice": "That choice is not on the menu. Please try again.",
     },
 }
@@ -155,6 +159,11 @@ def handle(db: Session, phone_number: str, text: str) -> str:
         if rest[0] != "1":
             return _end(t["cancelled"])
         payment = start_payment(db, bill, customer.phone)
+        if payment.provider == MOMO_PAY and payment.status == "pending":
+            code = ussd_code(bill.amount_due)
+            if not code:
+                return _end(t["pay_code_missing"])
+            return _end(t["pay_code"].format(amount=f"{bill.amount_due:,.0f}", code=code))
         if payment.status == "successful":
             return _end(t["pay_done"])
         if payment.status == "failed":

@@ -11,6 +11,7 @@ import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 
 const [APP, PHOTO, STAFF_PW, PHONE, CHROME] = process.argv.slice(2);
+const TX = 'E2E' + Date.now(); // a made-up MoMo transaction ID; staff confirm it below
 if (!APP || !PHOTO || !STAFF_PW || !PHONE) {
   console.error('usage: node live_e2e.mjs <app url> <meter photo> <staff password> <demo phone> [chrome path]');
   process.exit(2);
@@ -145,7 +146,21 @@ await step('15 pay the bill', p, async () => {
   await p.getByRole('button', { name: /^Pay RWF/ }).click();
   await p.waitForURL(/payment/);
   await p.getByRole('button', { name: /^Pay RWF/ }).click();
-  await p.getByRole('heading', { name: 'Paid' }).waitFor({ timeout: 150000 }); // MoMo: waits for the PIN
+  await p.getByRole('heading', { name: 'Pay with MoMo Pay' }).waitFor({ timeout: 60000 });
+  log('     code to dial:', (await p.locator('main a[href^="tel:"]').first().innerText()).trim());
+  await p.getByLabel('2. Enter the transaction ID').fill(TX);
+  await p.getByRole('button', { name: 'Send for checking' }).click();
+  await p.getByRole('heading', { name: "We're checking your payment" }).waitFor({ timeout: 30000 });
+});
+await step('15b staff confirm the payment', s, async () => {
+  await s.goto(APP + '/staff/payments');
+  const row = s.locator('#staff-main tr', { hasText: TX });
+  await row.getByRole('button', { name: 'Found: confirm' }).click();
+  await s.getByText(/The bill is paid/).waitFor({ timeout: 30000 });
+});
+await step('15c household sees it paid', p, async () => {
+  await p.reload();
+  await p.getByRole('heading', { name: 'Paid' }).waitFor({ timeout: 60000 });
   log('     receipt:', (await p.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 200));
 });
 await step('16 bills list shows it paid', p, async () => {
@@ -156,6 +171,13 @@ await step('16 bills list shows it paid', p, async () => {
 await step('17 messages show the confirmation', p, async () => {
   await p.goto(APP + '/messages');
   await p.getByText(/Checked and confirmed/).first().waitFor({ timeout: 30000 });
+});
+await step('17b delete a message', p, async () => {
+  const before = await p.getByRole('button', { name: 'Delete' }).count();
+  if (!before) throw new Error('no message could be deleted');
+  await p.getByRole('button', { name: 'Delete' }).first().click();
+  await p.waitForFunction((n) => [...document.querySelectorAll('main button')]
+    .filter((b) => b.textContent.trim() === 'Delete').length < n, before, { timeout: 30000 });
 });
 await step('18 a new reading waits for the next period', p, async () => {
   await p.goto(APP + '/submit/camera');

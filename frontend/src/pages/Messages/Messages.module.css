@@ -55,3 +55,15 @@
   gap: var(--space-3);
   justify-items: start;
 }
+
+/* Delete: at the foot of a message, after a hairline. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-rule);
+}

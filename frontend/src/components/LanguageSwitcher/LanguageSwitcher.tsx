@@ -1,34 +1,41 @@
 /**
  * @file LanguageSwitcher.tsx
- * @description Choose Ikinyarwanda or English. Each language is
- * named in itself, so anyone can find theirs. The choice is remembered on
- * the device by the I18nProvider.
+ * @description Choose Kinyarwanda or English: a two-option pill switch ("Kiny | Eng"), one tap,
+ * nothing to open. Each option carries the language's full name in itself for screen readers
+ * and as a tooltip. The choice is remembered on the device by the I18nProvider.
  */
 
-import { useId } from 'react';
-import { useI18n, LOCALES, LANGUAGE_NAMES } from '../../i18n/I18nProvider';
+import { useI18n, LOCALES, LANGUAGE_NAMES, type Locale } from '../../i18n/I18nProvider';
 import styles from './LanguageSwitcher.module.css';
 
+const SHORT: Record<Locale, string> = { rw: 'Kiny', en: 'Eng' };
+
 interface LanguageSwitcherProps {
-  /** compact: header pill with a hidden label; full: labelled field. */
+  /** compact: in a header; full: with a visible label (account pages). */
   variant?: 'compact' | 'full';
 }
 
 function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps) {
   const { t, locale, setLocale } = useI18n();
-  const id = useId();
   return (
     <div className={`${styles.root} ${styles[variant]}`}>
-      <label htmlFor={id} className={variant === 'compact' ? 'visually-hidden' : styles.label}>
-        {t('language.label')}
-      </label>
-      <select id={id} value={locale} onChange={(e) => setLocale(e.target.value)} className={styles.select}>
+      {variant === 'full' && <span className={styles.label}>{t('language.label')}</span>}
+      <div className={styles.switch} role="group" aria-label={t('language.label')}>
         {LOCALES.map((code) => (
-          <option key={code} value={code} lang={code}>
-            {LANGUAGE_NAMES[code]}
-          </option>
+          <button
+            key={code}
+            type="button"
+            lang={code}
+            className={`${styles.option} ${code === locale ? styles.current : ''}`}
+            aria-pressed={code === locale}
+            aria-label={LANGUAGE_NAMES[code]}
+            title={LANGUAGE_NAMES[code]}
+            onClick={() => setLocale(code)}
+          >
+            {SHORT[code]}
+          </button>
         ))}
-      </select>
+      </div>
     </div>
   );
 }
