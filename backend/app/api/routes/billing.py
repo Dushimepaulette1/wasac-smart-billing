@@ -35,6 +35,7 @@ from app.services.meter_correction import CorrectionError, correct_meter
 from app.services.payments import (
     MOMO_PAY,
     PaymentError,
+    payments_paid_twice,
     confirm,
     decline,
     pay_code,
@@ -244,7 +245,10 @@ async def pay_bill(bill_id: int, db: Session = Depends(get_db), access: Access =
             id=0, bill_id=bill_id, provider="unknown", status="successful", amount=bill.amount_due, currency="RWF")
         return out.model_copy(update={"already_paid": True})
     customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first()
-    payment = await run_in_threadpool(start_payment, db, bill, customer.phone if customer else "")
+    try:
+        payment = await run_in_threadpool(start_payment, db, bill, customer.phone if customer else "")
+    except PaymentError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
     return payment_out(payment)
 
 
@@ -290,7 +294,7 @@ async def payment_reference(payment_id: int, body: PaymentReference, db: Session
 @router.get("/api/payments/to-check", response_model=List[PaymentToCheck])
 async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)):
     """MoMo Pay payments with a transaction ID, waiting for an officer to find them in WASAC's MoMo
-    merchant account. Oldest first."""
+    merchant account, oldest first; then bills paid more than once in the last PAID_TWICE_DAYS days."""
     rows = (
         db.query(Payment, Bill, Customer)
         .join(Bill, Bill.bill_id == Payment.bill_id)
@@ -304,6 +308,11 @@ async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = D
                        meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
                        created_at=p.created_at, submitted_at=p.updated_at)
         for p, b, c in rows
+    ] + [
+        PaymentToCheck(kind="paid_twice", id=p.id, bill_id=b.bill_id, customer_id=c.customer_id,
+                       customer_name=c.name, meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
+                       created_at=p.created_at, submitted_at=p.updated_at)
+        for p, b, c in payments_paid_twice(db)
     ]
 
 

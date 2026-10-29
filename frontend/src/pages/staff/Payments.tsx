@@ -4,7 +4,7 @@
  * code by USSD enters the transaction ID from MTN's SMS; the bill stays unpaid until an officer
  * finds that transaction in WASAC's MoMo merchant account (portal or statement) and confirms it
  * here, or declines it with a reason (the household gets an SMS and can pay again). Every
- * decision is in Activity.
+ * decision is in Activity. Bills paid more than once are listed too, for information.
  */
 
 import { useState } from 'react';
@@ -88,7 +88,9 @@ function Payments() {
                       <td data-label={t('staff.payments.transaction')} className="code">{r.transaction_id}</td>
                       <td data-label={t('staff.payments.sent')} className="num">{dateTime(r.submitted_at)}</td>
                       <td data-label={t('staff.payments.check')}>
-                        {declining === r.id ? (
+                        {r.kind === 'paid_twice' ? (
+                          <p className="text-small">{t('staff.payments.paidTwice')}</p>
+                        ) : declining === r.id ? (
                           <div className={styles.form}>
                             <label className={styles.filter}>
                               {t('staff.payments.reason')}

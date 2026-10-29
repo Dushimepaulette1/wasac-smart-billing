@@ -304,6 +304,8 @@ export interface Payment {
 
 /** GET /api/payments/to-check: a MoMo Pay payment waiting for an officer. */
 export interface PaymentToCheck {
+  /** momo_pay_check: waits for an officer; paid_twice: a second successful payment on a paid bill (information). */
+  kind: 'momo_pay_check' | 'paid_twice';
   id: number;
   bill_id: number;
   customer_id: string;

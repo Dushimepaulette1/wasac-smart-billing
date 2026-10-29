@@ -563,6 +563,7 @@
   "staff.payments.confirm": "Bwabonetse: emeza",
   "staff.payments.confirmed": "{amount} ya {name} byemejwe. Fagitire yishyuwe.",
   "staff.payments.declined": "Ubwishyu bwa {name} bwanzwe. Bamenyeshejwe kuri SMS.",
+  "staff.payments.paidTwice": "Yishyuwe kabiri: iyi fagitire yari yarishyuwe, bityo urugo rwishyuye aya mafaranga inshuro irenze imwe kandi rugomba kuyasubizwa.",
   "staff.payments.how": "Uko bigenzurwa: fungura konti ya WASAC ya MoMo (portal cyangwa raporo), shaka nimero y'igikorwa n'amafaranga, hanyuma wemeze. Iyo MoMo API ihujwe, MTN yemeza ubwishyu ubwayo kandi ntibutegerereza hano.",
   "staff.activity.kind.payment_confirmed": "Yemeje ubwishyu bwa MoMo",
   "staff.activity.kind.payment_declined": "Yanze ubwishyu bwa MoMo",
