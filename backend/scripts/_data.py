@@ -39,10 +39,12 @@ def load_histories_csv(path: Path) -> Histories:
 def load_histories_db(include_demo: bool = False, include_seed: bool = False) -> Histories:
     from app.anomaly.statuses import NOT_CONFIRMED
     from app.db.session import SessionLocal
-    from app.models import Reading
+    from app.models import Customer, Reading
 
     db = SessionLocal()
     try:
+        # A DEMO- household is marked by its customer number; its meter may have any number.
+        demo_meters = {m for (m,) in db.query(Customer.meter_id).filter(Customer.customer_id.like(f"{DEMO_PREFIX}%"))}
         rows = (
             db.query(Reading.meter_id, Reading.submission_time, Reading.submitted_value)
             # Confirmed readings only, as the live detector's history (app/anomaly/service.py):
@@ -56,7 +58,7 @@ def load_histories_db(include_demo: bool = False, include_seed: bool = False) ->
 
     histories: Histories = defaultdict(list)
     for meter_id, when, value in rows:
-        if is_demo_id(meter_id) and not include_demo:
+        if (is_demo_id(meter_id) or meter_id in demo_meters) and not include_demo:
             continue
         if meter_id in SEED_METER_IDS and not include_seed:
             continue

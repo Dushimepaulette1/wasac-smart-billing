@@ -8,8 +8,29 @@ from sqlalchemy.orm import Session
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
 from app.models import Bill, Customer, Meter, Payment, Reading, StaffUser
-from app.schemas import CustomerInfo, MeterCorrectionRequest, PaymentDecline, PaymentOut, PaymentReference, PaymentToCheck
+from app.schemas import (
+    CustomerInfo,
+    HouseholdEdit,
+    HouseholdImport,
+    HouseholdImportResult,
+    HouseholdImportRow,
+    HouseholdIn,
+    MeterCorrectionRequest,
+    PaymentDecline,
+    PaymentOut,
+    PaymentReference,
+    PaymentToCheck,
+)
 from app.services.audit import record
+from app.services.households import (
+    DEMO_PREFIX,
+    HouseholdError,
+    add_household,
+    check_fields,
+    describe,
+    edit_household,
+    import_csv,
+)
 from app.services.meter_correction import CorrectionError, correct_meter
 from app.services.payments import (
     MOMO_PAY,
@@ -70,6 +91,8 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         next_reading_from=block.opens_on if block and block.reason == TOO_SOON else None,
         unpaid_count=unpaid_count,
         unpaid_amount=round(float(unpaid_amount), 2),
+        serial_number=meter.serial_number if meter else None,
+        is_demo=c.customer_id.startswith(DEMO_PREFIX),
     )
 
 
@@ -79,6 +102,49 @@ async def list_customers(db: Session = Depends(get_db), _staff: StaffUser = Depe
     return [_customer_info(db, c) for c in db.query(Customer).all()]
 
 
+@router.post("/customers", response_model=CustomerInfo, status_code=201)
+async def create_customer(
+    body: HouseholdIn, request: Request, db: Session = Depends(get_db), staff: StaffUser = Depends(require_staff),
+):
+    """Add a household and its meter (any staff). The phone number can sign in straight away."""
+    f, errors = check_fields(body.model_dump())
+    if errors:
+        raise HTTPException(status_code=422, detail=describe(errors))
+    try:
+        customer = add_household(db, f)
+    except HouseholdError as e:
+        db.rollback()
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    record(db, staff.username, "household_added", target=f.meter_id, detail=f.name, request=request, commit=False)
+    db.commit()
+    return _customer_info(db, customer)
+
+
+@router.post("/customers/import", response_model=HouseholdImportResult)
+async def import_customers(
+    body: HouseholdImport, request: Request, db: Session = Depends(get_db),
+    staff: StaffUser = Depends(require_role("supervisor")),
+):
+    """Preview a CSV of households, or save it (apply=true; only when no row has an error).
+    Supervisors and admins."""
+    try:
+        result = import_csv(db, body.csv, apply=body.apply)
+    except HouseholdError as e:
+        db.rollback()
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    if result.applied:
+        record(db, staff.username, "households_imported",
+               detail=f"{result.count('new')} new, {result.count('update')} updated", request=request, commit=False)
+        db.commit()
+    else:
+        db.rollback()
+    return HouseholdImportResult(
+        new=result.count("new"), update=result.count("update"), unchanged=result.count("unchanged"),
+        error=result.count("error"), applied=result.applied,
+        rows=[HouseholdImportRow(**vars(r)) for r in result.rows],
+    )
+
+
 @router.get("/customers/{customer_id}", response_model=CustomerInfo)
 async def get_customer(customer_id: str, db: Session = Depends(get_db), access: Access = Depends(household_access)):
     """One household: its own account, or any for staff."""
@@ -86,6 +152,30 @@ async def get_customer(customer_id: str, db: Session = Depends(get_db), access: 
     customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+    return _customer_info(db, customer)
+
+
+@router.patch("/customers/{customer_id}", response_model=CustomerInfo)
+async def update_customer(
+    customer_id: str, body: HouseholdEdit, request: Request, db: Session = Depends(get_db),
+    staff: StaffUser = Depends(require_staff),
+):
+    """Change a household's name, phone, sector or meter serial number (any staff)."""
+    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    f, errors = check_fields(body.model_dump(), new=False)
+    if errors:
+        raise HTTPException(status_code=422, detail=describe(errors))
+    try:
+        changed = edit_household(db, customer, f)
+    except HouseholdError as e:
+        db.rollback()
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    if changed:
+        record(db, staff.username, "household_updated", target=customer.meter_id, detail=", ".join(changed),
+               request=request, commit=False)
+    db.commit()
     return _customer_info(db, customer)
 
 

@@ -36,6 +36,9 @@ class Meter(Base):
     cover_condition = Column(String, default="clean")
     gps_lat = Column(Float)
     gps_lng = Column(Float)
+    # The maker's serial number printed on the meter (optional): what a later link to WASAC's
+    # meter records would check. Added after the table existed: app/db/init_db.py LATE_COLUMNS.
+    serial_number = Column(String(40), nullable=True)
 
     customer = relationship("Customer", foreign_keys=[customer_id])
     readings = relationship("Reading", back_populates="meter")
