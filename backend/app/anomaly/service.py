@@ -12,7 +12,7 @@ from app.models import ReadingEvidence
 from app.anomaly.model import AnomalyModel, load_model_if_available
 from app.anomaly.notifications import RETAKE_MESSAGE, action_for, dispatch, message_for, sms_household
 from app.anomaly.readings import digits_to_m3
-from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, is_cold_start
+from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, has_enough_history, is_cold_start
 from app.anomaly.statuses import (
     NOT_CONFIRMED,
     PENDING_REVIEW_TYPES,
@@ -99,6 +99,10 @@ def assess(
     is_anomaly = anomaly_type not in (AnomalyType.NORMAL, AnomalyType.BASELINE)
     feature_dict = features.to_dict() if features else {}
     feature_dict["cold_start"] = features is None or is_cold_start(features, config)
+    # Not enough suitable history to compare this reading with the household's usual use.
+    feature_dict["insufficient_history"] = features is None or not has_enough_history(features, config)
+    if anomaly_type == AnomalyType.MISREAD_SUSPECTED and features is not None and features.consumption_m3 >= 0:
+        feature_dict["digit_shift"] = True  # about 10x or 100x the usual use, not a lower reading
     return AnomalyResult(
         household_id=household_id,
         reading_m3=reading_m3,

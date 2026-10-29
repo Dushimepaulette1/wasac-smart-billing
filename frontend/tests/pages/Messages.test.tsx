@@ -46,6 +46,16 @@ describe('Messages', () => {
     }
   });
 
+  it('when a reading looks like a shifted digit, should not call it lower than the last one', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(9, 'MISREAD_SUSPECTED', { features: { digit_shift: true }, reading_status: 'pending_review' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'A reading far above your usual use' }));
+    expect(message).toHaveTextContent('about ten times');
+    expect(message).not.toHaveTextContent('lower than your last one');
+  });
+
   it('when a first reading was recorded as the starting point, should say the first bill comes next time', async () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([
       flag(8, 'NO_BASELINE', { status: 'resolved', requires_staff_review: true, reading_status: 'valid' }),
