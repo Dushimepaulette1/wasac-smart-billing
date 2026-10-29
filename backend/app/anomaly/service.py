@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.anomaly.config import AnomalyConfig
 from app.models import AnomalyFlag, FLAG_STATUS_OPEN
 from app.anomaly.features import ReadingPoint, compute_features
+from app.anomaly.edits import EditCheck, check_edit
 from app.anomaly.location import LocationCheck, PhotoEvidence, check_location
 from app.models import ReadingEvidence
 from app.anomaly.model import AnomalyModel, load_model_if_available
@@ -21,8 +22,9 @@ from app.anomaly.statuses import (
     READING_REJECTED,
     READING_VALID,
 )
-from app.models import Bill, Customer, Meter, Reading
+from app.models import Bill, Customer, Meter, PhotoRead, Reading
 from app.services.billing import build_bill
+from app.services.photo_evidence import link_photo
 from app.services.reading_window import ReadingBlock, reading_block
 
 # The same value for the same meter again within this time is a retry or a double tap, not a reading.
@@ -243,15 +245,18 @@ def has_baseline(db: Session, meter: Meter) -> bool:
 class Evaluation:
     """What a reading would lead to, worked out without writing anything (evaluate_reading).
 
-    scored     the rules/model result, after the "below the last confirmed reading" check; saved
-               as a flag when it is an anomaly
-    anomaly    the final result: scored, or a LOCATION_CHECK hold on top of it (a second flag)
+    scored     the rules/model result, after the no-starting-value and "below the last confirmed
+               reading" checks; saved as a flag when it is an anomaly
+    anomaly    the final result: scored, or an EDITED_DOWN / LOCATION_CHECK hold on top of it (a
+               second flag)
+    edit       how the household's value compares with the photo reader's (app/anomaly/edits.py)
     """
     refusal: Optional[ReadingRefused] = None
     consumption_m3: float = 0.0
     scored: Optional[AnomalyResult] = None
     anomaly: Optional[AnomalyResult] = None
     location: Optional[LocationCheck] = None
+    edit: Optional[EditCheck] = None
 
 
 def evaluate_reading(
@@ -263,6 +268,7 @@ def evaluate_reading(
     household: bool = False,
     config: Optional[AnomalyConfig] = None,
     model: Optional[AnomalyModel] = None,
+    photo: Optional[PhotoRead] = None,
 ) -> Evaluation:
     """Every check a new reading goes through, read-only: nothing is added to or changed in the session.
 
@@ -322,15 +328,39 @@ def evaluate_reading(
         )
 
     evaluation = Evaluation(consumption_m3=consumption, scored=scored, anomaly=scored)
+    if photo is not None:
+        evaluation.edit = check_edit(photo.reader_digits, photo.guidance, reading_m3, config)
+        evaluation.anomaly = _edit_hold(meter, scored, evaluation.edit)
     if evidence is not None:
         evaluation.location = check_location(meter.gps_lat, meter.gps_lng, evidence)
-        evaluation.anomaly = _location_hold(meter, scored, evaluation.location, evidence)
+        evaluation.anomaly = _location_hold(meter, evaluation.anomaly, evaluation.location, evidence)
     return evaluation
+
+
+def _edit_hold(meter: Meter, scored: AnomalyResult, edit: EditCheck) -> AnomalyResult:
+    """Record the AI read and the household's value for the officer; hold the reading if the
+    household lowered a reliable read by edit_hold_m3 or more and nothing else holds it already."""
+    scored.features = {**(scored.features or {}), **edit.features()}
+    if not edit.hold or scored.pending_review:
+        return scored
+    return AnomalyResult(
+        household_id=meter.meter_id,
+        reading_m3=scored.reading_m3,
+        daily_consumption=scored.daily_consumption,
+        anomaly_score=scored.anomaly_score,
+        is_anomaly=True,
+        anomaly_type=AnomalyType.EDITED_DOWN.value,
+        needs_retake=False,
+        message_for_household=message_for(AnomalyType.EDITED_DOWN),
+        features=dict(scored.features),
+        model_used=scored.model_used,
+        pending_review=True,
+    )
 
 
 def _location_hold(
     meter: Meter, scored: AnomalyResult, check: LocationCheck, evidence: PhotoEvidence
-) -> AnomalyResult:
+) -> AnomalyResult:  # scored: the result so far (may already be an EDITED_DOWN hold)
     """Hold the reading if where the photo was taken needs an officer's look."""
     if not check.needs_review:
         return scored
@@ -362,6 +392,7 @@ def submit_reading(
     method: str,
     evidence: Optional[PhotoEvidence] = None,
     household: bool = False,
+    photo: Optional[PhotoRead] = None,
 ) -> Submission:
     """Store a household reading, score it, and either confirm and bill it or hold it for staff review.
 
@@ -371,11 +402,12 @@ def submit_reading(
 
     Held readings (MISREAD_SUSPECTED, SPIKE, anything below the last confirmed reading, or a photo
     whose location or source needs checking, see app/anomaly/location.py) are not billed and do not move
-    meters.last_reading. Commits; call notify_household afterwards.
+    meters.last_reading. photo (the caller's own, from photo_evidence.claim) is linked to the reading
+    in the same transaction. Commits; call notify_household afterwards.
     """
     now = datetime.utcnow()
     meter = lock_meter(db, meter.meter_id)
-    evaluation = evaluate_reading(db, meter, reading_m3, now, evidence=evidence, household=household)
+    evaluation = evaluate_reading(db, meter, reading_m3, now, evidence=evidence, household=household, photo=photo)
     if evaluation.refusal:
         db.rollback()
         raise evaluation.refusal
@@ -402,6 +434,9 @@ def submit_reading(
             reading_id=reading.reading_id, photo_source=evidence.photo_source, lat=evidence.lat, lng=evidence.lng,
             accuracy_m=evidence.accuracy_m, distance_m=check.distance_m, outcome=check.outcome,
         ))
+
+    if photo is not None:
+        link_photo(photo, reading, evaluation.edit.household_digits)
 
     reading.anomaly_score = anomaly.anomaly_score
     submission = Submission(reading=reading, anomaly=anomaly, consumption_m3=consumption)

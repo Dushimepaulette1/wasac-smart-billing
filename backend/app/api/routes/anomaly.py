@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, MessageDismissal
+from app.anomaly.config import AnomalyConfig
+from app.anomaly.edits import changed_positions, household_digits
 from app.anomaly.review import ReviewError, resolve_flag
 from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
@@ -25,6 +27,7 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/anomaly")
+CONFIG = AnomalyConfig()  # only the meter's digit layout (8 wheels, 3 for litres) is used here
 
 
 @router.post("/score", response_model=AnomalyResultSchema)
@@ -160,6 +163,9 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             reading_id=reading.reading_id if reading else None,
             photo_available=bool(photo and photo.image_jpeg),
             reader_digits=photo.reader_digits if photo else None,
+            household_digits=household_digits(reading.submitted_value, CONFIG) if reading else None,
+            changed_positions=(changed_positions(photo.reader_digits, household_digits(reading.submitted_value, CONFIG))
+                               if photo and reading else []),
             edited_by_household=photo.edited if photo else None,
             reader_models=photo.models if photo else None,
             history=[

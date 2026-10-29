@@ -22,6 +22,7 @@ ACTIONS = {
     AnomalyType.UNUSUAL: Action(sms_household=False, staff_review=True),
     AnomalyType.LOCATION_CHECK: Action(sms_household=False, staff_review=True),
     AnomalyType.NO_BASELINE: Action(sms_household=False, staff_review=True),
+    AnomalyType.EDITED_DOWN: Action(sms_household=False, staff_review=True),
 }
 NO_ACTION = Action(sms_household=False, staff_review=False)
 
@@ -50,6 +51,10 @@ MESSAGES = {
     AnomalyType.NO_BASELINE: (
         "WASAC: This is the first reading for your meter. An officer will check it and record it as your "
         "starting point. Your first bill will come with your next reading."
+    ),
+    AnomalyType.EDITED_DOWN: (
+        "WASAC: The reading you sent is lower than what we read in your photo, so an officer will compare "
+        "the two before billing."
     ),
 }
 

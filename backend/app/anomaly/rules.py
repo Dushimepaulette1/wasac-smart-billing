@@ -20,6 +20,9 @@ class AnomalyType(str, Enum):
     # Not from the rules: the meter has no starting value yet (no confirmed reading, last_reading 0),
     # so this reading can only become the starting point. Held; accepting it bills nothing.
     NO_BASELINE = "NO_BASELINE"
+    # Not from the rules: the household lowered a reliable AI read by ANOMALY_EDIT_HOLD_M3 or more
+    # (app/anomaly/edits.py). Held for an officer; not a judgement that either value is wrong.
+    EDITED_DOWN = "EDITED_DOWN"
 
 
 def apply_rules(features: Optional[SubmissionFeatures], config: AnomalyConfig) -> Optional[AnomalyType]:

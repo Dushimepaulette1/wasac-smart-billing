@@ -16,6 +16,7 @@ export const ISSUE_KEY: Record<AnomalyType, string> = {
   NORMAL: 'issue.normal',
   LOCATION_CHECK: 'issue.location',
   NO_BASELINE: 'issue.noBaseline',
+  EDITED_DOWN: 'issue.editedDown',
 };
 
 /** The plain-words label for a flag: a suspected misread is either a reading lower than the last

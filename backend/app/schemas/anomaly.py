@@ -78,6 +78,9 @@ class ReviewItem(BaseModel):
     # The photo the reading came from (GET /api/anomaly/readings/{reading_id}/photo), if kept.
     reading_id: Optional[int] = None
     photo_available: bool = False
-    reader_digits: Optional[str] = None          # what the photo reader read
+    reader_digits: Optional[str] = None
+    # The household's value as 8 wheels, and which wheels (0 = leftmost) differ from reader_digits.
+    household_digits: Optional[str] = None
+    changed_positions: List[int] = []          # what the photo reader read
     edited_by_household: Optional[bool] = None   # the household changed those digits
     reader_models: Optional[str] = None
