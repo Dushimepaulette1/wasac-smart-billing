@@ -258,7 +258,9 @@ function ReviewQueue() {
           outcome === 'accept'
             ? res.amount_due !== null
               ? t('staff.review.acceptedBill', { name, amount: rwf(res.amount_due) })
-              : t('staff.review.accepted', { name })
+              : item.flag.anomaly_type === 'NO_BASELINE'
+                ? t('staff.review.acceptedStart', { name })
+                : t('staff.review.accepted', { name })
             : outcome === 'reject'
               ? t('staff.review.rejected', { name })
               : t('staff.review.closed', { name }),
@@ -413,7 +415,9 @@ function ReviewQueue() {
                       {t('staff.review.reject')}
                     </Button>
                   </div>
-                  <p className="text-small text-secondary">{t('staff.review.acceptNote')}</p>
+                  <p className="text-small text-secondary">
+                    {t(selected.flag.anomaly_type === 'NO_BASELINE' ? 'staff.review.acceptNoteStart' : 'staff.review.acceptNote')}
+                  </p>
                 </>
               )}
             </section>

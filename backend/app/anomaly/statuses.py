@@ -8,4 +8,4 @@ READING_REJECTED = "rejected"        # discarded by staff: never billed, never u
 
 NOT_CONFIRMED = (READING_PENDING, READING_REJECTED)
 
-PENDING_REVIEW_TYPES = {AnomalyType.MISREAD_SUSPECTED, AnomalyType.SPIKE}
+PENDING_REVIEW_TYPES = {AnomalyType.MISREAD_SUSPECTED, AnomalyType.SPIKE, AnomalyType.NO_BASELINE}

@@ -46,6 +46,16 @@ describe('Messages', () => {
     }
   });
 
+  it('when a first reading was recorded as the starting point, should say the first bill comes next time', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(8, 'NO_BASELINE', { status: 'resolved', requires_staff_review: true, reading_status: 'valid' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'Your first reading' }));
+    expect(message).toHaveTextContent('recorded as your starting point');
+    expect(within(message).queryByRole('link', { name: 'See your bills' })).not.toBeInTheDocument();
+  });
+
   it('when where a photo was taken is being checked, should tell the household why', async () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([
       flag(5, 'LOCATION_CHECK', { features: { location_check: 'upload' }, reading_status: 'pending_review' }),

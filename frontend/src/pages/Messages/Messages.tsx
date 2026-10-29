@@ -56,7 +56,9 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
     <p className={styles.status}>
       <Icon name="check" size={20} />
       <span>
-        {flag.reading_status === 'valid' ? (
+        {flag.reading_status === 'valid' && flag.anomaly_type === 'NO_BASELINE' ? (
+          t('msg.status.startingPoint')
+        ) : flag.reading_status === 'valid' ? (
           <>
             {t('msg.status.accepted')} <Link to="/history">{t('msg.seeBills')}</Link>
           </>
