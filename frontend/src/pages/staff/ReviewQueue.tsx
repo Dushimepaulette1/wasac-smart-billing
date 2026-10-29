@@ -27,7 +27,7 @@ import type { ReviewItem } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
-import { ISSUE_KEY, previousReading, usualUse } from '../../staff/issues';
+import { issueKey, previousReading, usualUse } from '../../staff/issues';
 import { locationFinding } from '../../utils/location';
 
 /** 1234 -> "1.2 km", 85 -> "85 m". */
@@ -107,7 +107,7 @@ function DecisionPane({ item }: { item: ReviewItem }) {
         </div>
         <p className={styles.issue}>
           <Icon name="clock" size={20} />
-          {t(ISSUE_KEY[item.flag.anomaly_type])}
+          {t(issueKey(item.flag))}
         </p>
       </div>
 
@@ -384,7 +384,7 @@ function ReviewQueue() {
                       onClick={() => select(item.flag.id, true)}
                     >
                       <span className={styles.itemName}>{item.customer_name ?? item.flag.household_id}</span>
-                      <span className={styles.itemIssue}>{t(ISSUE_KEY[item.flag.anomaly_type])}</span>
+                      <span className={styles.itemIssue}>{t(issueKey(item.flag))}</span>
                     </button>
                   </li>
                 );

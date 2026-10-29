@@ -70,8 +70,11 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
   );
 }
 
+const isDigitShift = (flag: AnomalyFlag) => flag.anomaly_type === 'MISREAD_SUSPECTED' && Boolean(flag.features?.digit_shift);
+
 /** What was noticed; for a location check, which reason (camera photo far away, no location, gallery photo). */
 function noticedKey(flag: AnomalyFlag): string {
+  if (isDigitShift(flag)) return 'msg.MISREAD_SUSPECTED.digitShift';
   if (flag.anomaly_type !== 'LOCATION_CHECK') return `msg.${flag.anomaly_type}.noticed`;
   const reason = locationFinding(flag.features)?.reason ?? 'no_location';
   return `msg.LOCATION_CHECK.${reason}`;
@@ -100,7 +103,7 @@ function Message({ flag, onDelete }: { flag: AnomalyFlag; onDelete: (id: number)
 
   return (
     <article className={`panel ${styles.message}`}>
-      <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
+      <h2 className="panel-title">{t(isDigitShift(flag) ? 'msg.MISREAD_SUSPECTED.digitShiftTitle' : `msg.${type}.title`)}</h2>
 
       <p>{t(noticedKey(flag), { date: when })}</p>
 

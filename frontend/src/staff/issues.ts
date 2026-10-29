@@ -4,7 +4,7 @@
  * usual", not "SPIKE"), and the numbers a decision rests on.
  */
 
-import type { AnomalyType, HistoryPoint } from '../api/types';
+import type { AnomalyFlag, AnomalyType, HistoryPoint } from '../api/types';
 
 export const ISSUE_KEY: Record<AnomalyType, string> = {
   SPIKE: 'issue.spike',
@@ -17,6 +17,13 @@ export const ISSUE_KEY: Record<AnomalyType, string> = {
   LOCATION_CHECK: 'issue.location',
   NO_BASELINE: 'issue.noBaseline',
 };
+
+/** The plain-words label for a flag: a suspected misread is either a reading lower than the last
+ *  one or about 10x/100x the usual use (a shifted digit, features.digit_shift). */
+export function issueKey(flag: Pick<AnomalyFlag, 'anomaly_type' | 'features'>): string {
+  if (flag.anomaly_type === 'MISREAD_SUSPECTED' && flag.features?.digit_shift) return 'issue.digitShift';
+  return ISSUE_KEY[flag.anomaly_type];
+}
 
 /** Median of the household's accepted monthly use; null with no history. */
 export function usualUse(history: HistoryPoint[]): number | null {

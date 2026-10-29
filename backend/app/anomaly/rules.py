@@ -32,6 +32,27 @@ def apply_rules(features: Optional[SubmissionFeatures], config: AnomalyConfig) -
         return AnomalyType.SPIKE
     if features.zero_streak_days >= config.stuck_days:
         return AnomalyType.METER_STUCK
+    return compare_with_history(features, config)
+
+
+def has_enough_history(features: SubmissionFeatures, config: AnomalyConfig) -> bool:
+    """At least min_history_periods past periods of min_period_days or more, and this reading's own
+    period long enough too: only then is its daily use compared with the household's usual."""
+    return (features.n_suitable_periods >= config.min_history_periods
+            and features.days_since_last >= config.min_period_days)
+
+
+def compare_with_history(features: SubmissionFeatures, config: AnomalyConfig) -> Optional[AnomalyType]:
+    """Daily use far above this household's own median (rules only; the model is not needed).
+    About 10x or 100x looks like a shifted digit (a misread), otherwise spike_ratio or more is
+    unusually high use. Both are held for an officer. Provisional thresholds (config.py)."""
+    if not has_enough_history(features, config):
+        return None
+    ratio = features.ratio_to_suitable_median
+    if looks_like_digit_shift(ratio, config):
+        return AnomalyType.MISREAD_SUSPECTED
+    if ratio >= config.spike_ratio:
+        return AnomalyType.SPIKE
     return None
 
 
@@ -40,6 +61,8 @@ def is_cold_start(features: SubmissionFeatures, config: AnomalyConfig) -> bool:
 
 
 def looks_like_digit_shift(ratio: float, config: AnomalyConfig) -> bool:
+    if ratio <= 0:
+        return False
     log_ratio = math.log10(ratio)
     return any(abs(log_ratio - k) <= config.misread_log10_tolerance for k in (1.0, 2.0))
 
