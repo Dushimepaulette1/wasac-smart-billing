@@ -147,7 +147,8 @@ await step('15 pay the bill', p, async () => {
   await p.waitForURL(/payment/);
   await p.getByRole('button', { name: /^Pay RWF/ }).click();
   await p.getByRole('heading', { name: 'Pay with MoMo Pay' }).waitFor({ timeout: 60000 });
-  log('     code to dial:', (await p.locator('main a[href^="tel:"]').first().innerText()).trim());
+  const dial = p.locator('main a[href^="tel:"]');
+  log('     code to dial:', (await dial.count()) ? (await dial.first().innerText()).trim() : 'none (MOMO_PAY_CODE not set)');
   await p.getByLabel('2. Enter the transaction ID').fill(TX);
   await p.getByRole('button', { name: 'Send for checking' }).click();
   await p.getByRole('heading', { name: "We're checking your payment" }).waitFor({ timeout: 30000 });
