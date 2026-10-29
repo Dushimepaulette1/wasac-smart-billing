@@ -7,7 +7,7 @@ from app.anomaly.location import PhotoEvidence
 from app.db.session import get_db
 from app.models import Customer
 from app.services import billing
-from app.services.photo_evidence import attach, save_photo_read
+from app.services.photo_evidence import claim, save_photo_read
 from app.utils.meter_value import parse_meter_value
 from app.core.ratelimit import MAX_UPLOAD_BYTES
 from app.anomaly.service import ReadingRefused, notify_household, submit_reading
@@ -109,13 +109,13 @@ async def confirm_reading(
             lng=where.lng if where else None,
             accuracy_m=where.accuracy_m if where else None,
         )
+    photo = claim(db, body.photo_id, access.owner)
     try:
         sub = submit_reading(db, meter, body.customer_id, submitted, method="camera", evidence=evidence,
-                             household=access.staff is None)
+                             household=access.staff is None, photo=photo)
     except ReadingRefused as refused:
         # 409: the app shows its own words for a block's reason (see GET /customers/{id}).
         raise HTTPException(status_code=409, detail=refused.message)
-    attach(db, body.photo_id, access.owner, sub.reading, f"{round(submitted * 1000):08d}")
     actions = notify_household(db, sub.anomaly)
     anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
 

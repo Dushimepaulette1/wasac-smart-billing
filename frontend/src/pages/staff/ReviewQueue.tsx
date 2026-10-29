@@ -83,6 +83,18 @@ function ReadingPhoto({ readingId, name }: { readingId: number; name: string }) 
   );
 }
 
+/** The reader's digits and the household's, the wheels the household changed in bold. */
+function DigitChange({ ai, typed, changed }: { ai: string; typed: string; changed: number[] }) {
+  const { t } = useI18n();
+  const show = (digits: string) =>
+    digits.split('').map((d, i) => (changed.includes(i) ? <strong key={i} className={styles.strong}>{d}</strong> : <span key={i}>{d}</span>));
+  return (
+    <span className="code" aria-label={t('staff.review.changedWheels', { ai, typed })}>
+      {show(ai)} → {show(typed)}
+    </span>
+  );
+}
+
 function DecisionPane({ item }: { item: ReviewItem }) {
   const { t, volume, date } = useI18n();
   const labels = useCounterLabels();
@@ -146,6 +158,14 @@ function DecisionPane({ item }: { item: ReviewItem }) {
                 <dd>
                   {formatReading(cellsFromCubicMetres(Number(item.reader_digits) / 1000))} m³
                   {item.edited_by_household && <span className={styles.strong}> · {t('staff.review.edited')}</span>}
+                </dd>
+              </div>
+            )}
+            {item.reader_digits && item.household_digits && (item.changed_positions?.length ?? 0) > 0 && (
+              <div>
+                <dt>{t('staff.review.changed')}</dt>
+                <dd>
+                  <DigitChange ai={item.reader_digits} typed={item.household_digits} changed={item.changed_positions ?? []} />
                 </dd>
               </div>
             )}

@@ -26,7 +26,9 @@ export type AnomalyType =
   /** The photo's location or source needs an officer's look (app/anomaly/location.py). */
   | 'LOCATION_CHECK'
   /** No starting value yet: the first reading becomes the starting point, without a bill. */
-  | 'NO_BASELINE';
+  | 'NO_BASELINE'
+  /** The household lowered a reliable AI read by 1 m³ or more: an officer compares the two. */
+  | 'EDITED_DOWN';
 
 /** app/models/anomaly_flag.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';
@@ -384,6 +386,9 @@ export interface ReviewItem {
   reader_digits?: string | null;
   /** The household changed the reader's digits before sending. */
   edited_by_household?: boolean | null;
+  /** The household's value as 8 wheels, and which wheels (0 = leftmost) differ from reader_digits. */
+  household_digits?: string | null;
+  changed_positions?: number[];
 }
 
 // ---------------------------------------------------------------------------

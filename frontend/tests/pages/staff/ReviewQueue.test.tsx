@@ -43,6 +43,16 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('when the household lowered the photo reading, should show both readings with the changed wheels', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(4, 'Edited House', { anomaly_type: 'EDITED_DOWN' }),
+      reader_digits: '00443520', household_digits: '00442520', changed_positions: [4], edited_by_household: true,
+    }]);
+    renderQueue();
+    expect(await screen.findByLabelText('Read 00443520, sent 00442520')).toBeInTheDocument();
+    expect(screen.getAllByText('Lowered from the photo\'s reading').length).toBeGreaterThan(0);
+  });
+
   it('when a reading is held, should offer accept and reject', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([item(1, 'Held House', { anomaly_type: 'SPIKE' })]);
     renderQueue();

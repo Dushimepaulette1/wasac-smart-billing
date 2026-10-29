@@ -29,6 +29,8 @@ class AnomalyConfig:
     misread_log10_tolerance: float = 0.15
     # Periods shorter than this give a daily rate too noisy to compare (rule-based history check).
     min_period_days: float = 7.0
+    # A household value this much (m3) or more below a reliable AI read is held (app/anomaly/edits.py).
+    edit_hold_m3: float = 1.0
     model_path: Path = field(default=_DEFAULT_MODEL_PATH)
 
     @classmethod
@@ -50,5 +52,6 @@ class AnomalyConfig:
                 "ANOMALY_MISREAD_LOG10_TOLERANCE", d.misread_log10_tolerance, float
             ),
             min_period_days=_env("ANOMALY_MIN_PERIOD_DAYS", d.min_period_days, float),
+            edit_hold_m3=_env("ANOMALY_EDIT_HOLD_M3", d.edit_hold_m3, float),
             model_path=_env("ANOMALY_MODEL_PATH", d.model_path, Path),
         )
