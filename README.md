@@ -407,11 +407,11 @@ and whether the household changed it (`backend/app/services/photo_evidence.py`).
 | `USSD_CALLBACK_TOKEN` | unset (USSD off) | Secret in the Africa's Talking USSD callback URL |
 | `PHOTO_RETENTION_DAYS` | `90` | How long meter photos are kept for reviewers |
 
-**Demo households** (`scripts/demo/generate_demo_households.py --load-db`, all `DEMO-`, labelled
-"Demo data" in the app): sign in with **0700 000 001** for DEMO-MTR-001, 0700 000 002 for
-DEMO-MTR-002, and so on to 0700 000 018; **0700 000 019** has two meters (019 and 020), to show
+**Demo households** (`scripts/demo/generate_demo_households.py --load-db`, customer numbers start with `DEMO-`, labelled
+"Demo data" in the app): sign in with **0700 000 001** for KGL-20001, 0700 000 002 for
+KGL-20002, and so on to 0700 000 018; **0700 000 019** has two meters (019 and 020), to show
 choosing a meter. These are not real numbers; the code is shown on screen. To try SMS sign-in
-with your own phone: `--set-phone DEMO-MTR-001 07XXXXXXXX` (and `--update-contacts` to undo). DEMO-MTR-002 has a
+with your own phone: `--set-phone KGL-20001 07XXXXXXXX` (and `--update-contacts` to undo). KGL-20002 has a
 location on file (Kacyiru), so its readings show the location check. `--update-contacts` sets the
 phones and location on DEMO- rows already in the database.
 
