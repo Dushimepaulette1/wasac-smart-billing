@@ -12,18 +12,19 @@ import type {
   ApiErrorBody,
   BillSummary,
   CalculateBillResponse,
+  CodeSent,
   ConfirmReadingResponse,
   CustomerInfo,
   GuideFrameResponse,
+  HouseholdAccount,
+  HouseholdSession,
   LoginResponse,
   Payment,
+  PaymentToCheck,
+  PhotoEvidence,
   PhotoSubmitResponse,
   ResolveFlagResponse,
   ReviewItem,
-  CodeSent,
-  HouseholdAccount,
-  HouseholdSession,
-  PhotoEvidence,
   SmsOutboxEntry,
   StaffAccount,
   StaffAction,
@@ -90,7 +91,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   json?: unknown;
   body?: BodyInit;
   timeout?: number;
@@ -272,6 +273,38 @@ export const api = {
   /** GET /payments/{id}: where a payment stands (pending, successful, failed). */
   getPayment(paymentId: number): Promise<Payment> {
     return request(`/payments/${encodeURIComponent(paymentId)}`);
+  },
+
+  /** POST /payments/{id}/reference: the MoMo transaction ID after paying by MoMo Pay (USSD). */
+  submitPaymentReference(paymentId: number, transactionId: string): Promise<Payment> {
+    return request(`/payments/${encodeURIComponent(paymentId)}/reference`, {
+      method: 'POST',
+      json: { transaction_id: transactionId },
+    });
+  },
+
+  /** DELETE /api/anomaly/flags/{id}/message: remove a message from the household's list. */
+  deleteMessage(flagId: number): Promise<void> {
+    return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/message`, { method: 'DELETE' });
+  },
+
+  /** GET /api/payments/to-check (staff): MoMo Pay payments waiting for an officer. */
+  paymentsToCheck(): Promise<PaymentToCheck[]> {
+    return request('/api/payments/to-check', { auth: 'staff' });
+  },
+
+  /** POST /api/payments/{id}/confirm (staff): found in WASAC's MoMo account, so the bill is paid. */
+  confirmPayment(paymentId: number): Promise<Payment> {
+    return request(`/api/payments/${encodeURIComponent(paymentId)}/confirm`, { method: 'POST', auth: 'staff' });
+  },
+
+  /** POST /api/payments/{id}/decline (staff): not found; the household is told and can pay again. */
+  declinePayment(paymentId: number, reason: string): Promise<Payment> {
+    return request(`/api/payments/${encodeURIComponent(paymentId)}/decline`, {
+      method: 'POST',
+      auth: 'staff',
+      json: { reason },
+    });
   },
 
 

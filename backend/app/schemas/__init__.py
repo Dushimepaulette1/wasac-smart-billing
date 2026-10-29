@@ -23,7 +23,10 @@ from app.schemas.billing import (  # noqa: F401
     BillCalculateRequest,
     CustomerInfo,
     MeterCorrectionRequest,
+    PaymentDecline,
     PaymentOut,
+    PaymentReference,
+    PaymentToCheck,
 )
 from app.schemas.household_auth import (  # noqa: F401
     CodeRequest,

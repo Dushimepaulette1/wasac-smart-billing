@@ -12,7 +12,7 @@
  * payment is simulated; a test payment says so on the receipt.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Button from '../../components/Button/Button';
@@ -62,7 +62,11 @@ function Payment() {
   const billId = Number(params.get('bill'));
   const load = useRequest(loadPayment);
   const { run } = load;
-  const [state, setState] = useState<'ready' | 'paying' | 'waiting' | 'paid' | 'unsure' | 'failed' | 'declined'>('ready');
+  // momopay: dial WASAC's MoMo Pay code, then give the transaction ID; checking: WASAC is checking it.
+  const [state, setState] = useState<'ready' | 'paying' | 'waiting' | 'paid' | 'unsure' | 'failed' | 'declined' | 'momopay' | 'checking'>('ready');
+  const [txId, setTxId] = useState('');
+  const [sending, setSending] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState<PaymentAttempt | null>(null);
@@ -76,6 +80,8 @@ function Payment() {
       setState('paid');
     } else if (p.status === 'failed') {
       setState('declined');
+    } else if (p.provider === 'momo_pay') {
+      setState(p.transaction_id ? 'checking' : 'momopay');
     } else {
       setState('waiting');
     }
@@ -169,6 +175,106 @@ function Payment() {
           </dl>
         )}
         {receipt?.test && <p className="text-small">{t('pay.testMode')}</p>}
+      </Screen>
+    );
+  }
+
+  if (state === 'momopay' && attempt) {
+    const code = attempt.ussd_code ?? null;
+    const sendId = async (e: FormEvent) => {
+      e.preventDefault();
+      const id = txId.trim();
+      if (!/^[A-Za-z0-9.-]{4,40}$/.test(id)) return setError(new ApiError('invalid'));
+      setSending(true);
+      setError(null);
+      try {
+        settle(await api.submitPaymentReference(attempt.id, id));
+      } catch (err) {
+        setError(err);
+      } finally {
+        setSending(false);
+      }
+    };
+    const copy = async () => {
+      try {
+        await navigator.clipboard.writeText(code ?? '');
+        setCopied(true);
+      } catch {
+        // No clipboard: the code is on screen to type.
+      }
+    };
+    return (
+      <Screen title={t('pay.momoPayTitle')} lede={<p>{t('pay.momoPayLede', { amount })}</p>} back>
+        <section className={`panel ${styles.panel}`} aria-labelledby="dial-title">
+          <p id="dial-title" className={styles.stepLabel}>{t('pay.momoPayStep1')}</p>
+          {code ? (
+            <>
+              <a className={styles.ussd} href={`tel:${code.replace(/#/g, '%23')}`}>
+                <span className="num">{code}</span>
+              </a>
+              <div className={styles.codeActions}>
+                <Button variant="secondary" icon="phone" href={`tel:${code.replace(/#/g, '%23')}`}>
+                  {t('pay.momoPayDial')}
+                </Button>
+                <Button variant="text" onClick={copy}>
+                  {copied ? t('pay.momoPayCopied') : t('pay.momoPayCopy')}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <p>{t('pay.momoPayNoCode')}</p>
+          )}
+          <dl className={styles.receipt}>
+            <div className={styles.line}>
+              <dt className="text-secondary">{t('pay.amount')}</dt>
+              <dd className="num">{amount}</dd>
+            </div>
+            <div className={styles.line}>
+              <dt className="text-secondary">{t('pay.momoPayReference')}</dt>
+              <dd className="code">{attempt.reference ?? bill.bill_id}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <form className={`panel ${styles.panel}`} onSubmit={sendId} noValidate>
+          <label htmlFor="momo-tx" className={styles.stepLabel}>{t('pay.momoPayStep2')}</label>
+          <p className="text-small text-secondary">{t('pay.momoPayStep2Hint')}</p>
+          {Boolean(error) && (
+            <Notice tone="error" live>
+              {error instanceof ApiError && error.kind === 'invalid' ? t('pay.momoPayBadId') : errorMessage(t, error)}
+            </Notice>
+          )}
+          <input
+            id="momo-tx"
+            className={styles.txInput}
+            value={txId}
+            onChange={(e) => setTxId(e.target.value)}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            inputMode="text"
+          />
+          <Button type="submit" loading={sending}>
+            {t('pay.momoPaySubmit')}
+          </Button>
+        </form>
+      </Screen>
+    );
+  }
+
+  if (state === 'checking' && attempt) {
+    return (
+      <Screen
+        title={t('pay.checkingTitle')}
+        action={
+          <Button fullWidth onClick={() => navigate('/home')}>
+            {t('action.backHome')}
+          </Button>
+        }
+      >
+        <Notice tone="held" live title={t('pay.checkingTitle')}>
+          {t('pay.checkingBody', { id: attempt.transaction_id ?? '', amount })}
+        </Notice>
       </Screen>
     );
   }

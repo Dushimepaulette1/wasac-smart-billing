@@ -77,8 +77,9 @@ def test_when_asking_for_the_bill_and_paying_should_answer_and_pay(anon_client, 
     db.commit()
     assert "RWF 6,460, not paid" in dial(anon_client, "9*2")[1]
     assert dial(anon_client, "9*3")[1].startswith("CON Pay RWF 6,460 with MoMo")
-    assert dial(anon_client, "9*3*1")[1] == "END Bill paid. Thank you."  # simulated without MoMo keys
-    assert dial(anon_client, "9*3")[1] == "END You have no unpaid bill."
+    # Without the MoMo API, USSD gives WASAC's MoMo Pay code to dial.
+    assert dial(anon_client, "9*3*1")[1] == "END Pay with WASAC's MoMo Pay code, then enter the transaction ID in the Mubazi app."
+    assert dial(anon_client, "9*3")[1].startswith("CON Pay RWF 6,460")  # still unpaid until an officer confirms
 
 
 def test_when_the_number_has_no_account_should_say_so(anon_client, household):

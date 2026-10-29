@@ -4,13 +4,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
-from app.models import AnomalyFlag, FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED
+from app.models import AnomalyFlag, FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, MessageDismissal
 from app.anomaly.review import ReviewError, resolve_flag
 from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
 from app.services.photo_evidence import photo_for_reading
 from app.models import StaffUser
-from app.api.deps import household_access
+from app.api.deps import Access, household_access
 from app.api.deps import require_staff, staff_from_header
 from app.db.session import get_db
 from app.models import Customer, Reading
@@ -49,14 +49,19 @@ async def list_flags(
     authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ):
-    # A household reads its own flags; listing every household's is staff only.
+    # A household reads its own flags (without the messages it deleted); listing every
+    # household's is staff only.
+    access = None
     if household_id:
-        household_access(authorization, db).require_meter(household_id)
+        access = household_access(authorization, db)
+        access.require_meter(household_id)
     else:
         staff_from_header(authorization, db)
     query = db.query(AnomalyFlag)
     if household_id:
         query = query.filter(AnomalyFlag.household_id == household_id)
+    if access is not None and access.staff is None:
+        query = query.filter(~AnomalyFlag.id.in_(db.query(MessageDismissal.flag_id)))
     if status:
         query = query.filter(AnomalyFlag.status == status)
     if requires_staff_review is not None:
@@ -70,6 +75,21 @@ async def list_flags(
         AnomalyFlagOut.model_validate(f).model_copy(update={"reading_status": statuses.get(f.reading_id)})
         for f in flags
     ]
+
+
+@router.delete("/flags/{flag_id}/message", status_code=204)
+async def delete_message(flag_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
+    """A household deletes a message from its Messages list (the flag stays for staff). A message
+    about a reading still being checked cannot be deleted: its outcome is still to come."""
+    flag = db.get(AnomalyFlag, flag_id)
+    if not flag or access.staff is not None or not access.owns_meter(flag.household_id):
+        raise HTTPException(status_code=404, detail="Message not found")
+    reading = db.get(Reading, flag.reading_id) if flag.reading_id else None
+    if flag.status == FLAG_STATUS_OPEN and reading is not None and reading.validation_status == "pending_review":
+        raise HTTPException(status_code=409, detail="This reading is still being checked.")
+    if not db.get(MessageDismissal, flag_id):
+        db.add(MessageDismissal(flag_id=flag_id))
+        db.commit()
 
 
 @router.patch("/flags/{flag_id}/resolve", response_model=ResolveFlagResponse)

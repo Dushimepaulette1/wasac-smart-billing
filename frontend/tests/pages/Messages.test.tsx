@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Messages, { SHOWN_TYPES } from '../../src/pages/Messages/Messages';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
@@ -10,7 +10,7 @@ import { makeFlag } from '../support/fixtures';
 
 vi.mock('../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/api/client')>();
-  return { ...actual, api: { ...actual.api, getHouseholdFlags: vi.fn() } };
+  return { ...actual, api: { ...actual.api, getHouseholdFlags: vi.fn(), deleteMessage: vi.fn() } };
 });
 
 const flag = (id: number, anomaly_type: AnomalyType, extra: Partial<AnomalyFlag> = {}) =>
@@ -108,5 +108,20 @@ describe('Messages', () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([flag(9, 'NORMAL'), flag(10, 'BASELINE')]);
     renderMessages();
     expect(await screen.findByText(/No messages\./)).toBeInTheDocument();
+  });
+
+  it('when a finished message is deleted, should remove it; a reading still being checked has no Delete', async () => {
+    vi.mocked(api.deleteMessage).mockResolvedValue(undefined);
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(1, 'SPIKE', { status: 'resolved', reading_status: 'valid', resolved_at: '2026-10-20T10:00:00' }),
+      flag(2, 'MISREAD_SUSPECTED', { status: 'open', reading_status: 'pending_review' }),
+    ]);
+    renderMessages();
+    const buttons = await screen.findAllByRole('button', { name: 'Delete' });
+    expect(buttons).toHaveLength(1);
+    await act(async () => fireEvent.click(buttons[0] as HTMLElement));
+    expect(api.deleteMessage).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole('heading', { name: 'Much more water than usual' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(1);
   });
 });

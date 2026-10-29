@@ -6,42 +6,53 @@
 
 .label {
   color: var(--color-text-secondary);
-}
-
-/* A native select keeps the phone's own picker; styled as a thin pill. */
-.select {
-  appearance: none;
-  min-height: 40px;
-  padding: 0 36px 0 var(--space-4);
-  border: 2px solid var(--color-outline);
   font-weight: var(--weight-semibold);
-  border-radius: var(--radius-button);
-  background: var(--chevron) no-repeat right 14px center;
+}
+
+/* A pill track with the current language as a filled pill inside it. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  padding: 3px;
+  border: 2px solid var(--color-outline);
+  border-radius: 999px;
+}
+
+.option {
+  min-width: 46px;
+  min-height: 34px;
+  padding: 0.2em 12px 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.option:hover {
   color: var(--color-text);
+}
+
+/* Current language: filled, and aria-pressed for screen readers. */
+.current,
+.current:hover {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+
+.full .option {
+  min-width: 64px;
+  min-height: 40px;
   font-size: var(--size-small);
-  cursor: pointer;
-  padding-top: 0.18em; /* Josefin Sans sits high */
 }
 
-.select option {
-  color: var(--field-text);
-  background: var(--field-bg);
-}
-
-.compact .select {
-  min-height: 44px;
-}
-
-.full .select {
-  min-height: var(--tap-min);
-  font-size: var(--size-body);
-  max-width: 320px;
-}
-
-@media (max-width: 479px) {
-  .compact .select {
-    max-width: 104px;
-    padding: 0 28px 0 var(--space-3);
-    background-position: right 10px center;
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
   }
 }

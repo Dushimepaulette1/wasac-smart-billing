@@ -236,9 +236,9 @@ export interface BillSummary {
 export interface Payment {
   id: number;
   bill_id: number;
-  /** momo, momo_sandbox (test money), simulated (no MoMo keys yet: no money moves). */
+  /** momo, momo_sandbox (test money), momo_pay (USSD, checked by WASAC), simulated (no money moves). */
   provider: string;
-  /** pending: waiting for the payer's PIN on their phone. */
+  /** pending: waiting for the payer's PIN, or (momo_pay) for WASAC to check the transaction ID. */
   status: 'pending' | 'successful' | 'failed';
   amount: number;
   currency: string;
@@ -247,6 +247,23 @@ export interface Payment {
   reason: string | null;
   /** The bill was already paid before this request. */
   already_paid: boolean;
+  /** momo_pay: what to dial (null until WASAC's code is set), the merchant code, the bill reference. */
+  ussd_code?: string | null;
+  pay_code?: string | null;
+  reference?: string | null;
+}
+
+/** GET /api/payments/to-check: a MoMo Pay payment waiting for an officer. */
+export interface PaymentToCheck {
+  id: number;
+  bill_id: number;
+  customer_id: string;
+  customer_name: string;
+  meter_id: string | null;
+  amount: number;
+  transaction_id: string | null;
+  created_at: IsoDateTime;
+  submitted_at: IsoDateTime;
 }
 
 // ---------------------------------------------------------------------------

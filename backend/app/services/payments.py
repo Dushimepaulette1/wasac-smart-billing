@@ -1,12 +1,22 @@
-"""Paying a bill: MTN Mobile Money when configured (app/services/momo.py), simulated otherwise.
+"""Paying a bill, in one of three ways:
 
-    start_payment   reuse a pending attempt, or start one: MoMo sends the payer a PIN prompt and
-                    the attempt waits; simulated payments succeed at once
-    refresh         ask MTN about a pending attempt; on success mark the bill paid (once) and
-                    send an SMS receipt; on failure record MTN's reason (nothing was taken)
+    momo        MTN Mobile Money API (app/services/momo.py), when its keys are set: MTN sends the
+                payer a PIN prompt, and MTN's own answer marks the bill paid (refresh)
+    momo_pay    otherwise: the household pays WASAC's MoMo Pay merchant code by USSD
+                (MOMO_PAY_CODE, dialled as MOMO_PAY_USSD), then enters the transaction ID from
+                MTN's SMS. The bill stays unpaid until a WASAC officer finds that payment in
+                WASAC's MoMo merchant account and confirms it (confirm / decline)
+    simulated   only with PAYMENTS_SIMULATE=1 (tests and demos): succeeds at once
 
-An attempt still pending after PENDING_LIMIT is marked failed, so the household can try again.
+    start_payment     reuse a pending attempt, or start one
+    refresh           ask MTN about a pending API attempt; mark paid (once, SMS receipt) or failed
+    submit_reference  the household's MoMo transaction ID for a momo_pay attempt
+    confirm / decline the officer's check of a momo_pay attempt
+
+An API attempt still pending after PENDING_LIMIT is marked failed, so the household can try again.
+A momo_pay attempt waits for the officer, however long that takes.
 """
+import os
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
@@ -19,6 +29,29 @@ from app.services import momo
 from app.services.sms import send_sms
 
 PENDING_LIMIT = timedelta(minutes=10)
+MOMO_PAY = "momo_pay"
+SIMULATED = "simulated"
+
+
+def pay_code():
+    """WASAC's MoMo Pay merchant code, or None when it is not set."""
+    return os.getenv("MOMO_PAY_CODE", "").strip() or None
+
+
+def ussd_code(amount: float):
+    """What the household dials to pay, e.g. *182*8*1*123456*6460#. The format can be changed with
+    MOMO_PAY_USSD (placeholders {code} and {amount}); None without a merchant code."""
+    code = pay_code()
+    if not code:
+        return None
+    template = os.getenv("MOMO_PAY_USSD", "*182*8*1*{code}*{amount}#")
+    return template.format(code=code, amount=int(round(amount)))
+
+
+class PaymentError(Exception):
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(detail)
+        self.status_code, self.detail = status_code, detail
 FINAL_FAILURES = {"FAILED", "REJECTED", "TIMEOUT", "EXPIRED", "CANCELLED"}
 
 
@@ -41,13 +74,15 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         .order_by(Payment.id.desc())
         .first()
     )
-    if open_attempt and datetime.utcnow() - open_attempt.created_at < PENDING_LIMIT:
-        return refresh(db, open_attempt)  # never ask MTN twice for the same bill
+    if open_attempt and (open_attempt.provider == MOMO_PAY
+                         or datetime.utcnow() - open_attempt.created_at < PENDING_LIMIT):
+        return refresh(db, open_attempt)  # never ask MTN twice, never two MoMo Pay attempts
 
     configured = momo.momo_configured()
+    simulate = not configured and os.getenv("PAYMENTS_SIMULATE", "0") == "1"
     payment = Payment(
         bill_id=bill.bill_id,
-        provider=momo.provider_name() if configured else "simulated",
+        provider=momo.provider_name() if configured else (SIMULATED if simulate else MOMO_PAY),
         reference_id=str(uuid.uuid4()),
         status=PENDING,
         amount=bill.amount_due,
@@ -55,8 +90,11 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
     )
     db.add(payment)
     db.flush()
-    if not configured:
+    if simulate:
         _mark_paid(db, payment, bill, f"SIM-{bill.bill_id:06d}-{payment.id}")
+        db.commit()
+        return payment
+    if not configured:  # MoMo Pay by USSD: wait for the household's transaction ID
         db.commit()
         return payment
     try:
@@ -69,7 +107,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
 
 
 def refresh(db: Session, payment: Payment) -> Payment:
-    if payment.status != PENDING or payment.provider == "simulated":
+    if payment.status != PENDING or payment.provider in (SIMULATED, MOMO_PAY):
         return payment
     bill = db.get(Bill, payment.bill_id)
     try:
@@ -85,4 +123,37 @@ def refresh(db: Session, payment: Payment) -> Payment:
         payment.status, payment.reason = FAILED, "no answer from MTN Mobile Money"
         payment.updated_at = datetime.utcnow()
     db.commit()
+    return payment
+
+
+def submit_reference(db: Session, payment: Payment, transaction_id: str) -> Payment:
+    """The household paid by MoMo Pay and types the transaction ID from MTN's SMS. Commits."""
+    if payment.provider != MOMO_PAY or payment.status != PENDING:
+        raise PaymentError(409, "This payment is not waiting for a MoMo transaction ID.")
+    payment.transaction_id = transaction_id
+    payment.updated_at = datetime.utcnow()
+    db.commit()
+    return payment
+
+
+def confirm(db: Session, payment: Payment) -> Payment:
+    """An officer found this payment in WASAC's MoMo merchant account: the bill is paid. Commits."""
+    if payment.provider != MOMO_PAY or payment.status != PENDING or not payment.transaction_id:
+        raise PaymentError(409, "Only a MoMo Pay payment with a transaction ID can be confirmed.")
+    _mark_paid(db, payment, db.get(Bill, payment.bill_id), payment.transaction_id)
+    db.commit()
+    return payment
+
+
+def decline(db: Session, payment: Payment, reason: str) -> Payment:
+    """An officer could not find this payment: the household is told and can try again. Commits."""
+    if payment.provider != MOMO_PAY or payment.status != PENDING:
+        raise PaymentError(409, "Only a MoMo Pay payment waiting for a check can be declined.")
+    payment.status, payment.reason, payment.updated_at = FAILED, reason[:120], datetime.utcnow()
+    bill = db.get(Bill, payment.bill_id)
+    customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first() if bill else None
+    db.commit()
+    if customer and customer.phone:
+        send_sms(customer.phone, f"WASAC: we could not find your MoMo payment ({payment.transaction_id or 'no ID'}) "
+                                 f"for bill {bill.bill_id}. Please check the transaction ID and try again.")
     return payment

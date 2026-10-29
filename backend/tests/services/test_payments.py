@@ -61,7 +61,8 @@ def mtn(monkeypatch):
     momo.reset_token()
 
 
-def test_when_momo_is_not_set_up_should_simulate_the_payment(db, household_client, bill):
+def test_when_payments_are_simulated_should_mark_the_bill_paid_at_once(db, household_client, bill, monkeypatch):
+    monkeypatch.setenv("PAYMENTS_SIMULATE", "1")
     body = household_client.post(f"/bills/{bill.bill_id}/pay").json()
     assert body["status"] == "successful" and body["provider"] == "simulated"
     assert body["transaction_id"].startswith("SIM-")
@@ -136,3 +137,45 @@ def test_when_another_household_asks_should_not_show_the_payment(db, household_c
     other = {"Authorization": f"Bearer {household_token('+250788222333')}"}
     assert anon_client.get(f"/payments/{started['id']}", headers=other).status_code == 404
     assert anon_client.post(f"/bills/{bill.bill_id}/pay", headers=other).status_code == 404
+
+
+def test_when_momo_api_is_not_set_up_should_ask_for_momo_pay_and_wait_for_an_officer(
+        db, household_client, client, bill, monkeypatch):
+    monkeypatch.setenv("MOMO_PAY_CODE", "123456")
+    started = household_client.post(f"/bills/{bill.bill_id}/pay").json()
+    assert started["provider"] == "momo_pay" and started["status"] == "pending"
+    assert started["ussd_code"] == "*182*8*1*123456*6460#" and started["reference"] == str(bill.bill_id)
+    assert household_client.post(f"/bills/{bill.bill_id}/pay").json()["id"] == started["id"]  # one attempt
+
+    # Nothing is paid until the household gives the transaction ID and an officer confirms it.
+    assert client.get("/api/payments/to-check").json() == []
+    sent = household_client.post(f"/payments/{started['id']}/reference", json={"transaction_id": "MP2610291234"})
+    assert sent.status_code == 200 and sent.json()["transaction_id"] == "MP2610291234"
+    db.refresh(bill)
+    assert bill.payment_status == "unpaid"
+    waiting = client.get("/api/payments/to-check").json()
+    assert [(w["id"], w["transaction_id"]) for w in waiting] == [(started["id"], "MP2610291234")]
+
+    done = client.post(f"/api/payments/{started['id']}/confirm")
+    assert done.status_code == 200 and done.json()["status"] == "successful"
+    db.refresh(bill)
+    assert bill.payment_status == "paid"
+    assert client.get("/api/payments/to-check").json() == []
+
+
+def test_when_an_officer_cannot_find_a_momo_pay_payment_should_decline_it_and_let_the_household_retry(
+        db, household_client, client, bill):
+    started = household_client.post(f"/bills/{bill.bill_id}/pay").json()
+    assert started["ussd_code"] is None  # no merchant code configured
+    household_client.post(f"/payments/{started['id']}/reference", json={"transaction_id": "WRONG123"})
+    declined = client.post(f"/api/payments/{started['id']}/decline", json={"reason": "not in the MoMo statement"})
+    assert declined.json()["status"] == "failed" and declined.json()["reason"] == "not in the MoMo statement"
+    db.refresh(bill)
+    assert bill.payment_status == "unpaid"
+    assert household_client.post(f"/bills/{bill.bill_id}/pay").json()["id"] != started["id"]
+
+
+def test_when_a_transaction_id_is_not_plausible_should_refuse_it(household_client, bill):
+    started = household_client.post(f"/bills/{bill.bill_id}/pay").json()
+    for bad in ["", "ab", "<script>", "x" * 41]:
+        assert household_client.post(f"/payments/{started['id']}/reference", json={"transaction_id": bad}).status_code == 422

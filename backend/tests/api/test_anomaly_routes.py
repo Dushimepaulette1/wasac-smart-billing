@@ -90,3 +90,25 @@ def test_when_a_billed_reading_needs_follow_up_should_say_so_and_close_without_a
     closed = client.patch(f"/api/anomaly/flags/{stuck}/resolve", json={})
     assert closed.status_code == 200 and closed.json()["status"] == "resolved" and closed.json()["outcome"] is None
     assert [i["flag"]["anomaly_type"] for i in client.get("/api/anomaly/review-queue").json()] == ["SPIKE"]
+
+
+def test_when_a_household_deletes_a_message_should_hide_it_from_them_but_not_from_staff(db, client, household_client):
+    from app.models import AnomalyFlag, Reading
+
+    add_household(db, "MTR-M", make_history([1.0] * 4), phone="+250788000111")
+    done = Reading(meter_id="MTR-M", submitted_value=5.0, validation_status="valid")
+    held = Reading(meter_id="MTR-M", submitted_value=900.0, validation_status="pending_review")
+    db.add_all([done, held]); db.flush()
+    old = AnomalyFlag(household_id="MTR-M", reading_id=done.reading_id, anomaly_type="SPIKE",
+                      requires_staff_review=True, status="resolved")
+    waiting = AnomalyFlag(household_id="MTR-M", reading_id=held.reading_id, anomaly_type="SPIKE",
+                          requires_staff_review=True, status="open")
+    db.add_all([old, waiting]); db.commit()
+
+    assert household_client.delete(f"/api/anomaly/flags/{waiting.id}/message").status_code == 409  # still checking
+    assert household_client.delete(f"/api/anomaly/flags/{old.id}/message").status_code == 204
+    mine = household_client.get("/api/anomaly/flags", params={"household_id": "MTR-M"}).json()
+    assert [f["id"] for f in mine] == [waiting.id]
+    staff_view = client.get("/api/anomaly/flags", params={"household_id": "MTR-M"}).json()
+    assert {f["id"] for f in staff_view} == {old.id, waiting.id}
+    assert household_client.delete("/api/anomaly/flags/999999/message").status_code == 404

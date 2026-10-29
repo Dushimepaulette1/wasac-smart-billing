@@ -9,7 +9,7 @@
  * or not confirmed (read the meter again). Opening Messages marks them read.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Screen from '../../components/Screen/Screen';
 import Icon from '../../components/Icon/Icon';
@@ -21,7 +21,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { HIGH_USE_TYPES } from '../../household/loadHome';
 import { locationFinding } from '../../utils/location';
 import { useAccount } from '../../household/session';
-import { markMessagesSeen, shownMessages } from '../../household/status';
+import { markMessagesSeen, refreshHouseholdFlags, shownMessages } from '../../household/status';
 import type { AnomalyFlag } from '../../api/types';
 import styles from './Messages.module.css';
 
@@ -75,8 +75,23 @@ function noticedKey(flag: AnomalyFlag): string {
   return `msg.LOCATION_CHECK.${reason}`;
 }
 
-function Message({ flag }: { flag: AnomalyFlag }) {
+function Message({ flag, onDelete }: { flag: AnomalyFlag; onDelete: (id: number) => void }) {
   const { t, date } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // A reading still being checked keeps its message: its outcome is still to come.
+  const canDelete = !(flag.status === 'open' && flag.reading_status === 'pending_review');
+  const remove = async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      await api.deleteMessage(flag.id);
+      onDelete(flag.id);
+    } catch {
+      setFailed(true);
+      setBusy(false);
+    }
+  };
   const type = flag.anomaly_type;
   const when = date(flag.created_at);
   const leak = HIGH_USE_TYPES.includes(type);
@@ -100,6 +115,15 @@ function Message({ flag }: { flag: AnomalyFlag }) {
       )}
 
       {flag.requires_staff_review && <CheckStatus flag={flag} />}
+
+      {canDelete && (
+        <div className={styles.footer}>
+          {failed && <span className="text-small">{t('messages.deleteFailed')}</span>}
+          <Button variant="text" icon="trash" loading={busy} onClick={remove}>
+            {t('messages.delete')}
+          </Button>
+        </div>
+      )}
     </article>
   );
 }
@@ -109,7 +133,12 @@ function Messages() {
   const meterId = account.meter_id ?? '';
   const { t } = useI18n();
   const flags = useRequest(api.getHouseholdFlags, { immediate: true, args: [meterId] });
-  const shown = flags.status === 'success' ? shownMessages(flags.data) : [];
+  const [deleted, setDeleted] = useState<number[]>([]);
+  const shown = flags.status === 'success' ? shownMessages(flags.data).filter((f) => !deleted.includes(f.id)) : [];
+  const onDelete = (id: number) => {
+    setDeleted((d) => [...d, id]);
+    refreshHouseholdFlags(); // the bell and the bottom bar recount without it
+  };
 
   // Everything on screen has now been seen on this device.
   useEffect(() => {
@@ -128,7 +157,7 @@ function Messages() {
         <ul className={styles.list}>
           {shown.map((flag) => (
             <li key={flag.id}>
-              <Message flag={flag} />
+              <Message flag={flag} onDelete={onDelete} />
             </li>
           ))}
         </ul>
