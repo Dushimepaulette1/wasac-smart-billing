@@ -127,6 +127,14 @@ await step('11 households page shows the unpaid bill', s, async () => {
   log('     row:', text);
   if (!/RWF/.test(text)) throw new Error('no unpaid amount shown for ' + HOUSEHOLD);
 });
+await step('11b households upload: preview only, saves nothing', s, async () => {
+  await s.getByRole('button', { name: 'Upload list' }).click();
+  await s.getByLabel('Choose a CSV file').setInputFiles({ name: 'check.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('name,phone,meter_number,sector\nPreview Check,0788 000 000,E2E-PREVIEW-1,Remera\n') });
+  await s.getByText('Preview of check.csv').waitFor({ timeout: 30000 });
+  log('     preview:', (await s.locator('#staff-main ul').filter({ hasText: 'new' }).first().innerText()).replace(/\s+/g, ' '));
+  await s.getByRole('button', { name: 'Cancel' }).click();
+});
 await step('12 sent SMS page lists messages', s, async () => {
   await s.goto(APP + '/staff/sms');
   await s.locator('#staff-main table, #staff-main section p').first().waitFor({ timeout: 30000 });
