@@ -15,6 +15,7 @@ export const ISSUE_KEY: Record<AnomalyType, string> = {
   BASELINE: 'issue.baseline',
   NORMAL: 'issue.normal',
   LOCATION_CHECK: 'issue.location',
+  NO_BASELINE: 'issue.noBaseline',
 };
 
 /** Median of the household's accepted monthly use; null with no history. */

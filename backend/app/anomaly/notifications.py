@@ -21,6 +21,7 @@ ACTIONS = {
     AnomalyType.METER_STUCK: Action(sms_household=False, staff_review=True),
     AnomalyType.UNUSUAL: Action(sms_household=False, staff_review=True),
     AnomalyType.LOCATION_CHECK: Action(sms_household=False, staff_review=True),
+    AnomalyType.NO_BASELINE: Action(sms_household=False, staff_review=True),
 }
 NO_ACTION = Action(sms_household=False, staff_review=False)
 
@@ -46,6 +47,10 @@ MESSAGES = {
         "WASAC: We could not confirm this photo was taken at your meter, so an officer will check "
         "the reading before billing."
     ),
+    AnomalyType.NO_BASELINE: (
+        "WASAC: This is the first reading for your meter. An officer will check it and record it as your "
+        "starting point. Your first bill will come with your next reading."
+    ),
 }
 
 
@@ -57,6 +62,11 @@ RESUBMIT_MESSAGE = (
 
 def confirmed_message(reading_m3: float, amount_rwf: float) -> str:
     return f"WASAC: Your meter reading of {reading_m3:.3f} m3 has been confirmed. Bill: RWF {amount_rwf:,.0f}."
+
+
+def starting_point_message(reading_m3: float) -> str:
+    return (f"WASAC: Your first meter reading of {reading_m3:.3f} m3 is recorded as your starting point. "
+            "Your first bill will come with your next reading.")
 
 
 def action_for(anomaly_type: AnomalyType) -> Action:

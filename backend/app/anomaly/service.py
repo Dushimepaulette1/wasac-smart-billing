@@ -223,6 +223,18 @@ class Submission:
     bill: Optional[Bill] = None
 
 
+def has_baseline(db: Session, meter: Meter) -> bool:
+    """Is there a starting value to measure a new reading from? A confirmed reading (a staff
+    correction or first reading counts), or a stored last_reading (imported meters). A meter
+    added without a first reading has neither: meters.last_reading is 0 and no reading is confirmed."""
+    if meter.last_reading:
+        return True
+    return db.query(Reading.reading_id).filter(
+        Reading.meter_id == meter.meter_id,
+        Reading.validation_status.notin_(NOT_CONFIRMED),
+    ).first() is not None
+
+
 @dataclass
 class Evaluation:
     """What a reading would lead to, worked out without writing anything (evaluate_reading).
@@ -276,7 +288,21 @@ def evaluate_reading(
     consumption = reading_m3 - meter.last_reading
     history = load_history(db, meter.meter_id, now)
     scored = assess(meter.meter_id, history, reading_m3, now, model, config)
-    if consumption < 0 and scored.anomaly_type != AnomalyType.MISREAD_SUSPECTED.value:
+    if not has_baseline(db, meter):
+        # Nothing to measure this reading from: billing it would charge the whole register.
+        scored = AnomalyResult(
+            household_id=meter.meter_id,
+            reading_m3=reading_m3,
+            daily_consumption=None,
+            anomaly_score=0.0,
+            is_anomaly=True,
+            anomaly_type=AnomalyType.NO_BASELINE.value,
+            needs_retake=False,
+            message_for_household=message_for(AnomalyType.NO_BASELINE),
+            features={"no_baseline": True},
+            pending_review=True,
+        )
+    elif consumption < 0 and scored.anomaly_type != AnomalyType.MISREAD_SUSPECTED.value:
         # The meter's confirmed reading is higher, even if no reading rows explain it (e.g. imported meters).
         scored = AnomalyResult(
             household_id=meter.meter_id,

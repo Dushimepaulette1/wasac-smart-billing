@@ -24,7 +24,9 @@ export type AnomalyType =
   | 'METER_STUCK'
   | 'UNUSUAL'
   /** The photo's location or source needs an officer's look (app/anomaly/location.py). */
-  | 'LOCATION_CHECK';
+  | 'LOCATION_CHECK'
+  /** No starting value yet: the first reading becomes the starting point, without a bill. */
+  | 'NO_BASELINE';
 
 /** app/models/anomaly_flag.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';

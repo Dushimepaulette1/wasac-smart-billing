@@ -17,6 +17,9 @@ class AnomalyType(str, Enum):
     # Not from the rules or the model: the photo's location or source needs a person to check it
     # (app/anomaly/location.py).
     LOCATION_CHECK = "LOCATION_CHECK"
+    # Not from the rules: the meter has no starting value yet (no confirmed reading, last_reading 0),
+    # so this reading can only become the starting point. Held; accepting it bills nothing.
+    NO_BASELINE = "NO_BASELINE"
 
 
 def apply_rules(features: Optional[SubmissionFeatures], config: AnomalyConfig) -> Optional[AnomalyType]:
