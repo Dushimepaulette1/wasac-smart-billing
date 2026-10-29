@@ -1,6 +1,6 @@
 """Bills, the tariff breakdown and household details (app/api/routes/billing.py)."""
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -42,9 +42,54 @@ class CustomerInfo(BaseModel):
     # Bills not paid yet, for the staff overview (one request instead of one per household).
     unpaid_count: int = 0
     unpaid_amount: float = 0.0
+    serial_number: Optional[str] = None
+    is_demo: bool = False                         # a DEMO- test household
 
     class Config:
         from_attributes = True
+
+
+class HouseholdIn(BaseModel):
+    """Staff add a household (app/services/households.py checks and cleans every field)."""
+    name: str = Field(max_length=200)
+    phone: str = Field(max_length=40)
+    meter_id: str = Field(max_length=60)
+    sector: str = Field(max_length=100)
+    serial_number: Optional[str] = Field(default=None, max_length=60)
+    first_reading: Optional[str] = Field(default=None, max_length=20)
+    customer_id: Optional[str] = Field(default=None, max_length=60)
+
+
+class HouseholdEdit(BaseModel):
+    """Staff change a household's details. The meter number does not change."""
+    name: str = Field(max_length=200)
+    phone: str = Field(max_length=40)
+    sector: str = Field(max_length=100)
+    serial_number: Optional[str] = Field(default=None, max_length=60)
+
+
+class HouseholdImport(BaseModel):
+    """A CSV file as text. apply=False only previews it."""
+    csv: str = Field(max_length=2_000_000)
+    apply: bool = False
+
+
+class HouseholdImportRow(BaseModel):
+    line: int
+    meter_id: str
+    name: str
+    action: str                 # new, update, unchanged, error
+    errors: List[str] = []
+    changes: List[str] = []
+
+
+class HouseholdImportResult(BaseModel):
+    new: int
+    update: int
+    unchanged: int
+    error: int
+    applied: bool
+    rows: List[HouseholdImportRow]
 
 
 class MeterCorrectionRequest(BaseModel):

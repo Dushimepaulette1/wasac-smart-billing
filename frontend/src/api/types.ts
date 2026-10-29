@@ -219,6 +219,53 @@ export interface CustomerInfo {
   /** Bills not paid yet (for the staff overview). */
   unpaid_count: number;
   unpaid_amount: number;
+  /** The maker's serial number printed on the meter, if WASAC has it. */
+  serial_number?: string | null;
+  /** A DEMO- test household. */
+  is_demo?: boolean;
+}
+
+/** POST /customers: staff add a household. The server checks and cleans every field. */
+export interface HouseholdInput {
+  name: string;
+  phone: string;
+  meter_id: string;
+  sector: string;
+  serial_number?: string;
+  /** Cubic metres as typed, e.g. "120.5"; empty for none. */
+  first_reading?: string;
+  /** WASAC's customer number; the server makes one if empty. */
+  customer_id?: string;
+}
+
+/** PATCH /customers/{id}: the meter number never changes. */
+export interface HouseholdEdit {
+  name: string;
+  phone: string;
+  sector: string;
+  serial_number?: string;
+}
+
+export interface HouseholdImportRow {
+  /** Line in the file (1 is the header). */
+  line: number;
+  meter_id: string;
+  name: string;
+  action: 'new' | 'update' | 'unchanged' | 'error';
+  /** Error codes, e.g. "phone" or "dup_meter:5" (the same meter as line 5). */
+  errors: string[];
+  /** For an update: name, phone, sector, serial. */
+  changes: string[];
+}
+
+/** POST /customers/import: a preview, or (applied) what was saved. */
+export interface HouseholdImportResult {
+  new: number;
+  update: number;
+  unchanged: number;
+  error: number;
+  applied: boolean;
+  rows: HouseholdImportRow[];
 }
 
 /** app/api/routes/billing.py customer_bills (dict per bill, no schema) */

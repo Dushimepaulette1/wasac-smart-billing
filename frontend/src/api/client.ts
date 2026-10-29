@@ -15,6 +15,9 @@ import type {
   CodeSent,
   ConfirmReadingResponse,
   CustomerInfo,
+  HouseholdEdit,
+  HouseholdImportResult,
+  HouseholdInput,
   GuideFrameResponse,
   HouseholdAccount,
   HouseholdSession,
@@ -382,6 +385,21 @@ export const api = {
   /** GET /customers: every household. */
   listCustomers(): Promise<CustomerInfo[]> {
     return request('/customers', { auth: 'staff' });
+  },
+
+  /** POST /customers: add a household (any staff). */
+  addHousehold(input: HouseholdInput): Promise<CustomerInfo> {
+    return request('/customers', { method: 'POST', json: input, auth: 'staff' });
+  },
+
+  /** PATCH /customers/{id}: name, phone, sector, serial number. */
+  editHousehold(customerId: string, edit: HouseholdEdit): Promise<CustomerInfo> {
+    return request(`/customers/${encodeURIComponent(customerId)}`, { method: 'PATCH', json: edit, auth: 'staff' });
+  },
+
+  /** POST /customers/import: preview a CSV of households, or save it (supervisors and admins). */
+  importHouseholds(csv: string, apply: boolean): Promise<HouseholdImportResult> {
+    return request('/customers/import', { method: 'POST', json: { csv, apply }, auth: 'staff', timeout: 60000 });
   },
 
   /** GET /api/anomaly/flags: every household's flags. */

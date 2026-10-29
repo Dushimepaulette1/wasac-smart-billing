@@ -4,6 +4,7 @@
  * narrow ones (labels come from data-label).
  */
 
+import Button from '../../components/Button/Button';
 import Icon from '../../components/Icon/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
@@ -14,9 +15,11 @@ interface HouseholdTableProps {
   households: HouseholdRow[];
   /** Fewer columns, for the overview. */
   compact?: boolean;
+  /** Shows an Edit button on each row. */
+  onEdit?: (household: HouseholdRow) => void;
 }
 
-function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
+function HouseholdTable({ households, compact = false, onEdit }: HouseholdTableProps) {
   const { t, rwf, volume, date } = useI18n();
   if (households.length === 0) return <p className={styles.empty}>{t('staff.households.none')}</p>;
   return (
@@ -38,6 +41,11 @@ function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
               {t('staff.col.unpaid')}
             </th>
             <th scope="col">{t('staff.col.status')}</th>
+            {onEdit && (
+              <th scope="col">
+                <span className="visually-hidden">{t('staff.accounts.col.actions')}</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -45,12 +53,14 @@ function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
             <tr key={h.customer_id}>
               <td>
                 {h.name}
+                {h.is_demo && <span className={styles.you}> {t('staff.households.test')}</span>}
                 <span className={styles.cellSub}>{h.sector}</span>
                 {compact && <span className={`${styles.cellSub} code`}>{h.meter_id}</span>}
               </td>
               {!compact && (
                 <td data-label={t('staff.col.meter')} className="code">
                   {h.meter_id}
+                  {h.serial_number && <span className={styles.cellSub}>{t('staff.households.serial', { serial: h.serial_number })}</span>}
                 </td>
               )}
               <td data-label={t('staff.col.lastReading')} className={styles.right}>
@@ -80,6 +90,13 @@ function HouseholdTable({ households, compact = false }: HouseholdTableProps) {
                   </span>
                 )}
               </td>
+              {onEdit && (
+                <td data-label={t('staff.accounts.col.actions')}>
+                  <Button variant="text" onClick={() => onEdit(h)} aria-label={t('staff.household.editFor', { name: h.name })}>
+                    {t('staff.household.edit')}
+                  </Button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
