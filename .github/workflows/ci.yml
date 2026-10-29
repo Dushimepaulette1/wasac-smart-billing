@@ -24,6 +24,17 @@ jobs:
     env:
       SMS_OUTBOX: "0"
       SEED_SAMPLE_DATA: "0"
+      # tests/pg: payment and review races on a real PostgreSQL (row locks, partial indexes).
+      TEST_POSTGRES_URL: postgresql://postgres:test@localhost:5432/mubazi_test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: mubazi_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

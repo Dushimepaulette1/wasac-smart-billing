@@ -563,6 +563,7 @@
   "staff.payments.confirm": "Found: confirm",
   "staff.payments.confirmed": "Confirmed {amount} from {name}. The bill is paid.",
   "staff.payments.declined": "Declined the payment from {name}. They have been told by SMS.",
+  "staff.payments.paidTwice": "Paid twice: this bill was already paid, so the household paid this amount more than once and is owed it.",
   "staff.payments.how": "To check: open WASAC's MoMo merchant account (portal or statement), find the transaction ID and the amount, then confirm. With the MoMo API connected, payments are confirmed by MTN automatically and never wait here.",
   "staff.activity.kind.payment_confirmed": "Confirmed a MoMo payment",
   "staff.activity.kind.payment_declined": "Declined a MoMo payment",

@@ -1,6 +1,6 @@
 """Bills, the tariff breakdown and household details (app/api/routes/billing.py)."""
 from datetime import datetime
-from typing import List, Optional
+from typing import Literal, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -129,7 +129,10 @@ class PaymentDecline(BaseModel):
 
 
 class PaymentToCheck(BaseModel):
-    """A MoMo Pay payment waiting for an officer, for the staff Payments page."""
+    """A payment for the staff Payments page: a MoMo Pay payment waiting for an officer
+    (momo_pay_check), or a second successful payment on a bill that was already paid (paid_twice,
+    for information: the household paid more than once)."""
+    kind: Literal["momo_pay_check", "paid_twice"] = "momo_pay_check"
     id: int
     bill_id: int
     customer_id: str
