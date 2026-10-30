@@ -30,7 +30,7 @@ describe('loadBill', () => {
     expect(data.reading && cellsToDigits(data.reading.cells)).toBe('00484500');
     expect(data.reading?.previous).toBeCloseTo(464);
     expect(data.periodStart).toBe('2026-09-09T09:38:11');
-    expect(api.calculateBill).toHaveBeenCalledWith(20.5);
+    expect(api.calculateBill).toHaveBeenCalledWith(20.5, undefined) // the bill's own tariff version, none on this fixture;
   });
 
   it('when showing the tariff, should list the tiers that apply, in order, without empty ones', async () => {
