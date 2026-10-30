@@ -43,6 +43,29 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('when rejecting, should ask why and send the reason', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([item(5, 'Reject House', { anomaly_type: 'SPIKE', reading_status: 'pending_review' })]);
+    vi.mocked(api.resolveFlag).mockClear();
+    vi.mocked(api.resolveFlag).mockResolvedValue({ amount_due: null } as Awaited<ReturnType<typeof api.resolveFlag>>);
+    renderQueue();
+    fireEvent.click(await screen.findByRole('button', { name: /reject, ask for a new photo/i }));
+    expect(api.resolveFlag).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Why are you rejecting this reading?'), { target: { value: 'other' } });
+    const confirmReject = screen.getByRole('button', { name: 'Reject the reading' });
+    expect(confirmReject).toBeDisabled(); // a typed reason is needed
+    fireEvent.change(screen.getByLabelText('The reason'), { target: { value: 'Meter was replaced' } });
+    vi.useFakeTimers();
+    fireEvent.click(confirmReject);
+    await act(async () => { vi.runAllTimers(); });
+    expect(api.resolveFlag).toHaveBeenCalledWith(5, 'reject', 'Meter was replaced');
+  });
+
+  it('when the server gives the previous reading, should show it', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(6, 'Prev House', { anomaly_type: 'MISREAD_SUSPECTED' }), previous_reading_m3: 431.46 }]);
+    renderQueue();
+    expect(await screen.findByText('431.460 m³')).toBeInTheDocument();
+  });
+
   it('when the household lowered the photo reading, should show both readings with the changed wheels', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([{
       ...item(4, 'Edited House', { anomaly_type: 'EDITED_DOWN' }),

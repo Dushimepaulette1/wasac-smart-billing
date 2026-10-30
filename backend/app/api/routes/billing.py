@@ -5,6 +5,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.anomaly.statuses import NOT_CONFIRMED
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
 from app.models import Bill, Customer, Meter, Payment, Reading, StaffUser
@@ -31,7 +32,7 @@ from app.services.households import (
     edit_household,
     import_csv,
 )
-from app.services.meter_correction import CorrectionError, correct_meter
+from app.services.meter_correction import CORRECTION, CorrectionError, correct_meter
 from app.services.payments import (
     MOMO_PAY,
     PaymentError,
@@ -54,15 +55,14 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
 
     past = (
         db.query(Reading)
-        .filter(Reading.meter_id == c.meter_id, Reading.validation_status == "valid")
+        .filter(Reading.meter_id == c.meter_id, Reading.validation_status.notin_(NOT_CONFIRMED),
+                Reading.submission_method != CORRECTION)
         .order_by(Reading.submission_time.desc())
         .limit(6)
         .all()
     )
-    avg = (
-        sum(r.implied_consumption for r in past if r.implied_consumption) / len(past)
-        if past else None
-    )
+    used = [r.implied_consumption for r in past if r.implied_consumption]
+    avg = sum(used) / len(used) if used else None
     anomaly_flagged = any(
         r.validation_status in ("anomaly_flagged", "pending_review")
         for r in (db.query(Reading)

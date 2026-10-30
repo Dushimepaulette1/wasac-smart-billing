@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnomalyResultSchema(BaseModel):
@@ -50,6 +50,8 @@ class AnomalyFlagOut(BaseModel):
 
 class ResolveFlagRequest(BaseModel):
     outcome: Optional[Literal["accept", "reject"]] = None
+    # Why: required to reject (422 otherwise), optional to accept. Kept in the audit log.
+    reason: Optional[str] = Field(default=None, max_length=160)
 
 
 class ResolveFlagResponse(AnomalyFlagOut):
@@ -69,6 +71,8 @@ class HistoryPoint(BaseModel):
 class ReviewItem(BaseModel):
     flag: AnomalyFlagOut
     reading_m3: Optional[float] = None
+    # The last accepted reading this one is measured from (what accepting it would bill from).
+    previous_reading_m3: Optional[float] = None
     submitted_at: Optional[datetime] = None
     reading_confidence: Optional[float] = None
     customer_id: Optional[str] = None

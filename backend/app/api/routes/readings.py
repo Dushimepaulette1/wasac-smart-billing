@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Request, UploadFile, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,7 @@ from app.anomaly.rules import AnomalyType
 from app.anomaly.statuses import READING_PENDING, READING_REJECTED
 from app.models import AnomalyFlag, Bill, Customer, PhotoRead, Reading
 from app.services import billing
+from app.services.audit import record
 from app.services.photo_evidence import claim, save_photo_read
 from app.utils.meter_value import parse_meter_value
 from app.core.ratelimit import MAX_UPLOAD_BYTES
@@ -179,6 +180,7 @@ def _already_sent(db: Session, photo_id: Optional[str], owner: str) -> Optional[
 @router.post("/confirm-reading", response_model=ConfirmReadingResponse)
 async def confirm_reading(
     body: ConfirmReadingRequest,
+    request: Request,
     db: Session = Depends(get_db),
     access: Access = Depends(household_access),
 ):
@@ -196,6 +198,9 @@ async def confirm_reading(
     except ReadingRefused as refused:
         # 409: the app shows its own words for a block's reason (see GET /customers/{id}).
         raise HTTPException(status_code=409, detail=refused.message)
+    if access.staff is not None:
+        record(db, access.staff.username, "reading_entered", target=meter.meter_id,
+               detail=f"{submitted:.3f} m3, {sub.reading.validation_status}", request=request)
     actions = notify_household(db, sub.anomaly)
     anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
 

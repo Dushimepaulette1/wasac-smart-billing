@@ -15,7 +15,8 @@ from app.models import StaffUser
 from app.api.deps import Access, household_access
 from app.api.deps import require_staff, staff_from_header
 from app.db.session import get_db
-from app.models import Customer, Reading
+from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING
+from app.models import Customer, Meter, Reading
 from app.schemas import (
     AnomalyFlagOut,
     AnomalyResultSchema,
@@ -28,6 +29,14 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api/anomaly")
 CONFIG = AnomalyConfig()  # only the meter's digit layout (8 wheels, 3 for litres) is used here
+
+
+def _previous_reading(flag: AnomalyFlag, reading: Optional[Reading], meter: Optional[Meter]) -> Optional[float]:
+    """A held reading is measured from the meter's last accepted reading (what _accept bills from).
+    An already-billed one moved the meter on, so its flag's own record of the previous reading is used."""
+    if reading is not None and reading.validation_status == READING_PENDING and meter is not None:
+        return meter.last_reading
+    return (flag.features or {}).get("previous_reading_m3")
 
 
 @router.post("/score", response_model=AnomalyResultSchema)
@@ -107,13 +116,21 @@ async def resolve(
     flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == flag_id).first()
     if not flag:
         raise HTTPException(status_code=404, detail="Anomaly flag not found")
+    reason = (body.reason or "").strip() if body else ""
+    if body and body.outcome == "reject" and len(reason) < 3:
+        raise HTTPException(status_code=422, detail="Say why the reading is rejected.")
     try:
         result = resolve_flag(db, flag, body.outcome if body else None)
     except ReviewError as e:
         db.rollback()
         raise HTTPException(status_code=e.status_code, detail=e.detail)
+    detail = f"{flag.household_id} {flag.anomaly_type}"
+    if result.bill:
+        reason = f"bill {result.bill.bill_id}, RWF {result.bill.amount_due:,.0f}" + (f", {reason}" if reason else "")
+    elif result.outcome == "accept":
+        reason = "starting point, no bill" + (f", {reason}" if reason else "")
     record(db, staff.username, result.outcome or "close", target=f"flag {flag.id}",
-           detail=f"{flag.household_id} {flag.anomaly_type}", request=request)
+           detail=f"{detail}: {reason}" if reason else detail, request=request)
     db.refresh(flag)
     return ResolveFlagResponse(
         **AnomalyFlagOut.model_validate(flag).model_dump(exclude={"reading_status"}),
@@ -140,9 +157,14 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
     for flag in flags:
         reading = db.query(Reading).filter(Reading.reading_id == flag.reading_id).first() if flag.reading_id else None
         customer = db.query(Customer).filter(Customer.meter_id == flag.household_id).first()
+        meter = db.get(Meter, flag.household_id)
+        history_query = db.query(Reading).filter(
+            Reading.meter_id == flag.household_id, Reading.validation_status.notin_(NOT_CONFIRMED),
+        )
+        if reading:
+            history_query = history_query.filter(Reading.submission_time < reading.submission_time)
         history = (
-            db.query(Reading)
-            .filter(Reading.meter_id == flag.household_id, Reading.validation_status == "valid")
+            history_query
             .order_by(Reading.submission_time.desc())
             .limit(6)
             .all()
@@ -155,6 +177,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
                 update={"reading_status": reading.validation_status if reading else None}
             ),
             reading_m3=reading.submitted_value if reading else None,
+            previous_reading_m3=_previous_reading(flag, reading, meter),
             submitted_at=reading.submission_time if reading else None,
             reading_confidence=reading.crnn_confidence if reading else None,
             customer_id=customer.customer_id if customer else None,

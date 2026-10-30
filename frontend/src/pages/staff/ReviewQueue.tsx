@@ -49,7 +49,12 @@ const SENT: Record<Outcome, 'accept' | 'reject' | null> = { accept: 'accept', re
 interface Pending {
   item: ReviewItem;
   outcome: Outcome;
+  reason?: string;
 }
+
+/** Why a reading is rejected: kept in Activity. 'other' asks the officer to type it. */
+const REJECT_REASONS = ['photo', 'digits', 'meter', 'other'] as const;
+type RejectReason = (typeof REJECT_REASONS)[number];
 
 /** The meter photo the reading came from, fetched with the staff token (an <img src> cannot send it). */
 function ReadingPhoto({ readingId, name }: { readingId: number; name: string }) {
@@ -98,7 +103,7 @@ function DigitChange({ ai, typed, changed }: { ai: string; typed: string; change
 function DecisionPane({ item }: { item: ReviewItem }) {
   const { t, volume, date } = useI18n();
   const labels = useCounterLabels();
-  const previous = previousReading(item.history);
+  const previous = item.previous_reading_m3 ?? previousReading(item.history);
   const usual = usualUse(item.history);
   const where = locationFinding(item.flag.features);
   const used = item.reading_m3 !== null && previous !== null ? item.reading_m3 - previous : null;
@@ -242,6 +247,9 @@ function ReviewQueue() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(() => Number(params.get('flag')) || null);
   const [pending, setPending] = useState<Pending | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState<RejectReason>('photo');
+  const [rejectText, setRejectText] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const timer = useRef<number | null>(null);
@@ -252,6 +260,8 @@ function ReviewQueue() {
   useEffect(() => {
     if (queue.status === 'success') setItems(queue.data);
   }, [queue.status, queue.data]);
+
+  useEffect(() => setRejecting(false), [selectedId]);
 
   const visible = items.filter((i) => i.flag.id !== pending?.item.flag.id);
   const selected = visible.find((i) => i.flag.id === selectedId) ?? visible[0] ?? null;
@@ -268,10 +278,10 @@ function ReviewQueue() {
   );
 
   const send = useCallback(
-    async ({ item, outcome }: Pending) => {
+    async ({ item, outcome, reason }: Pending) => {
       setPending(null);
       try {
-        const res = await api.resolveFlag(item.flag.id, SENT[outcome]);
+        const res = await (reason ? api.resolveFlag(item.flag.id, SENT[outcome], reason) : api.resolveFlag(item.flag.id, SENT[outcome]));
         setItems((list) => list.filter((i) => i.flag.id !== item.flag.id));
         const name = item.customer_name ?? item.flag.household_id;
         setResult(
@@ -293,13 +303,18 @@ function ReviewQueue() {
   );
 
   const decide = useCallback(
-    (outcome: Outcome) => {
+    (outcome: Outcome, reason?: string) => {
       if (!selected || (outcome === 'close') !== isFollowUp(selected)) return;
+      if (outcome === 'reject' && !reason) {
+        setRejecting(true); // a reject needs a reason first
+        return;
+      }
+      setRejecting(false);
       if (pending) send(pending); // a second decision sends the first now
       setError(null);
       setResult(null);
       const next = visible[visible.indexOf(selected) + 1] ?? visible[visible.indexOf(selected) - 1];
-      const decision = { item: selected, outcome };
+      const decision = { item: selected, outcome, reason };
       setPending(decision);
       if (next) setSelectedId(next.flag.id);
       if (timer.current) window.clearTimeout(timer.current);
@@ -320,7 +335,7 @@ function ReviewQueue() {
     () => () => {
       if (timer.current) window.clearTimeout(timer.current);
       const waiting = pendingRef.current;
-      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome]).catch(() => undefined);
+      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome], waiting.reason).catch(() => undefined);
     },
     [],
   );
@@ -435,6 +450,35 @@ function ReviewQueue() {
                       {t('staff.review.reject')}
                     </Button>
                   </div>
+                  {rejecting && (
+                    <div className={styles.form}>
+                      <label className={styles.filter}>
+                        {t('staff.review.rejectWhy')}
+                        <select className={styles.select} value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value as RejectReason)}>
+                          {REJECT_REASONS.map((r) => <option key={r} value={r}>{t(`staff.review.rejectWhy.${r}`)}</option>)}
+                        </select>
+                      </label>
+                      {rejectReason === 'other' && (
+                        <label className={styles.filter}>
+                          {t('staff.review.rejectWhyOther')}
+                          <input className={styles.search} maxLength={160} value={rejectText}
+                            onChange={(e) => setRejectText(e.target.value)} />
+                        </label>
+                      )}
+                      <div className={styles.rowActions}>
+                        <Button variant="secondary" disabled={rejectReason === 'other' && rejectText.trim().length < 3}
+                          onClick={() => {
+                            decide('reject', rejectReason === 'other' ? rejectText.trim() : t(`staff.review.rejectWhy.${rejectReason}`));
+                            setRejectText('');
+                            setRejectReason('photo');
+                          }}>
+                          {t('staff.review.rejectConfirm')}
+                        </Button>
+                        <Button variant="text" onClick={() => setRejecting(false)}>{t('action.cancel')}</Button>
+                      </div>
+                    </div>
+                  )}
                   <p className="text-small text-secondary">
                     {t(selected.flag.anomaly_type === 'NO_BASELINE' ? 'staff.review.acceptNoteStart' : 'staff.review.acceptNote')}
                   </p>

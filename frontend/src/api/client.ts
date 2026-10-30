@@ -422,11 +422,12 @@ export const api = {
   },
 
   /** PATCH /api/anomaly/flags/{id}/resolve: accept or reject a held reading, or (null) close a follow-up. */
-  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null): Promise<ResolveFlagResponse> {
+  /** A reject needs a reason; it goes into the audit log. */
+  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null, reason?: string): Promise<ResolveFlagResponse> {
     return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
       method: 'PATCH',
       auth: 'staff',
-      json: outcome ? { outcome } : {},
+      json: outcome ? { outcome, ...(reason ? { reason } : {}) } : {},
     });
   },
 };
