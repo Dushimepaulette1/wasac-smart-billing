@@ -54,6 +54,7 @@ produce infinite ratios. The model sees three columns: `log(ratio_to_median)`,
 |---|---|
 | Meter has no starting value (no confirmed reading, `last_reading` 0) | `NO_BASELINE`, held; accepting it records the starting point, no bill |
 | First reading after a starting value | `BASELINE`, never an anomaly |
+| Previous reading 99,000 m³ or more and new reading under 1,000 m³ | `ROLLOVER`, held; accepting it bills the use across the wrap |
 | Reading lower than the previous one | `MISREAD_SUSPECTED`, held for an officer (meters cannot run backwards, but the previous reading may have been wrong, or the meter replaced) |
 | Daily use above `ANOMALY_MAX_DAILY_M3` (default 5) | `SPIKE`, held |
 | Zero consumption for `ANOMALY_STUCK_DAYS` or more (default 30, may span several readings) | `METER_STUCK`, billed, staff follow-up |

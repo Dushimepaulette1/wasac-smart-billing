@@ -28,7 +28,9 @@ export type AnomalyType =
   /** No starting value yet: the first reading becomes the starting point, without a bill. */
   | 'NO_BASELINE'
   /** The household lowered a reliable AI read by 1 m³ or more: an officer compares the two. */
-  | 'EDITED_DOWN';
+  | 'EDITED_DOWN'
+  /** The register seems to have turned over past 99999: an officer confirms it. */
+  | 'ROLLOVER';
 
 /** app/models/anomaly_flag.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';
@@ -175,7 +177,7 @@ export interface ConfirmReadingResponse {
 }
 
 /** Why a reading would wait for an officer (schemas.ReadingCheckResponse.reason). */
-export type ReviewReason = 'first_reading' | 'below_previous' | 'high_use' | 'misread' | 'edited_down' | 'location';
+export type ReviewReason = 'first_reading' | 'below_previous' | 'high_use' | 'misread' | 'edited_down' | 'location' | 'rollover';
 
 /** schemas.ReadingCheckResponse: POST /check-reading, nothing stored. */
 export interface ReadingCheckResponse {

@@ -337,3 +337,17 @@ def test_when_two_supervisors_approve_at_once_should_apply_once(pg):
     assert all(isinstance(o, BillCorrectionError) and o.status_code == 409 for o in out if o != "applied"), out
     with pg() as db:
         assert db.query(AccountCredit).count() == 0
+
+
+def test_when_an_older_postgres_database_starts_should_add_the_late_columns(pg):
+    from sqlalchemy import inspect
+
+    from app.db.init_db import add_late_columns
+
+    engine = pg.kw["bind"]
+    with engine.begin() as conn:
+        conn.exec_driver_sql("ALTER TABLE bills DROP COLUMN tariff_version")
+        conn.exec_driver_sql("ALTER TABLE readings DROP COLUMN corrected_value_m3")
+    add_late_columns(engine)
+    assert "tariff_version" in {c["name"] for c in inspect(engine).get_columns("bills")}
+    assert "corrected_value_m3" in {c["name"] for c in inspect(engine).get_columns("readings")}

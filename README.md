@@ -193,6 +193,10 @@ speed and memory with `python scripts/benchmark_vision.py [--photos <folder>]`.
 | Tier 4 | >30 m³ | 1,000 |
 | Service charge | Fixed monthly | 1,000 |
 
+The rates are provisional until confirmed with RURA/WASAC. They live in versioned entries in
+`backend/app/services/tariffs.json`: a new tariff is a new entry, and every bill keeps the version
+it was made with, so a later correction uses that bill's own rates.
+
 ---
 
 ## Deployment
@@ -283,8 +287,12 @@ wasac-platform/
 MTN's Collections **Request to Pay**: MTN sends a PIN prompt to the household's phone, the app
 waits ("Approve the payment on your phone") and checks `GET /payments/{id}` every 3 s; on success
 the bill is marked paid once and an SMS receipt is sent; a declined payment takes nothing and can
-be tried again; a pending attempt is reused, never sent twice. Without keys, payments are
-simulated and the receipt says "Test payment".
+be tried again. Without keys, payments are simulated and the receipt says "Test payment".
+
+A bill is never prompted twice. It can have one open attempt (a row lock and a partial unique
+index), and only MTN's own answer closes one: a timeout after sending or an MTN 5xx stays pending
+until the status check says success, failure, or that MTN never received the request. MoMo Pay
+transaction IDs can be used for one payment. A second success on a paid bill becomes credit.
 
 Sandbox setup: sign up at momodeveloper.mtn.com, subscribe to **Collections**, put its primary
 key in `backend/.env` as `MOMO_SUBSCRIPTION_KEY`, run `python scripts/momo_sandbox_setup.py` (it
@@ -316,6 +324,23 @@ bar), even on a weak or missing connection:
 - Icons: a meter counter on the night stage, drawn in `frontend/icons/*.svg` and rendered to
   `frontend/public/` (192, 512, maskable 512, Apple 180, favicons).
 
+### Readings, reviews and corrections
+
+Before a reading is sent the app asks `POST /check-reading`, which stores nothing and runs the same
+checks as `POST /confirm-reading` (`evaluate_reading` in `app/anomaly/service.py`). A reading that
+would be held is explained, and the household can check the digits or send it for review; the
+checks run again on sending. Held: a first reading with no starting value (accepting it records the
+starting point, no bill), a lower reading, use 3x the household's median or more, about 10x (a
+shifted digit), a value 1 m³ or more below a reliable AI read, a register turning over, and a photo
+whose place needs checking. Thresholds are provisional (`app/anomaly/README.md`).
+
+A billed reading that turns out wrong is corrected by a supervisor in Households, with a preview
+first. Readings, bills and payments are never changed: `app/services/bill_corrections.py` records
+adjustments to this bill and the next one, and `app/services/balance.py` is the one definition of
+what is owed. A correction that charges more needs a different supervisor or admin; overpayments
+become credit, applied automatically; there are no cash refunds in the app.
+`scripts/find_first_reading_bills.py` lists bills that charged a whole register (read-only).
+
 ### Tests
 
 Both sides keep tests apart from the code, in a `tests/` folder that mirrors the code's folders,
@@ -329,6 +354,16 @@ and name each test as a sentence: **when** this happens, it **should** do that.
 GitHub Actions runs both on every push and pull request (`.github/workflows/ci.yml`), with no
 secrets: the backend tests use an in-memory database and fake models and can never reach Neon,
 Africa's Talking or MTN (`backend/tests/conftest.py`).
+
+PostgreSQL behaves differently from SQLite under simultaneous requests, so `backend/tests/pg/`
+races real threads against a real server. It is skipped without `TEST_POSTGRES_URL`, must point at
+a local database with "test" in its name (every test wipes it), and CI runs it on a `postgres:16`
+service. Locally:
+
+```bash
+docker run -d --rm --name mubazi-pg-test -p 5433:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=mubazi_test postgres:16
+TEST_POSTGRES_URL=postgresql://postgres:test@localhost:5433/mubazi_test pytest -m postgres
+```
 
 **Health:** `GET /health` is Render's check and stays 200 while the process answers; it reports
 `degraded` if the database cannot be reached. `GET /health/ready` answers 503 in that case: point
