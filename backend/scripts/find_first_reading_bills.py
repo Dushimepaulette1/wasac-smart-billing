@@ -30,6 +30,8 @@ def find(db: Session) -> list:
         .order_by(Bill.bill_id)
         .all()
     ):
+        if reading.corrected_value_m3 is not None:  # already corrected
+            continue
         if not reading.submitted_value or abs((bill.consumption_m3 or 0) - reading.submitted_value) > 0.0005:
             continue
         earlier = db.query(Reading.reading_id).filter(

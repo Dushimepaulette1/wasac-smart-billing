@@ -15,6 +15,7 @@ import { useAccount } from '../../household/session';
 import type { BillSummary } from '../../api/types';
 import { readingIsWaiting, useHouseholdFlags } from '../../household/status';
 import styles from './BillHistory.module.css';
+import { amountOwed } from '../../utils/bill';
 
 function BillHistory() {
   const account = useAccount();
@@ -61,7 +62,7 @@ function BillHistory() {
               <li key={bill.bill_id}>
                 <Link to={`/bill?id=${bill.bill_id}`} className={styles.row}>
                   <span className={`${styles.month} num`}>{label(bill)}</span>
-                  <span className={`${styles.amount} num`}>{rwf(bill.amount_due)}</span>
+                  <span className={`${styles.amount} num`}>{rwf(paid ? (bill.charges ?? bill.amount_due) : amountOwed(bill))}</span>
                   <span className="num text-secondary">{volume(bill.consumption_m3)}</span>
                   <span className={`${styles.status} ${paid ? '' : styles.unpaid}`}>
                     {paid ? t('bill.paid') : t('bill.unpaid')}

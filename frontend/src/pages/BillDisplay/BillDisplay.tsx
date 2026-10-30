@@ -17,6 +17,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadBill from '../../household/loadBill';
+import { amountOwed } from '../../utils/bill';
 import type { BillSummary } from '../../api/types';
 import { useAccount } from '../../household/session';
 import styles from './BillDisplay.module.css';
@@ -74,6 +75,9 @@ function BillDisplay() {
 
   const { bill, tiers, serviceCharge, periodStart, reading, history } = request.data;
   const paid = bill.payment_status === 'paid';
+  const owed = amountOwed(bill);
+  const adjustments = bill.adjustments ?? [];
+  const creditUsed = bill.credit_used ?? 0;
   const water = bill.amount_due - serviceCharge;
 
   return (
@@ -94,7 +98,7 @@ function BillDisplay() {
       action={
         paid ? null : (
           <Button fullWidth onClick={() => navigate(`/payment?bill=${bill.bill_id}`)}>
-            {t('pay.action', { amount: rwf(bill.amount_due) })}
+            {t('pay.action', { amount: rwf(owed) })}
           </Button>
         )
       }
@@ -133,6 +137,24 @@ function BillDisplay() {
             <dt>{t('bill.total')}</dt>
             <dd className="num">{rwf(bill.amount_due)}</dd>
           </div>
+          {adjustments.map((a) => (
+            <div className={styles.line} key={a.at}>
+              <dt>{t('bill.adjustment', { reason: a.reason })}</dt>
+              <dd className="num">{a.amount_delta > 0 ? '+' : '−'}{rwf(Math.abs(a.amount_delta))}</dd>
+            </div>
+          ))}
+          {creditUsed > 0 && (
+            <div className={styles.line}>
+              <dt>{t('bill.creditUsed')}</dt>
+              <dd className="num">−{rwf(creditUsed)}</dd>
+            </div>
+          )}
+          {(adjustments.length > 0 || creditUsed > 0) && (
+            <div className={`${styles.line} ${styles.total}`}>
+              <dt>{t('bill.balance')}</dt>
+              <dd className="num">{rwf(owed)}</dd>
+            </div>
+          )}
         </dl>
 
         <p className={styles.status}>

@@ -3,6 +3,7 @@
     household.py       customers, meters
     reading.py         readings, reading_evidence (where the photo was taken)
     bill.py            bills
+    bill_correction.py bill_corrections, bill_adjustments, account_credits
     anomaly_flag.py    anomaly_flags, message_dismissals (messages a household deleted)
     staff.py           staff_users, staff_temporary_passwords, staff_actions (audit log)
     household_code.py  household_codes (SMS sign-in)
@@ -13,6 +14,7 @@
 """
 from app.models.anomaly_flag import FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, AnomalyFlag, MessageDismissal
 from app.models.bill import Bill
+from app.models.bill_correction import AccountCredit, BillAdjustment, BillCorrection
 from app.models.household import Customer, Meter
 from app.models.household_code import HouseholdCode
 from app.models.payment import Payment
@@ -23,7 +25,7 @@ from app.models.sms_outbox import SmsOutbox
 from app.models.staff import ROLES, StaffAction, StaffTemporaryPassword, StaffUser
 
 __all__ = [
-    "AnomalyFlag", "Bill", "MessageDismissal", "Customer", "FLAG_STATUS_OPEN", "FLAG_STATUS_RESOLVED", "HouseholdCode",
+    "AccountCredit", "AnomalyFlag", "Bill", "BillAdjustment", "BillCorrection", "MessageDismissal", "Customer", "FLAG_STATUS_OPEN", "FLAG_STATUS_RESOLVED", "HouseholdCode",
     "Meter", "Payment", "PhotoRead", "PushSubscription", "ROLES", "Reading", "ReadingEvidence", "SmsOutbox", "StaffAction",
     "StaffTemporaryPassword", "StaffUser",
 ]

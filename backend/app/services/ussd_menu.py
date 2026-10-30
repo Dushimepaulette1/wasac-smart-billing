@@ -18,7 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.anomaly.service import ReadingRefused, notify_household, submit_reading
 from app.models import Bill, Customer, Meter
-from app.services.payments import MOMO_PAY, start_payment, ussd_code
+from app.services.balance import balances, bill_balance
+from app.services.payments import MOMO_PAY, PaymentError, start_payment, ussd_code
 from app.services.reading_window import PENDING, reading_block
 from app.utils.meter_value import parse_meter_value
 from app.utils.phone import normalize_phone
@@ -94,10 +95,11 @@ def parse_reading(typed: str) -> Optional[float]:
 
 
 def _latest_bill(db: Session, customer: Customer, unpaid_only: bool = False) -> Optional[Bill]:
-    query = db.query(Bill).filter(Bill.customer_id == customer.customer_id)
+    bills = db.query(Bill).filter(Bill.customer_id == customer.customer_id).order_by(Bill.created_at.desc()).all()
     if unpaid_only:
-        query = query.filter(Bill.payment_status != "paid")
-    return query.order_by(Bill.created_at.desc()).first()
+        owed = balances(db, customer.customer_id)
+        bills = [b for b in bills if not owed[b.bill_id].settled]
+    return bills[0] if bills else None
 
 
 def handle(db: Session, phone_number: str, text: str) -> str:
@@ -147,23 +149,27 @@ def handle(db: Session, phone_number: str, text: str) -> str:
         bill = _latest_bill(db, customer)
         if not bill:
             return _end(t["no_bill"])
-        status = t["paid"] if bill.payment_status == "paid" else t["unpaid"]
+        status = t["paid"] if bill_balance(db, bill).settled else t["unpaid"]
         return _end(t["bill"].format(month=f"{bill.created_at:%m/%Y}", amount=f"{bill.amount_due:,.0f}", status=status))
 
     if choice == "3":
         bill = _latest_bill(db, customer, unpaid_only=True)
         if not bill:
             return _end(t["nothing_to_pay"])
+        amount = bill_balance(db, bill).outstanding
         if not rest:
-            return _con(t["ask_pay"].format(amount=f"{bill.amount_due:,.0f}", phone=customer.phone))
+            return _con(t["ask_pay"].format(amount=f"{amount:,.0f}", phone=customer.phone))
         if rest[0] != "1":
             return _end(t["cancelled"])
-        payment = start_payment(db, bill, customer.phone)
+        try:
+            payment = start_payment(db, bill, customer.phone)
+        except PaymentError:  # an earlier payment is still being confirmed: no new prompt
+            return _end(t["pay_failed"])
         if payment.provider == MOMO_PAY and payment.status == "pending":
-            code = ussd_code(bill.amount_due)
+            code = ussd_code(amount)
             if not code:
                 return _end(t["pay_code_missing"])
-            return _end(t["pay_code"].format(amount=f"{bill.amount_due:,.0f}", code=code))
+            return _end(t["pay_code"].format(amount=f"{amount:,.0f}", code=code))
         if payment.status == "successful":
             return _end(t["pay_done"])
         if payment.status == "failed":

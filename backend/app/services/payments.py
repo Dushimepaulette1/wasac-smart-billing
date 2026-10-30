@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 from app.models import Bill, Customer
 from app.models.payment import FAILED, PENDING, SUCCESSFUL, Payment
 from app.services import momo
+from app.services.balance import bill_balance, settle
 from app.services.sms import send_sms
 
 # After this an attempt MTN has not settled is shown as still being confirmed (it stays pending).
@@ -97,8 +98,9 @@ def _mark_paid(db: Session, payment: Payment, bill: Bill, transaction_id: Option
         bill.payment_status = "paid"
         customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first()
         if customer and customer.phone:
-            send_sms(customer.phone, f"WASAC: payment of RWF {bill.amount_due:,.0f} received for bill {bill.bill_id}. "
+            send_sms(customer.phone, f"WASAC: payment of RWF {payment.amount:,.0f} received for bill {bill.bill_id}. "
                                      f"Ref {transaction_id or payment.reference_id[:8]}. Thank you.")
+    settle(db, bill.customer_id)  # anything paid beyond the balance becomes credit
 
 
 def _settle_old_failures(db: Session, bill: Bill) -> Optional[Payment]:
@@ -131,7 +133,8 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
     """Reuse the bill's open attempt, or start one. Commits. The attempt is committed before MTN is
     asked, so its reference id is kept even if the request then goes wrong."""
     bill = _lock_bill(db, bill.bill_id)
-    if bill.payment_status == "paid":
+    owed = bill_balance(db, bill)
+    if owed.settled:
         done = (db.query(Payment).filter(Payment.bill_id == bill.bill_id, Payment.status == SUCCESSFUL)
                 .order_by(Payment.id.desc()).first())
         db.commit()
@@ -159,7 +162,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         provider=momo.provider_name() if configured else (SIMULATED if simulate else MOMO_PAY),
         reference_id=str(uuid.uuid4()),
         status=PENDING,
-        amount=bill.amount_due,
+        amount=owed.outstanding,
         currency=momo.currency() if configured else "RWF",
     )
     db.add(payment)
@@ -178,7 +181,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         return payment
 
     try:
-        momo.request_to_pay(payment.reference_id, bill.amount_due, phone, external_id=f"bill-{bill.bill_id}",
+        momo.request_to_pay(payment.reference_id, payment.amount, phone, external_id=f"bill-{bill.bill_id}",
                             note=f"WASAC water bill {bill.bill_id}")
     except momo.MomoError as e:
         payment = _lock_payment(db, payment.id)

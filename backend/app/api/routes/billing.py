@@ -2,13 +2,13 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.anomaly.statuses import NOT_CONFIRMED
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
-from app.models import Bill, Customer, Meter, Payment, Reading, StaffUser
+from app.models import Bill, BillAdjustment, BillCorrection, Customer, Meter, Payment, Reading, StaffUser
+from app.models.bill_correction import APPLIED
 from app.schemas import (
     CustomerInfo,
     HouseholdEdit,
@@ -23,6 +23,7 @@ from app.schemas import (
     PaymentToCheck,
 )
 from app.services.audit import record
+from app.services.balance import available_credit, balances, bill_balance
 from app.services.households import (
     DEMO_PREFIX,
     HouseholdError,
@@ -73,11 +74,7 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
     )
 
     block = reading_block(db, meter) if meter else None
-    unpaid_count, unpaid_amount = (
-        db.query(func.count(Bill.bill_id), func.coalesce(func.sum(Bill.amount_due), 0.0))
-        .filter(Bill.customer_id == c.customer_id, Bill.payment_status != "paid")
-        .one()
-    )
+    owed = [b for b in balances(db, c.customer_id).values() if not b.settled]
     return CustomerInfo(
         customer_id=c.customer_id,
         name=c.name,
@@ -90,8 +87,9 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         anomaly_flagged=anomaly_flagged,
         reading_pending=bool(block and block.reason == PENDING),
         next_reading_from=block.opens_on if block and block.reason == TOO_SOON else None,
-        unpaid_count=unpaid_count,
-        unpaid_amount=round(float(unpaid_amount), 2),
+        unpaid_count=len(owed),
+        unpaid_amount=round(sum(b.outstanding for b in owed), 2),
+        credit_available=available_credit(db, c.customer_id),
         serial_number=meter.serial_number if meter else None,
         is_demo=c.customer_id.startswith(DEMO_PREFIX),
     )
@@ -219,13 +217,32 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
         .limit(12)
         .all()
     )
+    money = balances(db, customer_id)
+    applied = (
+        db.query(BillAdjustment, BillCorrection)
+        .join(BillCorrection, BillCorrection.id == BillAdjustment.correction_id)
+        .filter(BillAdjustment.bill_id.in_([b.bill_id for b in bills]), BillCorrection.status == APPLIED)
+        .order_by(BillAdjustment.id).all()
+    ) if bills else []
+    # amount_due is the bill as issued. payment_status answers "is anything still owed?" (a bill can
+    # be settled by credit, or owe more after a correction); the money fields show how.
     return [
         {
             "bill_id": b.bill_id,
+            "reading_id": b.reading_id,
             "consumption_m3": b.consumption_m3,
             "amount_due": b.amount_due,
-            "payment_status": b.payment_status,
+            "payment_status": "paid" if money[b.bill_id].settled else "unpaid",
             "created_at": b.created_at,
+            "charges": money[b.bill_id].charges,
+            "paid": round(money[b.bill_id].paid, 2),
+            "credit_used": round(money[b.bill_id].credit_used, 2),
+            "outstanding": money[b.bill_id].outstanding,
+            "adjustments": [
+                {"amount_delta": a.amount_delta, "consumption_after": a.consumption_after,
+                 "reason": c.reason, "at": c.decided_at or c.created_at}
+                for a, c in applied if a.bill_id == b.bill_id
+            ],
         }
         for b in bills
     ]
@@ -238,7 +255,7 @@ async def pay_bill(bill_id: int, db: Session = Depends(get_db), access: Access =
     bill = db.query(Bill).filter(Bill.bill_id == bill_id).first()
     if not bill or not access.owns_customer(bill.customer_id):
         raise HTTPException(status_code=404, detail="Bill not found")
-    if bill.payment_status == "paid":
+    if bill_balance(db, bill).settled:
         done = (db.query(Payment).filter(Payment.bill_id == bill_id, Payment.status == "successful")
                 .order_by(Payment.id.desc()).first())
         out = PaymentOut.model_validate(done) if done else PaymentOut(

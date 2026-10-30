@@ -239,6 +239,8 @@ export interface CustomerInfo {
   /** Bills not paid yet (for the staff overview). */
   unpaid_count: number;
   unpaid_amount: number;
+  /** Kept for the next bills; there are no cash refunds in the app. */
+  credit_available?: number;
   /** The maker's serial number printed on the meter, if WASAC has it. */
   serial_number?: string | null;
   /** A DEMO- test household. */
@@ -294,8 +296,53 @@ export interface BillSummary {
   consumption_m3: number;
   /** Can carry half-francs, e.g. 12400.5; shown rounded to whole francs. */
   amount_due: number;
+  /** 'paid' when nothing more is owed (by payment or credit), even if a correction changed the bill. */
   payment_status: PaymentStatus;
   created_at: IsoDateTime;
+  reading_id?: number | null;
+  /** The bill after corrections, what has been paid, credit used, and what is still owed. */
+  charges?: number;
+  paid?: number;
+  credit_used?: number;
+  outstanding?: number;
+  /** Corrections to this bill. amount_due stays as issued. */
+  adjustments?: BillAdjustmentLine[];
+}
+
+export interface BillAdjustmentLine {
+  amount_delta: number;
+  consumption_after: number;
+  reason: string;
+  at: IsoDateTime;
+}
+
+/** schemas.AdjustmentOut */
+export interface BillCorrectionLine {
+  bill_id: number;
+  consumption_before: number;
+  consumption_after: number;
+  amount_before: number;
+  amount_after: number;
+  amount_delta: number;
+  tariff_version: string;
+}
+
+/** schemas.BillCorrectionOut */
+export interface BillCorrection {
+  id: number | null;
+  status: 'preview' | 'applied' | 'awaiting_approval' | 'declined' | 'stale';
+  customer_id: string;
+  customer_name: string | null;
+  reading_id: number;
+  value_before_m3: number;
+  corrected_value_m3: number;
+  reason: string;
+  requested_by: string;
+  decided_by: string | null;
+  decision_reason: string | null;
+  needs_approval: boolean;
+  net_delta: number;
+  adjustments: BillCorrectionLine[];
 }
 
 /** app/api/routes/billing.py pay_bill: a new payment. */

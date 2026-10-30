@@ -19,10 +19,10 @@ import { ISSUE_KEY } from '../../staff/issues';
 import styles from '../../staff/staff.module.css';
 
 /** Filter choices: '' is everything. */
-const KINDS = ['', 'sign_in', 'sign_in_failed', 'accept', 'reject', 'close', 'reading_entered', 'account_created', 'account_updated', 'password_reset', 'password_changed', 'meter_corrected', 'payment_confirmed', 'payment_declined', 'household_added', 'household_updated', 'households_imported'] as const;
+const KINDS = ['', 'sign_in', 'sign_in_failed', 'accept', 'reject', 'close', 'reading_entered', 'account_created', 'account_updated', 'password_reset', 'password_changed', 'meter_corrected', 'payment_confirmed', 'payment_declined', 'household_added', 'household_updated', 'households_imported', 'bill_correction_requested', 'bill_corrected', 'correction_approved', 'correction_declined', 'credit_added', 'credit_applied'] as const;
 
 /** Actions worth a second look get the held (brass) colour. */
-const WATCH = new Set(['sign_in_failed', 'password_reset', 'account_updated', 'meter_corrected', 'payment_declined', 'household_updated']);
+const WATCH = new Set(['sign_in_failed', 'password_reset', 'account_updated', 'meter_corrected', 'bill_corrected', 'correction_approved', 'payment_declined', 'household_updated']);
 
 function Activity() {
   const { t } = useI18n();
