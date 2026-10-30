@@ -86,3 +86,34 @@ def test_when_the_average_is_worked_out_should_count_flagged_readings_but_not_co
                    validation_status="anomaly_flagged", submission_time=datetime.utcnow() - timedelta(days=3)))
     db.commit()
     assert client.get(f"/customers/{customer_id}").json()["avg_consumption"] == 20.0
+
+
+def test_when_rejected_with_a_code_should_show_it_to_the_household_but_not_the_officers_text(db, client, household_client, household):
+    flag_id = confirm(client, household[0], household[1] + 200)["anomaly"]["flag_id"]
+    client.patch(f"/api/anomaly/flags/{flag_id}/resolve",
+                 json={"outcome": "reject", "reason": "Private note about the visit", "reason_code": "digits"})
+    flag = household_client.get("/api/anomaly/flags", params={"household_id": METER}).json()[0]
+    assert flag["decision_code"] == "digits" and "Private note" not in str(flag)
+
+
+def test_when_a_reading_was_corrected_should_show_the_corrected_history_and_keep_the_original(db, client, household):
+    from app.models import Bill, BillAdjustment, BillCorrection
+
+    customer_id, last = household
+    r = Reading(meter_id=METER, submitted_value=last + 12, corrected_value_m3=last + 10, implied_consumption=12.0,
+                validation_status="valid", submission_time=datetime.utcnow() - timedelta(days=2))
+    db.add(r)
+    db.flush()
+    bill = Bill(customer_id=customer_id, reading_id=r.reading_id, consumption_m3=12.0, amount_due=7000.0)
+    fix = BillCorrection(customer_id=customer_id, reading_id=r.reading_id, value_before_m3=last + 12,
+                         corrected_value_m3=last + 10, reason="Re-read", status="applied", requested_by="s", request_key="k")
+    db.add_all([bill, fix])
+    db.flush()
+    db.add(BillAdjustment(correction_id=fix.id, bill_id=bill.bill_id, consumption_before=12.0, consumption_after=10.0,
+                          amount_before=7000.0, amount_after=5000.0, amount_delta=-2000.0, tariff_version="v1-provisional"))
+    db.commit()
+    confirm(client, customer_id, last + 5)  # below it: held
+    point = client.get("/api/anomaly/review-queue").json()[0]["history"][-1]
+    assert point["reading_m3"] == pytest.approx(last + 10) and point["consumption_m3"] == 10.0
+    assert point["original_reading_m3"] == pytest.approx(last + 12) and point["original_consumption_m3"] == 12.0
+    assert client.get(f"/customers/{customer_id}").json()["avg_consumption"] == 10.0

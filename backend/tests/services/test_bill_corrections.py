@@ -161,7 +161,7 @@ def test_when_paying_after_a_correction_should_ask_for_the_balance(db, anon_clie
     correct(anon_client, staff["sup1"], r2, "440.000")
     monkeypatch.setenv("PAYMENTS_SIMULATE", "1")
     body = anon_client.post(f"/bills/{b2.bill_id}/pay", headers=bearer(household_token())).json()
-    assert body["amount"] == pytest.approx(billing.calculate_bill(8.54)["total"])
+    assert body["amount"] == billing.whole_francs(billing.calculate_bill(8.54)["total"])
     assert bill_balance(db, b2).settled
 
 

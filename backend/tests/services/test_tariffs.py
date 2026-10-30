@@ -44,3 +44,13 @@ def test_when_a_reading_is_billed_should_record_the_tariff_version(db):
     from app.db.init_db import LATE_COLUMNS
     assert ("bills", "tariff_version", "VARCHAR(40)") in LATE_COLUMNS
     assert billing.build_bill("C", 1, 12).tariff_version == "v1-provisional"
+
+
+def test_when_an_old_bill_is_explained_should_use_its_version(anon_client):
+    assert anon_client.post("/calculate-bill", json={"consumption_m3": 5, "tariff_version": "v1-provisional"}).json()["total_amount_due"] == 2750
+    assert anon_client.post("/calculate-bill", json={"consumption_m3": 5, "tariff_version": "nope"}).status_code == 422
+
+
+def test_amounts_should_carry_no_float_noise():
+    assert billing.calculate_bill(3.54)["total"] == 2239.0
+    assert billing.whole_francs(6460.5) == 6461 and billing.whole_francs(6460.49) == 6460 and billing.whole_francs(2.5) == 3

@@ -298,7 +298,7 @@ def evaluate_reading(
         ))
 
     config, model = _resolve(config, model)
-    consumption = reading_m3 - meter.last_reading
+    consumption = round(reading_m3 - meter.last_reading, 3)
     history = load_history(db, meter.meter_id, now)
     scored = assess(meter.meter_id, history, reading_m3, now, model, config)
     if not has_baseline(db, meter):

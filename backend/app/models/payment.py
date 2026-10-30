@@ -32,3 +32,6 @@ class Payment(Base):
     reason = Column(String(120), nullable=True)          # why it failed, in MTN's words
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    # A second success on a paid bill, looked at by staff (it stays on record, off their list).
+    reviewed_by = Column(String(64), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)

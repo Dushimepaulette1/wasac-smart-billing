@@ -5,6 +5,12 @@ bill, which starts from it. Both are recalculated with their own tariff version 
 BillAdjustment, in one correction. readings.corrected_value_m3 holds the new value (submitted_value
 stays); meters.last_reading moves only if this is the latest reading, so later periods stay right.
 
+A first bill measured from nothing (a meter added with no starting value, so the whole register was
+charged) is a BASELINE correction: a supervisor gives the true starting reading, and the bill is
+recalculated from it. If that equals the reading, the reading was only ever the starting point and
+nothing is owed for it: the bill's charges become zero, as for a first reading today. The reading
+itself can be corrected at the same time, which also recalculates the next bill.
+
 A correction that only lowers charges applies at once. One that charges more on any bill waits for
 a different supervisor or admin, and is recalculated then: if the bills changed meanwhile it goes
 STALE and a new one is needed. Refused while a reading is waiting for review or a payment on an
@@ -21,7 +27,9 @@ from sqlalchemy.orm import Session
 from app.anomaly.service import lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING
 from app.models import Bill, Customer, Meter, Payment, Reading
-from app.models.bill_correction import APPLIED, AWAITING, DECLINED, STALE, BillAdjustment, BillCorrection
+from app.models.bill_correction import (
+    APPLIED, AWAITING, BASELINE, DECLINED, READING, STALE, BillAdjustment, BillCorrection,
+)
 from app.models.payment import PENDING
 from app.services.audit import record
 from app.services.balance import balances, settle
@@ -61,15 +69,29 @@ def _current_consumption(db: Session, bill: Bill) -> float:
     return latest.consumption_after if latest else bill.consumption_m3
 
 
-def _change(db: Session, bill: Bill, after: float, charges: float) -> Change:
+def _change(db: Session, bill: Bill, after: float, charges: float, no_charge: bool = False) -> Change:
     version = bill_tariff(bill)["version"]
     data = calculate_bill(after, version)
     return Change(bill=bill, consumption_before=_current_consumption(db, bill), consumption_after=round(after, 3),
-                  amount_before=charges, amount_after=round(data["total"], 2), tiers=data, tariff_version=version)
+                  amount_before=charges, amount_after=0.0 if no_charge else round(data["total"], 2),
+                  tiers=data, tariff_version=version)
 
 
-def plan_correction(db: Session, reading: Reading, corrected: float) -> List[Change]:
-    """What this correction would do to each bill; refuses what cannot be applied safely. Read-only."""
+def measured_from_zero(db: Session, bill: Bill, reading: Reading) -> bool:
+    """Did this bill charge the whole register? No confirmed reading before it, and its volume is the
+    reading itself. Read-only; false once a baseline correction has given it a real start."""
+    if not reading.effective_value or abs(_current_consumption(db, bill) - reading.effective_value) > 0.0005:
+        return False
+    return db.query(Reading.reading_id).filter(
+        Reading.meter_id == reading.meter_id,
+        Reading.submission_time < reading.submission_time,
+        Reading.validation_status.notin_(NOT_CONFIRMED),
+    ).first() is None
+
+
+def plan_correction(db: Session, reading: Reading, corrected: float, start_m3: Optional[float] = None) -> List[Change]:
+    """What this correction would do to each bill; refuses what cannot be applied safely. Read-only.
+    start_m3: a baseline correction, the true starting reading."""
     if not 0 <= corrected <= MAX_READING_M3:
         raise BillCorrectionError(422, "A meter reading is between 0 and 99999.999 m³.")
     if reading.validation_status in NOT_CONFIRMED:
@@ -77,8 +99,14 @@ def plan_correction(db: Session, reading: Reading, corrected: float) -> List[Cha
     bill = db.query(Bill).filter(Bill.reading_id == reading.reading_id).first()
     if bill is None:
         raise BillCorrectionError(409, "This reading has no bill. Use the meter correction instead.")
-    if abs(corrected - reading.effective_value) < 0.0005:
+    same_value = abs(corrected - reading.effective_value) < 0.0005
+    if same_value and start_m3 is None:
         raise BillCorrectionError(409, "This reading already has that value.")
+    if start_m3 is not None:
+        if not measured_from_zero(db, bill, reading):
+            raise BillCorrectionError(409, "Only a first bill charged from no starting reading can be given a baseline.")
+        if not 0 <= start_m3 <= MAX_READING_M3:
+            raise BillCorrectionError(422, "A meter reading is between 0 and 99999.999 m³.")
     if db.query(Reading.reading_id).filter(Reading.meter_id == reading.meter_id,
                                            Reading.validation_status == READING_PENDING).first():
         raise BillCorrectionError(409, "A reading from this household is waiting in the review queue: decide on it first.")
@@ -86,12 +114,13 @@ def plan_correction(db: Session, reading: Reading, corrected: float) -> List[Cha
                                           BillCorrection.status == AWAITING).first():
         raise BillCorrectionError(409, "A correction of this reading is already waiting for approval.")
 
-    start = round(reading.effective_value - _current_consumption(db, bill), 3)
+    start = start_m3 if start_m3 is not None else round(reading.effective_value - _current_consumption(db, bill), 3)
     if corrected < start:
         raise BillCorrectionError(409, f"The reading before this one is {start:.3f} m³, so this bill would be negative. "
                                        "Correct that reading first, or record a meter replacement.")
     money = balances(db, bill.customer_id)
-    changes = [_change(db, bill, corrected - start, money[bill.bill_id].charges)]
+    starting_point = start_m3 is not None and corrected - start < 0.0005
+    changes = [_change(db, bill, corrected - start, money[bill.bill_id].charges, no_charge=starting_point)]
 
     following = (
         db.query(Reading)
@@ -100,7 +129,7 @@ def plan_correction(db: Session, reading: Reading, corrected: float) -> List[Cha
         .order_by(Reading.submission_time).first()
     )
     # After a staff meter correction the count starts again: nothing later depends on this reading.
-    if following is not None and following.submission_method != CORRECTION:
+    if following is not None and following.submission_method != CORRECTION and not same_value:
         next_bill = db.query(Bill).filter(Bill.reading_id == following.reading_id).first()
         if corrected > following.effective_value:
             raise BillCorrectionError(409, f"The next reading is {following.effective_value:.3f} m³, so the next bill "
@@ -121,20 +150,21 @@ def needs_approval(changes: List[Change]) -> bool:
 
 def _apply(db: Session, correction: BillCorrection, reading: Reading, actor: str, request: Optional[Request]) -> None:
     correction.status = APPLIED
-    reading.corrected_value_m3 = correction.corrected_value_m3
-    meter = db.get(Meter, reading.meter_id)
-    later = db.query(Reading.reading_id).filter(
-        Reading.meter_id == reading.meter_id, Reading.submission_time > reading.submission_time,
-        Reading.validation_status.notin_(NOT_CONFIRMED)).first()
-    if later is None:
-        meter.last_reading = correction.corrected_value_m3
+    if abs(correction.corrected_value_m3 - reading.effective_value) >= 0.0005:  # a baseline may leave it as it is
+        reading.corrected_value_m3 = correction.corrected_value_m3
+        meter = db.get(Meter, reading.meter_id)
+        later = db.query(Reading.reading_id).filter(
+            Reading.meter_id == reading.meter_id, Reading.submission_time > reading.submission_time,
+            Reading.validation_status.notin_(NOT_CONFIRMED)).first()
+        if later is None:
+            meter.last_reading = correction.corrected_value_m3
     db.flush()
     settle(db, correction.customer_id, actor, request)
 
 
 def request_correction(
     db: Session, reading: Reading, corrected: float, reason: str, staff: str, request_key: Optional[str],
-    request: Optional[Request] = None,
+    request: Optional[Request] = None, start_m3: Optional[float] = None,
 ) -> BillCorrection:
     """Record a correction: applied, or waiting for approval if it charges more. Commits. The same
     request_key returns the first correction, so a repeated request cannot adjust twice."""
@@ -144,12 +174,12 @@ def request_correction(
     if existing:
         db.rollback()
         return existing
-    changes = plan_correction(db, reading, corrected)
+    changes = plan_correction(db, reading, corrected, start_m3)
     bill = changes[0].bill
     correction = BillCorrection(
         customer_id=bill.customer_id, reading_id=reading.reading_id, value_before_m3=reading.effective_value,
         corrected_value_m3=round(corrected, 3), reason=reason[:200], status=AWAITING, requested_by=staff,
-        request_key=key,
+        request_key=key, kind=READING if start_m3 is None else BASELINE, start_m3=start_m3,
     )
     db.add(correction)
     db.flush()
@@ -198,7 +228,7 @@ def approve_correction(db: Session, correction_id: int, staff: str, request: Opt
     correction.status = STALE  # while planning, so this correction does not block itself
     db.flush()
     try:
-        changes = plan_correction(db, reading, correction.corrected_value_m3)
+        changes = plan_correction(db, reading, correction.corrected_value_m3, correction.start_m3)
         same = ({(a.bill_id, a.amount_before, a.amount_after) for a in stored}
                 == {(c.bill.bill_id, c.amount_before, c.amount_after) for c in changes})
     except BillCorrectionError:

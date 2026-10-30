@@ -70,6 +70,20 @@ RESUBMIT_MESSAGE = (
 )
 
 
+RESUBMIT_REASONS = {
+    "photo": "The photo was not clear enough.",
+    "digits": "The numbers did not match the photo.",
+    "meter": "The photo did not show your meter.",
+}
+
+
+def resubmit_message(reason_code: Optional[str] = None) -> str:
+    """The officer's reason in fixed words; anything they typed stays with staff."""
+    why = RESUBMIT_REASONS.get(reason_code or "")
+    return f"WASAC: We could not confirm your last meter reading. {why} Please submit a new, clear photo of your water meter." \
+        if why else RESUBMIT_MESSAGE
+
+
 def confirmed_message(reading_m3: float, amount_rwf: float) -> str:
     return f"WASAC: Your meter reading of {reading_m3:.3f} m3 has been confirmed. Bill: RWF {amount_rwf:,.0f}."
 

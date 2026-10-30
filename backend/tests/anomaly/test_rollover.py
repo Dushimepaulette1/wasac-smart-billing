@@ -49,3 +49,10 @@ def test_when_rejected_should_leave_the_meter_alone(db, client, household):
     flag = confirm(client, customer_id, 7.0).json()["anomaly"]["flag_id"]
     client.patch(f"/api/anomaly/flags/{flag}/resolve", json={"outcome": "reject", "reason": "Misread"})
     assert db.get(Meter, METER).last_reading == last
+
+
+def test_when_reviewing_a_rollover_should_give_the_use_across_the_wrap_not_a_negative(db, client, household):
+    customer_id, last = household
+    confirm(client, customer_id, 7.0)
+    item = client.get("/api/anomaly/review-queue").json()[0]
+    assert item["consumption_m3"] == pytest.approx(100_000 - last + 7) and item["consumption_m3"] > 0

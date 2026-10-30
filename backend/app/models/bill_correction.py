@@ -10,6 +10,7 @@ from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Index, Integer
 from app.db.session import Base
 
 APPLIED, AWAITING, DECLINED, STALE = "applied", "awaiting_approval", "declined", "stale"
+READING, BASELINE = "reading", "baseline"
 OVERPAYMENT, USED = "overpayment", "applied"
 
 
@@ -24,6 +25,9 @@ class BillCorrection(Base):
     reading_id = Column(Integer, ForeignKey("readings.reading_id"), nullable=False, index=True)
     value_before_m3 = Column(Float, nullable=False)
     corrected_value_m3 = Column(Float, nullable=False)
+    # BASELINE: the first bill was measured from nothing; start_m3 is the true starting reading.
+    kind = Column(String(16), nullable=False, default=READING)
+    start_m3 = Column(Float, nullable=True)
     reason = Column(String(200), nullable=False)
     status = Column(String(20), nullable=False, index=True)
     requested_by = Column(String(64), nullable=False)

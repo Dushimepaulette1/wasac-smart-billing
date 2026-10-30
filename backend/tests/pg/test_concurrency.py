@@ -376,3 +376,20 @@ def test_when_two_bills_settle_at_once_should_spend_a_credit_once(pg):
     with pg() as db:
         assert available_credit(db, customer_id) == 0
         assert db.query(AccountCredit).filter(AccountCredit.kind == "applied").count() == 1
+
+
+def test_when_two_supervisors_reconcile_one_payment_at_once_should_settle_it_once(pg, mtn, receipts, monkeypatch):
+    bill_id = make_bill(pg)
+    with pg() as db:
+        payment_id = payments.start_payment(db, db.get(Bill, bill_id), "+250788000111").id
+
+    monkeypatch.setattr(momo.httpx, "get", lambda url, headers=None, timeout=None: Resp(404, None))  # MTN: no record
+
+    def settle_it(i):
+        with pg() as db:
+            return payments.reconcile(db, db.get(Payment, payment_id), True, "Seen on the MoMo portal", f"TX{i}").status
+
+    out = race(4, settle_it)
+    assert out.count("successful") == 1, out
+    assert all(isinstance(o, payments.PaymentError) for o in out if o != "successful")
+    assert len(receipts) == 1

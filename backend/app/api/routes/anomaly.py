@@ -10,6 +10,7 @@ from app.anomaly.edits import changed_positions, household_digits
 from app.anomaly.review import ReviewError, resolve_flag
 from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
+from app.services.balance import current_consumption
 from app.services.photo_evidence import photo_for_reading
 from app.models import StaffUser
 from app.api.deps import Access, household_access
@@ -29,6 +30,15 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api/anomaly")
 CONFIG = AnomalyConfig()  # only the meter's digit layout (8 wheels, 3 for litres) is used here
+
+
+def _history_point(r: Reading, corrected: dict) -> HistoryPoint:
+    used = corrected.get(r.reading_id, r.implied_consumption)
+    return HistoryPoint(
+        date=r.submission_time, reading_m3=r.effective_value, consumption_m3=used,
+        original_reading_m3=r.submitted_value if r.effective_value != r.submitted_value else None,
+        original_consumption_m3=r.implied_consumption if used != r.implied_consumption else None,
+    )
 
 
 def _previous_reading(flag: AnomalyFlag, reading: Optional[Reading], meter: Optional[Meter]) -> Optional[float]:
@@ -120,7 +130,7 @@ async def resolve(
     if body and body.outcome == "reject" and len(reason) < 3:
         raise HTTPException(status_code=422, detail="Say why the reading is rejected.")
     try:
-        result = resolve_flag(db, flag, body.outcome if body else None)
+        result = resolve_flag(db, flag, body.outcome if body else None, body.reason_code if body else None)
     except ReviewError as e:
         db.rollback()
         raise HTTPException(status_code=e.status_code, detail=e.detail)
@@ -170,6 +180,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             .all()
         )
         photo = photo_for_reading(db, reading.reading_id) if reading else None
+        corrected = current_consumption(db, [r.reading_id for r in history])
         items.append(ReviewItem(
             # reading_status tells the two kinds apart: pending_review needs accept or reject;
             # an already-billed reading (valid, anomaly_flagged) only needs closing after follow-up.
@@ -177,6 +188,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
                 update={"reading_status": reading.validation_status if reading else None}
             ),
             reading_m3=reading.submitted_value if reading else None,
+            consumption_m3=reading.implied_consumption if reading else None,
             previous_reading_m3=_previous_reading(flag, reading, meter),
             submitted_at=reading.submission_time if reading else None,
             reading_confidence=reading.crnn_confidence if reading else None,
@@ -192,7 +204,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             edited_by_household=photo.edited if photo else None,
             reader_models=photo.models if photo else None,
             history=[
-                HistoryPoint(date=r.submission_time, reading_m3=r.effective_value, consumption_m3=r.implied_consumption)
+                _history_point(r, corrected)
                 for r in reversed(history)
             ],
         ))

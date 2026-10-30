@@ -243,8 +243,11 @@ async def confirm_reading(
 
 @router.post("/calculate-bill")
 async def calculate_bill(body: BillCalculateRequest):
-    data = billing.calculate_bill(body.consumption_m3)
-    rates = [rate for _, rate in billing.tariff()["tiers"]]
+    try:
+        rates = [rate for _, rate in billing.tariff(body.tariff_version)["tiers"]]
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Unknown tariff version")
+    data = billing.calculate_bill(body.consumption_m3, body.tariff_version)
     return {
         "consumption_m3": body.consumption_m3,
         "breakdown": {

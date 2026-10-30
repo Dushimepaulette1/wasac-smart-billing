@@ -43,6 +43,7 @@ class AnomalyFlagOut(BaseModel):
     status: str
     created_at: datetime
     resolved_at: Optional[datetime] = None
+    decision_code: Optional[str] = None  # why it was rejected: photo, digits, meter, other
     # The flagged reading's status: pending_review, valid (accepted), rejected, anomaly_flagged.
     # Lets the household see the outcome of a check ("confirmed" or "please read again").
     reading_status: Optional[str] = None
@@ -52,6 +53,8 @@ class ResolveFlagRequest(BaseModel):
     outcome: Optional[Literal["accept", "reject"]] = None
     # Why: required to reject (422 otherwise), optional to accept. Kept in the audit log.
     reason: Optional[str] = Field(default=None, max_length=160)
+    # The reason as a code the household's app words for them. The text above stays with staff.
+    reason_code: Optional[Literal["photo", "digits", "meter", "other"]] = None
 
 
 class ResolveFlagResponse(AnomalyFlagOut):
@@ -64,13 +67,19 @@ class ResolveFlagResponse(AnomalyFlagOut):
 
 class HistoryPoint(BaseModel):
     date: datetime
-    reading_m3: float
+    reading_m3: float                # as it stands, after any correction
     consumption_m3: Optional[float] = None
+    # Set when a correction changed them: what was sent and billed at the time.
+    original_reading_m3: Optional[float] = None
+    original_consumption_m3: Optional[float] = None
 
 
 class ReviewItem(BaseModel):
     flag: AnomalyFlagOut
     reading_m3: Optional[float] = None
+    # Use this reading stands for (across the wrap for a register rollover), from the backend so
+    # the screen never has to work it out.
+    consumption_m3: Optional[float] = None
     # The last accepted reading this one is measured from (what accepting it would bill from).
     previous_reading_m3: Optional[float] = None
     submitted_at: Optional[datetime] = None
