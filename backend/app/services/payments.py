@@ -133,6 +133,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
     """Reuse the bill's open attempt, or start one. Commits. The attempt is committed before MTN is
     asked, so its reference id is kept even if the request then goes wrong."""
     bill = _lock_bill(db, bill.bill_id)
+    settle(db, bill.customer_id)  # credit held back while an earlier attempt was open
     owed = bill_balance(db, bill)
     if owed.settled:
         done = (db.query(Payment).filter(Payment.bill_id == bill.bill_id, Payment.status == SUCCESSFUL)

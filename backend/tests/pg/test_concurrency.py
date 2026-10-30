@@ -166,8 +166,10 @@ def test_when_ten_pay_requests_arrive_at_once_should_open_one_attempt_and_prompt
 
 
 def test_without_the_lock_and_the_index_ten_pay_requests_would_prompt_more_than_once(pg, mtn, slow_lookup, monkeypatch):
-    """Shows the race test above can fail: with both guards removed, requests open several attempts."""
+    """Shows the race test above can fail: with every guard removed, requests open several attempts.
+    (settle's lock on the customer row also serialises them, so it is removed too.)"""
     no_bill_lock(monkeypatch)
+    monkeypatch.setattr(payments, "settle", lambda *a, **k: None)
     with pg.kw["bind"].begin() as conn:
         conn.exec_driver_sql("DROP INDEX uq_payments_one_pending")
     bill_id = make_bill(pg)
@@ -351,3 +353,26 @@ def test_when_an_older_postgres_database_starts_should_add_the_late_columns(pg):
     add_late_columns(engine)
     assert "tariff_version" in {c["name"] for c in inspect(engine).get_columns("bills")}
     assert "corrected_value_m3" in {c["name"] for c in inspect(engine).get_columns("readings")}
+
+
+def test_when_two_bills_settle_at_once_should_spend_a_credit_once(pg):
+    from app.models import AccountCredit
+    from app.services.balance import available_credit, settle
+
+    with pg() as db:
+        customer_id = add_household(db, "MTR-PGK", make_history([0.4] * 2))
+        for _ in range(2):
+            db.add(Bill(customer_id=customer_id, consumption_m3=5, amount_due=2750.0, payment_status="unpaid"))
+        db.add(AccountCredit(customer_id=customer_id, amount=1000.0, kind="overpayment"))
+        db.commit()
+
+    def run(_):
+        with pg() as db:
+            settle(db, customer_id)
+            db.commit()
+            return True
+
+    assert race(6, run) == [True] * 6
+    with pg() as db:
+        assert available_credit(db, customer_id) == 0
+        assert db.query(AccountCredit).filter(AccountCredit.kind == "applied").count() == 1
