@@ -1,4 +1,5 @@
 """Photo reading, live tips and confirming a reading (app/api/routes/readings.py)."""
+from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -65,12 +66,30 @@ class ConfirmReadingRequest(BaseModel):
     photo_id: Optional[str] = Field(default=None, max_length=32)
 
 
+class ReadingCheckResponse(BaseModel):
+    """POST /check-reading: what sending this reading would lead to, with nothing stored.
+    /confirm-reading checks everything again when the reading is actually sent."""
+    # The reading would wait for an officer instead of being billed; reason says why, in a word the
+    # app translates: first_reading, below_previous, high_use, misread, edited_down, location.
+    needs_review: bool = False
+    reason: Optional[str] = None
+    previous_reading_m3: Optional[float] = None  # the last accepted reading, as billing uses it
+    consumption_m3: Optional[float] = None
+    # It cannot be sent now: pending (a reading is being checked), too_soon (this period's reading
+    # is in; opens_on says when the next one can be sent), duplicate (it was just sent).
+    refused: Optional[Literal["pending", "too_soon", "duplicate"]] = None
+    opens_on: Optional[datetime] = None
+
+
 class ConfirmReadingResponse(BaseModel):
     success: bool
     bill_amount: Optional[float] = None
     consumption_m3: Optional[float] = None
     tariff_breakdown: Optional[TariffBreakdown] = None
     validation_status: str
+    # True when the same photo was sent again (a retry after a lost answer): this is the reading
+    # it was already used for, nothing new was stored.
+    repeated: bool = False
     anomaly_flagged: bool = False
     anomaly_score: Optional[float] = None
     error_message: Optional[str] = None
