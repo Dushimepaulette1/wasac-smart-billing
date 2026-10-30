@@ -34,7 +34,7 @@ def _out(db: Session, c: BillCorrection) -> BillCorrectionOut:
     return BillCorrectionOut(
         id=c.id, status=c.status, customer_id=c.customer_id, customer_name=customer.name if customer else None,
         reading_id=c.reading_id, value_before_m3=c.value_before_m3, corrected_value_m3=c.corrected_value_m3,
-        reason=c.reason, requested_by=c.requested_by, decided_by=c.decided_by, decision_reason=c.decision_reason,
+        kind=c.kind, start_m3=c.start_m3, reason=c.reason, requested_by=c.requested_by, decided_by=c.decided_by, decision_reason=c.decision_reason,
         created_at=c.created_at, decided_at=c.decided_at,
         net_delta=round(sum(a.amount_delta for a in adjustments), 2),
         needs_approval=any(a.amount_delta > 0 for a in adjustments),
@@ -56,11 +56,16 @@ async def correct_billed_reading(
     corrected = parse_meter_value(body.corrected_reading)
     if corrected is None:
         raise HTTPException(status_code=422, detail="Reading must be a number like 00565.846")
+    start = None
+    if body.start_reading is not None:
+        start = parse_meter_value(body.start_reading)
+        if start is None:
+            raise HTTPException(status_code=422, detail="Reading must be a number like 00565.846")
     try:
         if body.apply:
             return _out(db, request_correction(db, reading, corrected, body.reason.strip(), staff.username,
-                                               body.request_key, request))
-        changes = plan_correction(db, reading, corrected)
+                                               body.request_key, request, start_m3=start))
+        changes = plan_correction(db, reading, corrected, start)
     except BillCorrectionError as e:
         db.rollback()
         raise HTTPException(status_code=e.status_code, detail=e.detail)
@@ -68,6 +73,7 @@ async def correct_billed_reading(
     return BillCorrectionOut(
         status="preview", customer_id=customer_id, customer_name=customer.name, reading_id=reading_id,
         value_before_m3=reading.effective_value, corrected_value_m3=corrected, reason=body.reason.strip(),
+        kind="reading" if start is None else "baseline", start_m3=start,
         requested_by=staff.username, needs_approval=needs_approval(changes),
         net_delta=round(sum(c.delta for c in changes), 2),
         adjustments=[AdjustmentOut(bill_id=c.bill.bill_id, consumption_before=c.consumption_before,

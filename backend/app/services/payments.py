@@ -13,11 +13,15 @@
     submit_reference  the household's MoMo transaction ID for a momo_pay attempt
     confirm / decline the officer's check of a momo_pay attempt
 
+    reconcile         a supervisor settles an attempt MTN cannot answer for, with evidence
+
 Never two prompts for one bill. A bill has at most one pending attempt (the bill row is locked
 while one is started, and a partial unique index backs that up), and a new MTN prompt is only sent
-once every earlier attempt has a final answer from MTN. An answer we are not sure of (a timeout
-after sending, an MTN 5xx, no status yet) keeps the attempt pending: only MTN's status (success,
-failure, or "no such request") ends it, however long that takes.
+once every earlier attempt is finished. Only MTN's success or failure status finishes an attempt
+by itself. An answer we are not sure of (a timeout after sending, an MTN 5xx, no status yet, or a
+404: MTN does not know the reference, which is not proof of no charge) keeps it pending. After
+PENDING_LIMIT it is on the staff Payments page: a supervisor who has looked in MTN's records closes
+it, with the evidence in the audit log. MTN's status can overrule that, never the other way round.
 A momo_pay attempt waits for the officer, however long that takes.
 """
 import os
@@ -25,6 +29,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -32,6 +37,7 @@ from app.models import Bill, Customer
 from app.models.payment import FAILED, PENDING, SUCCESSFUL, Payment
 from app.services import momo
 from app.services.balance import bill_balance, settle
+from app.services.billing import whole_francs
 from app.services.sms import send_sms
 
 # After this an attempt MTN has not settled is shown as still being confirmed (it stays pending).
@@ -41,6 +47,8 @@ CONFIRMING = "confirming with MTN"
 # such attempts from the last day are asked about again before a new prompt is sent.
 OLD_LOCAL_FAILURE = "no answer from MTN Mobile Money"
 RECHECK_WINDOW = timedelta(hours=24)
+NO_RECORD = "MTN has no record yet: a staff check is needed"
+CLOSED_BY_STAFF = "closed by staff: "
 MOMO_PAY = "momo_pay"
 SIMULATED = "simulated"
 
@@ -57,7 +65,7 @@ def ussd_code(amount: float):
     if not code:
         return None
     template = os.getenv("MOMO_PAY_USSD", "*182*8*1*{code}*{amount}#")
-    return template.format(code=code, amount=int(round(amount)))
+    return template.format(code=code, amount=whole_francs(amount))
 
 
 class PaymentError(Exception):
@@ -104,16 +112,19 @@ def _mark_paid(db: Session, payment: Payment, bill: Bill, transaction_id: Option
 
 
 def _settle_old_failures(db: Session, bill: Bill) -> Optional[Payment]:
-    """Ask MTN about this bill's attempts that were failed locally (not by MTN) in the last day.
-    Returns the attempt if MTN says it succeeded (the bill is then paid). Raises PaymentError if
-    MTN cannot be asked: a new prompt then waits, so a late success cannot be paid twice."""
+    """Ask MTN about this bill's attempts that were closed here, not by MTN, in the last day (old
+    local failures and staff closures). Returns the attempt if MTN says it succeeded (the bill is
+    then paid). Raises PaymentError if that cannot be ruled out: a new prompt then waits, so a late
+    success cannot be paid twice. A staff closure stands on a 404: staff saw MTN's records."""
     old = (
         db.query(Payment)
-        .filter(Payment.bill_id == bill.bill_id, Payment.status == FAILED, Payment.reason == OLD_LOCAL_FAILURE,
+        .filter(Payment.bill_id == bill.bill_id, Payment.status == FAILED,
+                or_(Payment.reason == OLD_LOCAL_FAILURE, Payment.reason.like(f"{CLOSED_BY_STAFF}%")),
                 Payment.provider.in_(API_PROVIDERS), Payment.created_at > datetime.utcnow() - RECHECK_WINDOW)
         .all()
     )
     for payment in old:
+        staff_closed = payment.reason.startswith(CLOSED_BY_STAFF)
         try:
             answer = momo.payment_status(payment.reference_id)
         except momo.MomoError:
@@ -124,6 +135,10 @@ def _settle_old_failures(db: Session, bill: Bill) -> Optional[Payment]:
         if answer.status == "PENDING":
             raise PaymentError(409, "An earlier payment request is still open on your phone. "
                                     "Approve or cancel it, then try again.")
+        if answer.status == NOT_FOUND:
+            if staff_closed:
+                continue
+            raise PaymentError(503, "We are still confirming an earlier payment with MTN. Try again later.")
         payment.reason = (answer.reason or answer.status.lower())[:120]  # MTN's final word: not asked again
         payment.updated_at = datetime.utcnow()
     return None
@@ -144,6 +159,8 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         raise PaymentError(409, "This bill is already paid.")
     open_attempt = _open_attempt(db, bill.bill_id)
     if open_attempt:
+        if open_attempt.provider == MOMO_PAY and not open_attempt.transaction_id:
+            open_attempt.amount = whole_francs(owed.outstanding)  # not paid yet: show today's balance
         db.commit()
         return refresh(db, open_attempt)  # never ask MTN twice, never two MoMo Pay attempts
 
@@ -163,7 +180,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         provider=momo.provider_name() if configured else (SIMULATED if simulate else MOMO_PAY),
         reference_id=str(uuid.uuid4()),
         status=PENDING,
-        amount=owed.outstanding,
+        amount=whole_francs(owed.outstanding),  # what is actually collected, so the record matches MTN's
         currency=momo.currency() if configured else "RWF",
     )
     db.add(payment)
@@ -213,9 +230,9 @@ def refresh(db: Session, payment: Payment) -> Payment:
     elif answer.status in FINAL_FAILURES:
         payment.status, payment.reason = FAILED, (answer.reason or answer.status.lower())[:120]
         payment.updated_at = now
-    elif answer.status == NOT_FOUND:  # MTN never got the request: no prompt, safe to try again
-        payment.status, payment.reason = FAILED, "MTN has no record of this payment request"
-        payment.updated_at = now
+    elif answer.status == NOT_FOUND:  # not proof of no charge: stays open, a supervisor decides
+        if payment.reason != NO_RECORD:
+            payment.reason, payment.updated_at = NO_RECORD, now
     elif now - payment.created_at > PENDING_LIMIT and payment.reason != CONFIRMING:
         payment.reason, payment.updated_at = CONFIRMING, now
     db.commit()
@@ -295,9 +312,71 @@ def payments_paid_twice(db: Session) -> list:
     )
     seen, extra = set(), []
     for payment, bill, customer in rows:
+        if payment.reviewed_at is not None:
+            continue
         first = (db.query(Payment.id).filter(Payment.bill_id == bill.bill_id, Payment.status == SUCCESSFUL)
                  .order_by(Payment.updated_at, Payment.id).first())
         if first and first.id != payment.id and payment.id not in seen:
             seen.add(payment.id)
             extra.append((payment, bill, customer))
     return extra
+
+
+def mark_reviewed(db: Session, payment: Payment, staff: str) -> Payment:
+    """Staff have looked at a paid-twice payment. It stays on record; the extra is already credit. Commits."""
+    payment = _lock_payment(db, payment.id)
+    if payment.status != SUCCESSFUL:
+        db.rollback()
+        raise PaymentError(409, "Only a successful payment can be marked as reviewed.")
+    payment.reviewed_by, payment.reviewed_at = staff, datetime.utcnow()
+    db.commit()
+    return payment
+
+
+def needs_reconciliation(db: Session) -> list:
+    """(payment, bill, customer) for API attempts MTN has not settled after PENDING_LIMIT, oldest first."""
+    return (
+        db.query(Payment, Bill, Customer)
+        .join(Bill, Bill.bill_id == Payment.bill_id)
+        .join(Customer, Customer.customer_id == Bill.customer_id)
+        .filter(Payment.provider.in_(API_PROVIDERS), Payment.status == PENDING,
+                Payment.created_at < datetime.utcnow() - PENDING_LIMIT)
+        .order_by(Payment.created_at.asc())
+        .all()
+    )
+
+
+def reconcile(db: Session, payment: Payment, paid: bool, evidence: str, transaction_id: Optional[str] = None) -> Payment:
+    """A supervisor settles an attempt from MTN's own records (partner portal, statement, support).
+    MTN's live answer comes first: a status that contradicts the decision refuses it, and a final
+    status settles the attempt as MTN says. Only "cannot be asked" or a 404 leaves it to the
+    supervisor. Commits; the caller writes the audit row with the evidence."""
+    if payment.provider not in API_PROVIDERS or payment.status != PENDING:
+        raise PaymentError(409, "Only an open MTN payment can be reconciled.")
+    if paid and not transaction_id:
+        raise PaymentError(422, "Give MTN's transaction ID.")
+    try:
+        answer = momo.payment_status(payment.reference_id)
+    except momo.MomoError:
+        answer = None
+    if answer is not None and answer.status not in (NOT_FOUND,):
+        refresh(db, payment)
+        db.refresh(payment)
+        if answer.status == "PENDING":
+            raise PaymentError(409, "MTN still shows this payment as open. Wait for it to finish.")
+        raise PaymentError(409, f"MTN answered: it is {payment.status}. It has been recorded as MTN says.")
+    payment = _lock_payment(db, payment.id)
+    if payment.status != PENDING:
+        db.rollback()
+        raise PaymentError(409, "This payment has just been settled.")
+    if paid:
+        used = db.query(Payment.id).filter(Payment.transaction_id == transaction_id, Payment.id != payment.id).first()
+        if used:
+            db.rollback()
+            raise PaymentError(409, "This transaction ID is already on another payment.")
+        _mark_paid(db, payment, _lock_bill(db, payment.bill_id), transaction_id)
+    else:
+        payment.status, payment.reason = FAILED, f"{CLOSED_BY_STAFF}{evidence}"[:120]
+        payment.updated_at = datetime.utcnow()
+    db.commit()
+    return payment

@@ -127,8 +127,9 @@ def request_to_pay(reference_id: str, amount: float, phone: str, external_id: st
 
 
 def payment_status(reference_id: str) -> MomoStatus:
-    """MTN's answer for one request to pay. NOT_FOUND: MTN has no request with this reference id,
-    so no prompt was ever sent for it."""
+    """MTN's answer for one request to pay. NOT_FOUND (HTTP 404): MTN does not know this reference
+    id. MTN's documentation ties that to a request that was not registered, but says nothing about
+    a 404 after a 202, or a request still in flight, so it is not proof of no charge: see payments.py."""
     try:
         r = httpx.get(f"{base_url()}/collection/v1_0/requesttopay/{reference_id}",
                       headers=_headers(), timeout=TIMEOUT_SECONDS)

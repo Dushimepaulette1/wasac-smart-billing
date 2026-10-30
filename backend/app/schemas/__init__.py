@@ -33,6 +33,7 @@ from app.schemas.billing import (  # noqa: F401
     HouseholdIn,
     MeterCorrectionRequest,
     PaymentDecline,
+    PaymentReconcile,
     PaymentOut,
     PaymentReference,
     PaymentToCheck,

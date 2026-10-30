@@ -19,11 +19,13 @@ from app.schemas import (
     MeterCorrectionRequest,
     PaymentDecline,
     PaymentOut,
+    PaymentReconcile,
     PaymentReference,
     PaymentToCheck,
 )
 from app.services.audit import record
-from app.services.balance import available_credit, balances, bill_balance
+from app.services.balance import available_credit, balances, bill_balance, current_consumption
+from app.services.bill_corrections import measured_from_zero
 from app.services.households import (
     DEMO_PREFIX,
     HouseholdError,
@@ -37,7 +39,10 @@ from app.services.meter_correction import CORRECTION, CorrectionError, correct_m
 from app.services.payments import (
     MOMO_PAY,
     PaymentError,
+    mark_reviewed,
+    needs_reconciliation,
     payments_paid_twice,
+    reconcile,
     confirm,
     decline,
     pay_code,
@@ -62,7 +67,8 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         .limit(6)
         .all()
     )
-    used = [r.implied_consumption for r in past if r.implied_consumption]
+    corrected = current_consumption(db, [r.reading_id for r in past])
+    used = [v for v in (corrected.get(r.reading_id, r.implied_consumption) for r in past) if v]
     avg = sum(used) / len(used) if used else None
     anomaly_flagged = any(
         r.validation_status in ("anomaly_flagged", "pending_review")
@@ -224,6 +230,11 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
         .filter(BillAdjustment.bill_id.in_([b.bill_id for b in bills]), BillCorrection.status == APPLIED)
         .order_by(BillAdjustment.id).all()
     ) if bills else []
+    volumes = current_consumption(db, [b.reading_id for b in bills])
+    # Only the oldest bill can have been measured from nothing.
+    first = bills[-1] if bills else None
+    first_reading = db.get(Reading, first.reading_id) if first and first.reading_id else None
+    unknown = {first.bill_id: measured_from_zero(db, first, first_reading)} if first_reading else {}
     # amount_due is the bill as issued. payment_status answers "is anything still owed?" (a bill can
     # be settled by credit, or owe more after a correction); the money fields show how.
     return [
@@ -234,6 +245,9 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
             "amount_due": b.amount_due,
             "payment_status": "paid" if money[b.bill_id].settled else "unpaid",
             "created_at": b.created_at,
+            "tariff_version": b.tariff_version,
+            "consumption_current": volumes.get(b.reading_id, b.consumption_m3),
+            "unknown_start": unknown.get(b.bill_id, False),
             "charges": money[b.bill_id].charges,
             "paid": round(money[b.bill_id].paid, 2),
             "credit_used": round(money[b.bill_id].credit_used, 2),
@@ -330,7 +344,55 @@ async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = D
                        customer_name=c.name, meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
                        created_at=p.created_at, submitted_at=p.updated_at)
         for p, b, c in payments_paid_twice(db)
+    ] + [
+        PaymentToCheck(kind="needs_reconciliation", id=p.id, bill_id=b.bill_id, customer_id=c.customer_id,
+                       customer_name=c.name, meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
+                       created_at=p.created_at, submitted_at=p.updated_at, reason=p.reason)
+        for p, b, c in needs_reconciliation(db)
     ]
+
+
+@router.post("/api/payments/{payment_id}/recheck", response_model=PaymentOut)
+async def recheck_payment(payment_id: int, db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)):
+    """Ask MTN again about an open attempt. Never sends a prompt."""
+    payment = db.get(Payment, payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return payment_out(await run_in_threadpool(refresh, db, payment))
+
+
+@router.post("/api/payments/{payment_id}/reconcile", response_model=PaymentOut)
+async def reconcile_payment(payment_id: int, body: PaymentReconcile, request: Request, db: Session = Depends(get_db),
+                            staff: StaffUser = Depends(require_role("supervisor"))):
+    """A supervisor settles an attempt from MTN's records, with the evidence (supervisors and admins)."""
+    payment = db.get(Payment, payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    paid = body.outcome == "paid"
+    try:
+        payment = await run_in_threadpool(reconcile, db, payment, paid, body.evidence.strip(), body.transaction_id)
+    except PaymentError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    record(db, staff.username, "payment_reconciled_paid" if paid else "payment_reconciled_failed",
+           target=f"bill {payment.bill_id}", detail=f"RWF {payment.amount:,.0f}: {body.evidence.strip()}"[:200],
+           request=request)
+    return payment_out(payment)
+
+
+@router.post("/api/payments/{payment_id}/reviewed", response_model=PaymentOut)
+async def review_paid_twice(payment_id: int, request: Request, db: Session = Depends(get_db),
+                            staff: StaffUser = Depends(require_staff)):
+    """Staff have looked at a bill paid twice: off the list, still on record."""
+    payment = db.get(Payment, payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    try:
+        payment = mark_reviewed(db, payment, staff.username)
+    except PaymentError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    record(db, staff.username, "paid_twice_reviewed", target=f"bill {payment.bill_id}",
+           detail=f"RWF {payment.amount:,.0f}, {payment.transaction_id}", request=request)
+    return payment_out(payment)
 
 
 @router.post("/api/payments/{payment_id}/confirm", response_model=PaymentOut)

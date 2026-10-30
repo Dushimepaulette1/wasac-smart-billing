@@ -1,5 +1,8 @@
 """WASAC's tiered water tariff, and turning a confirmed reading into a bill.
 
+Volumes are kept to the litre (3 decimals) and money to 2 decimals, so float noise never reaches a
+bill. Bills can carry part of a franc (litres are billed); payments are in whole francs (whole_francs).
+
 Tariffs are versioned in app/services/tariffs.json: four tiers (first 5 m3, next 10, next 15, the
 rest) and a service charge per bill. A bill records the version it was made with, so a later
 correction recalculates it with its own rates. A version is never edited once bills use it; a new
@@ -9,6 +12,7 @@ The rates are provisional until confirmed against the RURA/WASAC tariff.
 """
 import json
 from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Optional
 
@@ -33,6 +37,11 @@ def bill_tariff(bill: Bill) -> dict:
     return tariff(bill.tariff_version or ORIGINAL_VERSION)
 
 
+def whole_francs(amount: float) -> int:
+    """What can actually be collected: MoMo takes whole francs. Half a franc rounds up."""
+    return int(Decimal(str(amount)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
 def calculate_bill(consumption: float, version: Optional[str] = None) -> dict:
     """WASAC tiered tariff calculation."""
     rates = tariff(version)
@@ -40,13 +49,13 @@ def calculate_bill(consumption: float, version: Optional[str] = None) -> dict:
     data = {}
     total = 0.0
     for n, (size, rate) in enumerate(rates["tiers"], start=1):
-        units = max(remaining, 0) if size is None else min(remaining, size)
-        remaining -= units
-        amount = units * rate
+        units = round(max(remaining, 0) if size is None else min(remaining, size), 3)
+        remaining = round(remaining - units, 3)
+        amount = round(units * rate, 2)
         data[f"tier{n}_units"], data[f"tier{n}_amount"] = units, amount
         total += amount
     service = float(rates["service_charge"])
-    return {**data, "service_charge": service, "total": total + service}
+    return {**data, "service_charge": service, "total": round(total + service, 2)}
 
 
 def build_bill(customer_id: str, reading_id: int, consumption: float) -> Bill:

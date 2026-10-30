@@ -32,6 +32,9 @@ LATE_COLUMNS = (
     ("meters", "serial_number", "VARCHAR(40)"),
     ("bills", "tariff_version", "VARCHAR(40)"),
     ("readings", "corrected_value_m3", "DOUBLE PRECISION"),
+    ("payments", "reviewed_by", "VARCHAR(64)"),
+    ("payments", "reviewed_at", "TIMESTAMP"),
+    ("anomaly_flags", "decision_code", "VARCHAR(16)"),
 )
 
 

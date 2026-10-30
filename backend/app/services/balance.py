@@ -13,7 +13,7 @@ payment attempt open is skipped: the prompt is for the amount it showed.
 """
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Iterable, Optional
 
 from fastapi import Request
 from sqlalchemy import func
@@ -86,6 +86,22 @@ def balances(db: Session, customer_id: str) -> Dict[int, BillBalance]:
         )
         for b in bills
     }
+
+
+def current_consumption(db: Session, reading_ids: Iterable[int]) -> Dict[int, float]:
+    """reading_id -> the volume its bill stands at after corrections, for readings with a correction.
+    The bill and reading keep the original figures; this is what to show alongside them."""
+    ids = [i for i in reading_ids if i is not None]
+    if not ids:
+        return {}
+    rows = (
+        db.query(Bill.reading_id, BillAdjustment.consumption_after)
+        .join(BillAdjustment, BillAdjustment.bill_id == Bill.bill_id)
+        .join(BillCorrection, BillCorrection.id == BillAdjustment.correction_id)
+        .filter(Bill.reading_id.in_(ids), BillCorrection.status == APPLIED)
+        .order_by(BillAdjustment.id).all()
+    )
+    return dict(rows)  # the latest adjustment wins
 
 
 def bill_balance(db: Session, bill: Bill) -> BillBalance:

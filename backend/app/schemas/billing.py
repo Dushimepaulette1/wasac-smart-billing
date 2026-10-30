@@ -24,6 +24,7 @@ class TariffBreakdown(BaseModel):
 
 class BillCalculateRequest(BaseModel):
     consumption_m3: float = Field(ge=0, le=99_999.999, allow_inf_nan=False)
+    tariff_version: Optional[str] = Field(default=None, max_length=40)  # an old bill's rates; none: today's
 
 
 class CustomerInfo(BaseModel):
@@ -133,7 +134,8 @@ class PaymentToCheck(BaseModel):
     """A payment for the staff Payments page: a MoMo Pay payment waiting for an officer
     (momo_pay_check), or a second successful payment on a bill that was already paid (paid_twice,
     for information: the household paid more than once)."""
-    kind: Literal["momo_pay_check", "paid_twice"] = "momo_pay_check"
+    kind: Literal["momo_pay_check", "paid_twice", "needs_reconciliation"] = "momo_pay_check"
+    reason: Optional[str] = None
     id: int
     bill_id: int
     customer_id: str
@@ -145,8 +147,17 @@ class PaymentToCheck(BaseModel):
     submitted_at: datetime
 
 
+class PaymentReconcile(BaseModel):
+    outcome: Literal["paid", "failed"]
+    evidence: str = Field(min_length=10, max_length=160)  # what was seen in MTN's records, and where
+    transaction_id: Optional[str] = Field(default=None, min_length=3, max_length=64, pattern=r"^[A-Za-z0-9._-]+$")
+
+
 class BillCorrectionRequest(BaseModel):
     corrected_reading: str = Field(max_length=20)
+    # A first bill measured from nothing: the meter's true starting reading (equal to
+    # corrected_reading: that reading was only ever the starting point, nothing is owed).
+    start_reading: Optional[str] = Field(default=None, max_length=20)
     reason: str = Field(min_length=5, max_length=200)
     request_key: Optional[str] = Field(default=None, max_length=64)  # the same key twice is one correction
     apply: bool = True  # False: show the effect, store nothing
@@ -176,6 +187,8 @@ class BillCorrectionOut(BaseModel):
     reading_id: int
     value_before_m3: float
     corrected_value_m3: float
+    kind: str = "reading"
+    start_m3: Optional[float] = None
     reason: str
     requested_by: str
     decided_by: Optional[str] = None

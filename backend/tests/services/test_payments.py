@@ -139,11 +139,10 @@ def test_when_mtn_errors_after_the_request_should_keep_it_open_until_mtn_says_ho
     mtn.refuse_request = 500
     body = household_client.post(f"/bills/{bill.bill_id}/pay").json()
     assert body["status"] == "pending" and body["reason"] == "confirming with MTN"
-    mtn.refuse_request, mtn.known = False, set()  # MTN never received it
+    mtn.refuse_request, mtn.known = False, set()  # MTN does not know the reference: not proof of no charge
     again = household_client.post(f"/bills/{bill.bill_id}/pay").json()
-    assert again["id"] == body["id"] and again["status"] == "failed" and len(mtn.requests) == 1
-    retry = household_client.post(f"/bills/{bill.bill_id}/pay").json()
-    assert retry["id"] != body["id"] and retry["status"] == "pending" and len(mtn.requests) == 2
+    assert again["id"] == body["id"] and again["status"] == "pending" and "staff check" in again["reason"]
+    assert len(mtn.requests) == 1  # never a second prompt
 
 
 def test_when_mtn_never_answers_should_keep_checking_and_never_prompt_twice(db, household_client, bill, mtn):
@@ -322,3 +321,155 @@ def test_when_an_older_database_lacks_the_payment_indexes_should_add_them():
     add_late_indexes(engine)
     names = {i["name"] for i in inspect(engine).get_indexes("payments")}
     assert {"uq_payments_one_pending", "uq_payments_momo_pay_txn"} <= names
+
+
+# ---- Staff reconciliation: attempts MTN cannot answer for --------------------------------------
+
+
+@pytest.fixture
+def stuck(db, household_client, bill, mtn):
+    """An attempt over 10 minutes old that MTN answers 404 for."""
+    mtn.statuses = ["PENDING"]
+    payment_id = household_client.post(f"/bills/{bill.bill_id}/pay").json()["id"]
+    payment = db.get(Payment, payment_id)
+    payment.created_at = datetime.utcnow() - timedelta(minutes=30)
+    db.commit()
+    mtn.known = set()
+    assert household_client.get(f"/payments/{payment_id}").json()["status"] == "pending"
+    return payment_id
+
+
+@pytest.fixture
+def supervisor(db, anon_client):
+    from support.factories import add_officer, staff_token
+
+    return {"Authorization": f"Bearer {staff_token(add_officer(db, 'sup1', role='supervisor'))}"}
+
+
+EVIDENCE = "Checked MoMo partner portal 2026-10-30, nothing under this reference"
+
+
+def reconcile(c, payment_id, headers, **body):
+    return c.post(f"/api/payments/{payment_id}/reconcile", headers=headers, json={"evidence": EVIDENCE, **body})
+
+
+def test_when_an_attempt_is_stuck_should_be_listed_for_staff_and_never_retried(db, household_client, client, bill, mtn, stuck):
+    listed = client.get("/api/payments/to-check").json()
+    assert [(p["kind"], p["id"]) for p in listed] == [("needs_reconciliation", stuck)]
+    assert "staff check" in listed[0]["reason"]
+    for _ in range(3):
+        assert household_client.post(f"/bills/{bill.bill_id}/pay").json()["id"] == stuck
+    assert len(mtn.requests) == 1
+    db.refresh(bill)
+    assert bill.payment_status == "unpaid"
+
+
+def test_when_mtn_cannot_be_reached_at_all_should_also_be_listed(db, household_client, client, bill, mtn):
+    mtn.statuses = ["PENDING"]
+    payment_id = household_client.post(f"/bills/{bill.bill_id}/pay").json()["id"]
+    db.get(Payment, payment_id).created_at = datetime.utcnow() - timedelta(hours=5)
+    db.commit()
+    mtn.unreachable = True
+    assert [p["id"] for p in client.get("/api/payments/to-check").json()] == [payment_id]
+
+
+def test_when_a_supervisor_closes_a_stuck_attempt_should_allow_a_new_try_and_keep_the_evidence(
+        db, household_client, anon_client, bill, mtn, stuck, supervisor):
+    from app.models import StaffAction
+
+    r = reconcile(anon_client, stuck, supervisor, outcome="failed")
+    assert r.status_code == 200 and r.json()["status"] == "failed" and "closed by staff" in r.json()["reason"]
+    row = db.query(StaffAction).filter(StaffAction.action == "payment_reconciled_failed").one()
+    assert row.username == "sup1" and "partner portal" in row.detail
+    retry = household_client.post(f"/bills/{bill.bill_id}/pay").json()  # still 404 for the old one
+    assert retry["id"] != stuck and len(mtn.requests) == 2
+
+
+def test_when_a_supervisor_confirms_a_stuck_attempt_should_mark_paid_once(db, anon_client, bill, mtn, stuck, supervisor):
+    r = reconcile(anon_client, stuck, supervisor, outcome="paid", transaction_id="MTN123456")
+    assert r.status_code == 200 and r.json()["status"] == "successful" and r.json()["transaction_id"] == "MTN123456"
+    db.refresh(bill)
+    assert bill.payment_status == "paid"
+    assert reconcile(anon_client, stuck, supervisor, outcome="paid", transaction_id="MTN123456").status_code == 409
+
+
+def test_when_confirming_without_a_transaction_id_should_refuse(anon_client, stuck, supervisor):
+    assert reconcile(anon_client, stuck, supervisor, outcome="paid").status_code == 422
+
+
+@pytest.mark.parametrize("evidence", ["", "short"])
+def test_when_there_is_no_real_evidence_should_refuse(anon_client, stuck, supervisor, evidence):
+    r = anon_client.post(f"/api/payments/{stuck}/reconcile", headers=supervisor, json={"outcome": "failed", "evidence": evidence})
+    assert r.status_code == 422
+
+
+def test_when_an_officer_tries_to_reconcile_should_refuse(client, stuck):
+    assert client.post(f"/api/payments/{stuck}/reconcile", json={"outcome": "failed", "evidence": EVIDENCE}).status_code == 403
+
+
+def test_when_mtn_says_success_while_closing_should_record_success_not_failure(db, anon_client, bill, mtn, stuck, supervisor):
+    mtn.known, mtn.statuses = None, ["SUCCESSFUL"]
+    r = reconcile(anon_client, stuck, supervisor, outcome="failed")
+    assert r.status_code == 409 and "successful" in r.json()["detail"]
+    assert db.get(Payment, stuck).status == "successful"
+
+
+def test_when_mtn_still_shows_it_open_should_refuse_to_close_it(db, anon_client, mtn, stuck, supervisor):
+    mtn.known, mtn.statuses = None, ["PENDING"]
+    assert reconcile(anon_client, stuck, supervisor, outcome="failed").status_code == 409
+    assert db.get(Payment, stuck).status == "pending"
+
+
+def test_when_mtn_reports_failure_while_confirming_should_refuse_to_mark_paid(db, anon_client, bill, mtn, stuck, supervisor):
+    mtn.known, mtn.statuses = None, ["FAILED"]
+    assert reconcile(anon_client, stuck, supervisor, outcome="paid", transaction_id="MTN1").status_code == 409
+    db.refresh(bill)
+    assert db.get(Payment, stuck).status == "failed" and bill.payment_status == "unpaid"
+
+
+def test_when_mtn_cannot_be_asked_should_let_the_supervisor_decide_on_evidence(db, anon_client, mtn, stuck, supervisor):
+    mtn.unreachable = True
+    assert reconcile(anon_client, stuck, supervisor, outcome="failed").status_code == 200
+
+
+def test_when_a_staff_closed_attempt_later_shows_success_should_mark_paid_not_prompt(
+        db, household_client, anon_client, bill, mtn, stuck, supervisor):
+    reconcile(anon_client, stuck, supervisor, outcome="failed")
+    mtn.known, mtn.statuses = None, ["SUCCESSFUL"]
+    body = household_client.post(f"/bills/{bill.bill_id}/pay").json()
+    assert body["id"] == stuck and body["status"] == "successful" and len(mtn.requests) == 1
+
+
+def test_when_staff_recheck_should_ask_mtn_and_never_prompt(client, bill, mtn, stuck):
+    r = client.post(f"/api/payments/{stuck}/recheck")
+    assert r.status_code == 200 and r.json()["status"] == "pending" and len(mtn.requests) == 1
+
+
+def test_when_an_old_local_failure_gets_a_404_should_not_prompt(db, household_client, bill, mtn):
+    from app.services.payments import OLD_LOCAL_FAILURE
+
+    db.add(Payment(bill_id=bill.bill_id, provider="momo_sandbox", reference_id="old-ref", status="failed",
+                   amount=bill.amount_due, currency="EUR", reason=OLD_LOCAL_FAILURE))
+    db.commit()
+    mtn.known = set()
+    assert household_client.post(f"/bills/{bill.bill_id}/pay").status_code == 503 and len(mtn.requests) == 0
+
+
+def test_when_staff_review_a_paid_twice_payment_should_leave_the_list_and_stay_on_record(db, client, bill):
+    bill.payment_status = "paid"
+    for ref in ("one", "two"):
+        db.add(Payment(bill_id=bill.bill_id, provider="momo_sandbox", reference_id=ref, status="successful",
+                       amount=bill.amount_due, currency="EUR"))
+    db.commit()
+    listed = client.get("/api/payments/to-check").json()
+    assert [p["kind"] for p in listed] == ["paid_twice"]
+    assert client.post(f"/api/payments/{listed[0]['id']}/reviewed").status_code == 200
+    assert client.get("/api/payments/to-check").json() == []
+    assert db.get(Payment, listed[0]["id"]).status == "successful"
+
+
+def test_when_a_bill_has_part_of_a_franc_should_record_what_mtn_collects(db, household_client, bill, mtn):
+    bill.amount_due = 6460.5
+    db.commit()
+    body = household_client.post(f"/bills/{bill.bill_id}/pay").json()
+    assert body["amount"] == 6461 and mtn.requests[0]["json"]["amount"] == "6461"

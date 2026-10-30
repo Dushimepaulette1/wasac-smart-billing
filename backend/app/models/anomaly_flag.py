@@ -26,6 +26,8 @@ class AnomalyFlag(Base):
     status = Column(String, default=FLAG_STATUS_OPEN, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     resolved_at = Column(DateTime, nullable=True)
+    # Why it was rejected, as a code the household's app can word (the officer's own text stays staff-only).
+    decision_code = Column(String(16), nullable=True)
 
 
 class MessageDismissal(Base):
