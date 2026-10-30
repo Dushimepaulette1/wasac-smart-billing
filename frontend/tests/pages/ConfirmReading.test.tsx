@@ -196,6 +196,7 @@ describe('ConfirmReading', () => {
     ['misread', 'digit is in the wrong place'],
     ['edited_down', 'numbers we read in your photo'],
     ['location', 'could not confirm this photo'],
+    ['rollover', 'started again from zero'],
   ])('when the reason is %s, should say so in plain words', async (reason, words) => {
     server({ ...fine, needs_review: true, reason });
     renderWith('00484500');

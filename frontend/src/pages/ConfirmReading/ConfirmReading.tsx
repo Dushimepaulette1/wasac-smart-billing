@@ -138,7 +138,7 @@ function ConfirmReading() {
         setState('retake');
       } else {
         leaving.current = true;
-        navigate('/submit/held', { state: { cells, at: localDateIso() } satisfies HeldState });
+        navigate('/submit/held', { state: { cells, at: localDateIso(), reason: check?.reason ?? undefined } satisfies HeldState });
         submission.reset();
       }
     } catch (err) {

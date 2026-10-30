@@ -23,6 +23,9 @@ class AnomalyType(str, Enum):
     # Not from the rules: the household lowered a reliable AI read by ANOMALY_EDIT_HOLD_M3 or more
     # (app/anomaly/edits.py). Held for an officer; not a judgement that either value is wrong.
     EDITED_DOWN = "EDITED_DOWN"
+    # Not from the rules: the register seems to have turned over (app/anomaly/readings.py). Held;
+    # accepting it bills the use across the wrap.
+    ROLLOVER = "ROLLOVER"
 
 
 def apply_rules(features: Optional[SubmissionFeatures], config: AnomalyConfig) -> Optional[AnomalyType]:

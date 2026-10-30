@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_RESOLVED
 from app.anomaly.location import env_float
+from app.anomaly.readings import rollover_consumption
 from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message, sms_household, starting_point_message
 from app.anomaly.service import has_baseline, household_phone, lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
@@ -57,7 +58,9 @@ def _accept(db: Session, reading: Reading) -> Optional[Bill]:
         meter.last_reading_date = reading.submission_time
         return None
     # Accepting a lower reading (e.g. a replaced meter) resets the baseline and bills nothing for this period.
-    consumption = max(0.0, reading.submitted_value - meter.last_reading)
+    consumption = rollover_consumption(meter.last_reading, reading.submitted_value)
+    if consumption is None:
+        consumption = max(0.0, reading.submitted_value - meter.last_reading)
     reading.validation_status = READING_VALID
     reading.implied_consumption = consumption
     customer_id = db.query(Customer.customer_id).filter(Customer.meter_id == reading.meter_id).scalar()

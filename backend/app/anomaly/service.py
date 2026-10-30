@@ -13,7 +13,7 @@ from app.anomaly.location import LocationCheck, PhotoEvidence, check_location
 from app.models import ReadingEvidence
 from app.anomaly.model import AnomalyModel, load_model_if_available
 from app.anomaly.notifications import RETAKE_MESSAGE, action_for, dispatch, message_for, sms_household
-from app.anomaly.readings import digits_to_m3
+from app.anomaly.readings import digits_to_m3, rollover_consumption
 from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, has_enough_history, is_cold_start
 from app.anomaly.statuses import (
     NOT_CONFIRMED,
@@ -315,6 +315,20 @@ def evaluate_reading(
             features={"no_baseline": True},
             pending_review=True,
         )
+    elif rollover_consumption(meter.last_reading, reading_m3) is not None:
+        consumption = rollover_consumption(meter.last_reading, reading_m3)
+        scored = AnomalyResult(
+            household_id=meter.meter_id,
+            reading_m3=reading_m3,
+            daily_consumption=None,
+            anomaly_score=1.0,
+            is_anomaly=True,
+            anomaly_type=AnomalyType.ROLLOVER.value,
+            needs_retake=False,
+            message_for_household=message_for(AnomalyType.ROLLOVER),
+            features={"rollover": True, "previous_reading_m3": meter.last_reading, "consumption_m3": consumption},
+            pending_review=True,
+        )
     elif consumption < 0 and scored.anomaly_type != AnomalyType.MISREAD_SUSPECTED.value:
         # The meter's confirmed reading is higher, even if no reading rows explain it (e.g. imported meters).
         scored = AnomalyResult(
@@ -346,6 +360,7 @@ REVIEW_REASONS = {
     AnomalyType.SPIKE: "high_use",
     AnomalyType.EDITED_DOWN: "edited_down",
     AnomalyType.LOCATION_CHECK: "location",
+    AnomalyType.ROLLOVER: "rollover",
 }
 
 
