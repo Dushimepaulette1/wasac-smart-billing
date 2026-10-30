@@ -19,6 +19,10 @@ from app.schemas.anomaly import (  # noqa: F401
     ReviewItem,
 )
 from app.schemas.billing import (  # noqa: F401
+    AdjustmentOut,
+    BillCorrectionDecline,
+    BillCorrectionOut,
+    BillCorrectionRequest,
     TariffBreakdown,
     BillCalculateRequest,
     CustomerInfo,

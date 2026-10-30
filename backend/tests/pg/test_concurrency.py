@@ -286,3 +286,54 @@ def test_when_an_older_postgres_database_starts_should_add_the_partial_indexes(p
     with engine.connect() as conn:
         names = {r[0] for r in conn.exec_driver_sql("SELECT indexname FROM pg_indexes WHERE tablename = 'payments'")}
     assert {"uq_payments_one_pending", "uq_payments_momo_pay_txn"} <= names
+
+
+def _billed_account(make):
+    from app.services import billing
+
+    with make() as db:
+        customer_id = add_household(db, "MTR-PGC", make_history([0.4], start=datetime.utcnow() - timedelta(days=200), start_m3=400.0))
+        reading = Reading(meter_id="MTR-PGC", submitted_value=431.46, validation_status="valid",
+                          submission_time=datetime.utcnow() - timedelta(days=30))
+        db.add(reading)
+        db.flush()
+        db.add(billing.build_bill(customer_id, reading.reading_id, 31.46))
+        db.get(Meter, "MTR-PGC").last_reading = 431.46
+        db.commit()
+        return reading.reading_id
+
+
+def test_when_the_same_correction_is_sent_at_once_should_adjust_once(pg):
+    from app.models import BillAdjustment, BillCorrection
+    from app.services.bill_corrections import request_correction
+
+    reading_id = _billed_account(pg)
+
+    def send(_):
+        with pg() as db:
+            return request_correction(db, db.get(Reading, reading_id), 421.46, "Meter read on site", "sup1", "same-key").id
+
+    out = race(4, send)
+    assert len(set(out)) == 1 and isinstance(out[0], int), out
+    with pg() as db:
+        assert db.query(BillCorrection).count() == 1 and db.query(BillAdjustment).count() == 1
+
+
+def test_when_two_supervisors_approve_at_once_should_apply_once(pg):
+    from app.models import AccountCredit, BillCorrection
+    from app.services.bill_corrections import BillCorrectionError, approve_correction, request_correction
+
+    reading_id = _billed_account(pg)
+    with pg() as db:
+        correction_id = request_correction(db, db.get(Reading, reading_id), 440.0, "Meter read on site", "sup1", "up").id
+        assert db.get(BillCorrection, correction_id).status == "awaiting_approval"
+
+    def approve(i):
+        with pg() as db:
+            return approve_correction(db, correction_id, f"sup{i + 2}").status
+
+    out = race(3, approve)
+    assert out.count("applied") == 1
+    assert all(isinstance(o, BillCorrectionError) and o.status_code == 409 for o in out if o != "applied"), out
+    with pg() as db:
+        assert db.query(AccountCredit).count() == 0

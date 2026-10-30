@@ -11,6 +11,7 @@ import type {
   AnomalyFlag,
   ApiErrorBody,
   BillSummary,
+  BillCorrection,
   CalculateBillResponse,
   CodeSent,
   ConfirmReadingResponse,
@@ -378,6 +379,24 @@ export const api = {
   },
 
   /** POST /customers/{id}/meter-correction (supervisors, admins): set the meter's current reading. */
+  /** A household's bills, for staff. */
+  staffBills(customerId: string): Promise<BillSummary[]> {
+    return request(`/customers/${encodeURIComponent(customerId)}/bills`, { auth: 'staff' });
+  },
+
+  /** Correct a billed reading (supervisors). apply false: the effect only, nothing stored. */
+  correctBill(customerId: string, readingId: number, body: { corrected_reading: string; reason: string; request_key: string; apply: boolean }): Promise<BillCorrection> {
+    return request(`/customers/${encodeURIComponent(customerId)}/readings/${readingId}/correction`, { method: 'POST', json: body, auth: 'staff' });
+  },
+
+  billCorrections(status?: string): Promise<BillCorrection[]> {
+    return request(`/bill-corrections${status ? `?status=${encodeURIComponent(status)}` : ''}`, { auth: 'staff' });
+  },
+
+  decideBillCorrection(id: number, how: 'approve' | 'decline', reason?: string): Promise<BillCorrection> {
+    return request(`/bill-corrections/${id}/${how}`, { method: 'POST', auth: 'staff', ...(how === 'decline' ? { json: { reason } } : {}) });
+  },
+
   correctMeter(customerId: string, readingM3: number, reason: string): Promise<CustomerInfo> {
     return request(`/customers/${encodeURIComponent(customerId)}/meter-correction`, {
       method: 'POST',

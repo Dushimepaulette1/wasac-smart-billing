@@ -192,7 +192,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             edited_by_household=photo.edited if photo else None,
             reader_models=photo.models if photo else None,
             history=[
-                HistoryPoint(date=r.submission_time, reading_m3=r.submitted_value, consumption_m3=r.implied_consumption)
+                HistoryPoint(date=r.submission_time, reading_m3=r.effective_value, consumption_m3=r.implied_consumption)
                 for r in reversed(history)
             ],
         ))

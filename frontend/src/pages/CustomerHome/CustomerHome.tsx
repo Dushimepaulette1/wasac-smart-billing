@@ -21,6 +21,7 @@ import InstallApp from '../../pwa/InstallApp';
 import PushOptIn from '../../pwa/PushOptIn';
 import type { AnomalyFlag } from '../../api/types';
 import styles from './CustomerHome.module.css';
+import { amountOwed } from '../../utils/bill';
 
 const SEEN_KEY = 'mubazi.decisionSeen';
 
@@ -109,7 +110,7 @@ function CustomerHome() {
   const action = readButton;
 
   let title = t('home.readPrompt');
-  if (due) title = t('home.billDue', { month: month(due.created_at), amount: rwf(due.amount_due) });
+  if (due) title = t('home.billDue', { month: month(due.created_at), amount: rwf(amountOwed(due)) });
   else if (checking) title = t('home.checkingTitle');
   else if (opensOn) title = t('home.readingInTitle');
 
@@ -129,15 +130,19 @@ function CustomerHome() {
     >
       {decision && <DecisionBanner flag={decision} meterId={meterId} />}
 
+      {(customer.credit_available ?? 0) >= 1 && (
+        <p className="text-small">{t('home.credit', { amount: rwf(customer.credit_available ?? 0) })}</p>
+      )}
+
       {due && (
         <section className={`panel panel-ink ${styles.billCard}`} aria-labelledby="due-title">
           <p id="due-title" className={styles.billLabel}>
             {t('home.billFor', { month: month(due.created_at) })}
           </p>
-          <p className={styles.billAmount}>{rwf(due.amount_due)}</p>
+          <p className={styles.billAmount}>{rwf(amountOwed(due))}</p>
           <div className={styles.billActions}>
             <Button onClick={() => navigate(`/payment?bill=${due.bill_id}`)}>
-              {t('pay.action', { amount: rwf(due.amount_due) })}
+              {t('pay.action', { amount: rwf(amountOwed(due)) })}
             </Button>
             <Button variant="text" onClick={() => navigate(`/bill?id=${due.bill_id}`)}>
               {t('home.seeBill')}

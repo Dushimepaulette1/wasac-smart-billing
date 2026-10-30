@@ -16,7 +16,9 @@ class Reading(Base):
 
     reading_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     meter_id = Column(String, ForeignKey("meters.meter_id"))
-    submitted_value = Column(Float, nullable=False)
+    submitted_value = Column(Float, nullable=False)  # as sent; never changed
+    # Set by a billed-reading correction (app/services/bill_corrections.py). Added at start-up.
+    corrected_value_m3 = Column(Float, nullable=True)
     implied_consumption = Column(Float)
     submission_method = Column(String, default="camera")  # "camera" or "ussd"
     crnn_confidence = Column(Float)
@@ -27,6 +29,11 @@ class Reading(Base):
 
     meter = relationship("Meter", back_populates="readings")
     bill = relationship("Bill", back_populates="reading", uselist=False)
+
+    @property
+    def effective_value(self) -> float:
+        """The reading as it stands: a correction's value if it has one, otherwise as sent."""
+        return self.submitted_value if self.corrected_value_m3 is None else self.corrected_value_m3
 
 
 class ReadingEvidence(Base):

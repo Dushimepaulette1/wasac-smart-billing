@@ -31,6 +31,7 @@ LATE_INDEXES = (
 LATE_COLUMNS = (
     ("meters", "serial_number", "VARCHAR(40)"),
     ("bills", "tariff_version", "VARCHAR(40)"),
+    ("readings", "corrected_value_m3", "DOUBLE PRECISION"),
 )
 
 

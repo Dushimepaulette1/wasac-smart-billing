@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Optional, Sequence
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.anomaly.config import AnomalyConfig
@@ -23,6 +24,7 @@ from app.anomaly.statuses import (
     READING_VALID,
 )
 from app.models import Bill, Customer, Meter, PhotoRead, Reading
+from app.services.balance import settle
 from app.services.billing import build_bill
 from app.services.photo_evidence import link_photo
 from app.services.reading_window import ReadingBlock, reading_block
@@ -124,7 +126,8 @@ def load_history(
     db: Session, household_id: str, before: datetime, exclude_reading_id: Optional[int] = None
 ) -> List[ReadingPoint]:
     """Confirmed previous readings for this meter. Pending and rejected readings are never history."""
-    query = db.query(Reading.submitted_value, Reading.submission_time).filter(
+    value = func.coalesce(Reading.corrected_value_m3, Reading.submitted_value)
+    query = db.query(value, Reading.submission_time).filter(
         Reading.meter_id == household_id,
         Reading.submission_time < before,
         Reading.validation_status.notin_(NOT_CONFIRMED),
@@ -468,6 +471,7 @@ def submit_reading(
         db.add(submission.bill)
         meter.last_reading = reading_m3
         meter.last_reading_date = now
+        settle(db, customer_id)  # any credit goes towards the new bill
     db.commit()
     if submission.bill is not None:
         db.refresh(submission.bill)

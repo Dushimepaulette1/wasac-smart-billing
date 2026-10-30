@@ -2,6 +2,7 @@
 
     routes/readings.py        /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
     routes/billing.py         /customers, /customers/{id}/bills, /bills/{id}/pay, /payments/{id}
+    routes/bill_corrections.py  /customers/{id}/readings/{id}/correction, /bill-corrections
     routes/anomaly.py         /api/anomaly/... (messages, review queue, decisions)
     routes/household_auth.py  /household/... (SMS sign-in)
     routes/push.py            /household/push/... (phone alerts)
@@ -11,11 +12,12 @@
 """
 from fastapi import APIRouter
 
-from app.api.routes import anomaly, billing, health, household_auth, push, readings, staff_auth, ussd
+from app.api.routes import anomaly, bill_corrections, billing, health, household_auth, push, readings, staff_auth, ussd
 
 api_router = APIRouter()
 api_router.include_router(readings.router, tags=["Meter Reading"])
 api_router.include_router(billing.router, tags=["Billing"])
+api_router.include_router(bill_corrections.router, tags=["Billing"])
 api_router.include_router(ussd.router, tags=["USSD"])
 api_router.include_router(anomaly.router, tags=["Anomaly Detection"])
 api_router.include_router(staff_auth.router, tags=["Staff sign-in"])

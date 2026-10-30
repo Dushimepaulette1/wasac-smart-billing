@@ -27,6 +27,7 @@ import { localDateIso } from '../../i18n/format';
 import { formatRwandanPhone } from '../../utils/phone';
 import { useAccount } from '../../household/session';
 import styles from './Payment.module.css';
+import { amountOwed } from '../../utils/bill';
 
 interface PaymentView {
   bill: BillSummary;
@@ -120,7 +121,7 @@ function Payment() {
   }
 
   const { bill, phone } = load.data;
-  const amount = rwf(bill.amount_due);
+  const amount = rwf(amountOwed(bill));
   const alreadyPaid = bill.payment_status === 'paid' && state === 'ready';
 
   const pay = async () => {

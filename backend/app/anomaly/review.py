@@ -11,6 +11,7 @@ from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message, sms_h
 from app.anomaly.service import has_baseline, household_phone, lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
 from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
+from app.services.balance import settle
 from app.services.billing import build_bill
 from app.services.push import send_to_phone
 
@@ -64,6 +65,7 @@ def _accept(db: Session, reading: Reading) -> Optional[Bill]:
     db.add(bill)
     meter.last_reading = reading.submitted_value
     meter.last_reading_date = reading.submission_time
+    settle(db, customer_id)  # any credit goes towards the new bill
     return bill
 
 
