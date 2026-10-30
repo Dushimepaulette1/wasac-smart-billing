@@ -50,6 +50,7 @@ interface Pending {
   item: ReviewItem;
   outcome: Outcome;
   reason?: string;
+  reasonCode?: RejectReason;
 }
 
 /** Why a reading is rejected: kept in Activity. 'other' asks the officer to type it. */
@@ -106,10 +107,10 @@ function DecisionPane({ item }: { item: ReviewItem }) {
   const previous = item.previous_reading_m3 ?? previousReading(item.history);
   const usual = usualUse(item.history);
   const where = locationFinding(item.flag.features);
-  const used = item.reading_m3 !== null && previous !== null ? item.reading_m3 - previous : null;
+  const used = item.consumption_m3 ?? (item.reading_m3 !== null && previous !== null ? item.reading_m3 - previous : null);
   const ratio = used !== null && usual ? used / usual : null;
-  const months = [...item.history.slice(-5).map((h) => ({ key: h.date, label: date(h.date), m3: h.consumption_m3 ?? 0, current: false })),
-    ...(used !== null ? [{ key: 'this', label: t('staff.review.thisReading'), m3: used, current: true }] : [])];
+  const months = [...item.history.slice(-5).map((h) => ({ key: h.date, label: date(h.date), m3: h.consumption_m3 ?? 0, current: false, was: h.original_consumption_m3 ?? null })),
+    ...(used !== null ? [{ key: 'this', label: t('staff.review.thisReading'), m3: used, current: true, was: null }] : [])];
   const max = Math.max(...months.map((m) => Math.abs(m.m3)), 1);
 
   return (
@@ -229,7 +230,10 @@ function DecisionPane({ item }: { item: ReviewItem }) {
                   <span className={styles.track} aria-hidden="true">
                     <span className={styles.bar} style={{ width: `${(Math.max(m.m3, 0) / max) * 100}%` }} />
                   </span>
-                  <span className={styles.barValue}>{volume(m.m3)}</span>
+                  <span className={styles.barValue}>
+                    {volume(m.m3)}
+                    {m.was !== null && <span className="text-small"> {t('staff.review.correctedFrom', { volume: volume(m.was) })}</span>}
+                  </span>
                 </li>
               ))}
             </ol>
@@ -278,10 +282,10 @@ function ReviewQueue() {
   );
 
   const send = useCallback(
-    async ({ item, outcome, reason }: Pending) => {
+    async ({ item, outcome, reason, reasonCode }: Pending) => {
       setPending(null);
       try {
-        const res = await (reason ? api.resolveFlag(item.flag.id, SENT[outcome], reason) : api.resolveFlag(item.flag.id, SENT[outcome]));
+        const res = await (reason ? api.resolveFlag(item.flag.id, SENT[outcome], reason, reasonCode) : api.resolveFlag(item.flag.id, SENT[outcome]));
         setItems((list) => list.filter((i) => i.flag.id !== item.flag.id));
         const name = item.customer_name ?? item.flag.household_id;
         setResult(
@@ -303,7 +307,7 @@ function ReviewQueue() {
   );
 
   const decide = useCallback(
-    (outcome: Outcome, reason?: string) => {
+    (outcome: Outcome, reason?: string, reasonCode?: RejectReason) => {
       if (!selected || (outcome === 'close') !== isFollowUp(selected)) return;
       if (outcome === 'reject' && !reason) {
         setRejecting(true); // a reject needs a reason first
@@ -314,7 +318,7 @@ function ReviewQueue() {
       setError(null);
       setResult(null);
       const next = visible[visible.indexOf(selected) + 1] ?? visible[visible.indexOf(selected) - 1];
-      const decision = { item: selected, outcome, reason };
+      const decision = { item: selected, outcome, reason, reasonCode };
       setPending(decision);
       if (next) setSelectedId(next.flag.id);
       if (timer.current) window.clearTimeout(timer.current);
@@ -335,7 +339,7 @@ function ReviewQueue() {
     () => () => {
       if (timer.current) window.clearTimeout(timer.current);
       const waiting = pendingRef.current;
-      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome], waiting.reason).catch(() => undefined);
+      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome], waiting.reason, waiting.reasonCode).catch(() => undefined);
     },
     [],
   );
@@ -469,7 +473,7 @@ function ReviewQueue() {
                       <div className={styles.rowActions}>
                         <Button variant="secondary" disabled={rejectReason === 'other' && rejectText.trim().length < 3}
                           onClick={() => {
-                            decide('reject', rejectReason === 'other' ? rejectText.trim() : t(`staff.review.rejectWhy.${rejectReason}`));
+                            decide('reject', rejectReason === 'other' ? rejectText.trim() : t(`staff.review.rejectWhy.${rejectReason}`), rejectReason);
                             setRejectText('');
                             setRejectReason('photo');
                           }}>

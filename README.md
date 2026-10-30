@@ -290,9 +290,12 @@ the bill is marked paid once and an SMS receipt is sent; a declined payment take
 be tried again. Without keys, payments are simulated and the receipt says "Test payment".
 
 A bill is never prompted twice. It can have one open attempt (a row lock and a partial unique
-index), and only MTN's own answer closes one: a timeout after sending or an MTN 5xx stays pending
-until the status check says success, failure, or that MTN never received the request. MoMo Pay
-transaction IDs can be used for one payment. A second success on a paid bill becomes credit.
+index), and only MTN's success or failure status closes one by itself. A timeout after sending, an
+MTN 5xx or a 404 (MTN does not know the reference, which is not proof of no charge) stays pending.
+After 10 minutes it is listed on the staff Payments page: anyone can ask MTN again, and a supervisor
+who has checked MTN's records closes it with the evidence. MTN's live status overrules them. Nothing
+there sends a prompt. MoMo Pay transaction IDs can be used for one payment. Payments are recorded in
+the whole francs collected. A second success on a paid bill becomes credit, and staff mark it reviewed.
 
 Sandbox setup: sign up at momodeveloper.mtn.com, subscribe to **Collections**, put its primary
 key in `backend/.env` as `MOMO_SUBSCRIPTION_KEY`, run `python scripts/momo_sandbox_setup.py` (it
@@ -339,7 +342,11 @@ first. Readings, bills and payments are never changed: `app/services/bill_correc
 adjustments to this bill and the next one, and `app/services/balance.py` is the one definition of
 what is owed. A correction that charges more needs a different supervisor or admin; overpayments
 become credit, applied automatically; there are no cash refunds in the app.
-`scripts/find_first_reading_bills.py` lists bills that charged a whole register (read-only).
+`scripts/find_first_reading_bills.py` lists bills that charged a whole register (read-only). Such a
+first bill takes a baseline correction: the supervisor gives the true starting reading, and if the
+reading itself was wrong too, the next bill is recalculated with it.
+
+What still needs WASAC, MTN or a person to decide: `docs/decisions/OPEN_ITEMS.md`.
 
 ### Tests
 

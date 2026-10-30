@@ -43,6 +43,21 @@ beforeEach(() => {
 afterEach(() => window.sessionStorage.clear());
 
 describe('BillCorrection', () => {
+  it('when a first bill charged the whole meter, should ask for the true start and keep the reading if left empty', async () => {
+    vi.mocked(api.staffBills).mockResolvedValue([{ ...bill, unknown_start: true, reading_m3: 431.46 }]);
+    vi.mocked(api.correctBill).mockResolvedValue(correction({ kind: 'baseline' }));
+    renderPanel();
+    fireEvent.change(screen.getByLabelText('Household'), { target: { value: 'C1' } });
+    await screen.findByRole('option', { name: /21,375/ });
+    fireEvent.change(screen.getByLabelText('Bill'), { target: { value: '70' } });
+    fireEvent.change(screen.getByLabelText('True starting reading (m³)'), { target: { value: '420.000' } });
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Old meter card' } });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Show the effect' })); });
+    const sent = vi.mocked(api.correctBill).mock.calls[0]?.[2];
+    expect(sent?.start_reading).toBe('420.000');
+    expect(sent?.corrected_reading).toBe('431.46');
+  });
+
   it('when previewing, should show the effect on each bill and store nothing', async () => {
     vi.mocked(api.correctBill).mockResolvedValue(correction({}));
     renderPanel();

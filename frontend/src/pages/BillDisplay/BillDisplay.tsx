@@ -17,14 +17,14 @@ import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
 import loadBill from '../../household/loadBill';
-import { amountOwed } from '../../utils/bill';
+import { amountOwed, usedVolume } from '../../utils/bill';
 import type { BillSummary } from '../../api/types';
 import { useAccount } from '../../household/session';
 import styles from './BillDisplay.module.css';
 
 function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: number }) {
   const { t, month, volume } = useI18n();
-  const max = Math.max(...history.map((b) => b.consumption_m3), 1);
+  const max = Math.max(...history.map(usedVolume), 1);
   return (
     <section className={`panel ${styles.usage}`} aria-labelledby="usage-title">
       <h2 id="usage-title" className="panel-title">
@@ -37,9 +37,9 @@ function UsageBars({ history, currentId }: { history: BillSummary[]; currentId: 
             <li key={b.bill_id} className={`${styles.barRow} ${current ? styles.current : ''}`}>
               <span>{month(b.created_at)}</span>
               <span className={styles.track} aria-hidden="true">
-                <span className={styles.bar} style={{ width: `${(b.consumption_m3 / max) * 100}%` }} />
+                <span className={styles.bar} style={{ width: `${(usedVolume(b) / max) * 100}%` }} />
               </span>
-              <span className="num">{volume(b.consumption_m3)}</span>
+              <span className="num">{volume(usedVolume(b))}</span>
             </li>
           );
         })}
@@ -85,7 +85,10 @@ function BillDisplay() {
       title={t('bill.title', { month: month(bill.created_at) })}
       lede={
         <>
-          <p>{t('bill.used', { volume: volume(bill.consumption_m3) })}</p>
+          <p>{t('bill.used', { volume: volume(usedVolume(bill)) })}</p>
+          {usedVolume(bill) !== bill.consumption_m3 && (
+            <p className="text-small">{t('bill.usedOriginal', { volume: volume(bill.consumption_m3) })}</p>
+          )}
           <p className="text-small">
             {periodStart
               ? t('bill.period', { from: date(periodStart), to: date(bill.created_at) })

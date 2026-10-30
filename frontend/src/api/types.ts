@@ -302,6 +302,12 @@ export interface BillSummary {
   payment_status: PaymentStatus;
   created_at: IsoDateTime;
   reading_id?: number | null;
+  /** The reading as it stands, and the volume after corrections; consumption_m3 stays as billed. */
+  reading_m3?: number | null;
+  consumption_current?: number;
+  tariff_version?: string | null;
+  /** Staff: this first bill charged the whole register, from no starting reading. */
+  unknown_start?: boolean;
   /** The bill after corrections, what has been paid, credit used, and what is still owed. */
   charges?: number;
   paid?: number;
@@ -338,6 +344,8 @@ export interface BillCorrection {
   reading_id: number;
   value_before_m3: number;
   corrected_value_m3: number;
+  kind?: 'reading' | 'baseline';
+  start_m3?: number | null;
   reason: string;
   requested_by: string;
   decided_by: string | null;
@@ -371,8 +379,10 @@ export interface Payment {
 
 /** GET /api/payments/to-check: a MoMo Pay payment waiting for an officer. */
 export interface PaymentToCheck {
-  /** momo_pay_check: waits for an officer; paid_twice: a second successful payment on a paid bill (information). */
-  kind: 'momo_pay_check' | 'paid_twice';
+  /** momo_pay_check: waits for an officer; paid_twice: a second success on a paid bill, already credit;
+   *  needs_reconciliation: MTN has not settled it, a supervisor checks MTN's records. */
+  kind: 'momo_pay_check' | 'paid_twice' | 'needs_reconciliation';
+  reason?: string | null;
   id: number;
   bill_id: number;
   customer_id: string;
@@ -410,6 +420,8 @@ export interface AnomalyFlag {
   resolved_at: IsoDateTime | null;
   /** The flagged reading's status: 'pending_review', 'valid' (accepted), 'rejected', 'anomaly_flagged'. */
   reading_status?: ReadingStatus | null;
+  /** Why it was rejected: photo, digits, meter, other. */
+  decision_code?: string | null;
 }
 
 /** schemas.ResolveFlagRequest */
@@ -431,12 +443,17 @@ export interface HistoryPoint {
   date: IsoDateTime;
   reading_m3: number;
   consumption_m3: number | null;
+  /** Set when a correction changed them: what was sent and billed at the time. */
+  original_reading_m3?: number | null;
+  original_consumption_m3?: number | null;
 }
 
 /** schemas.ReviewItem: a held reading with what a decision needs. */
 export interface ReviewItem {
   flag: AnomalyFlag;
   reading_m3: number | null;
+  /** The use this reading stands for, from the backend (across the wrap for a rollover). */
+  consumption_m3?: number | null;
   /** The last accepted reading, as billing measures from it. */
   previous_reading_m3?: number | null;
   submitted_at: IsoDateTime | null;

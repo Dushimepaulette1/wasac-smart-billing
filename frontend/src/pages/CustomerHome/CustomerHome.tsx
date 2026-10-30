@@ -22,6 +22,7 @@ import PushOptIn from '../../pwa/PushOptIn';
 import type { AnomalyFlag } from '../../api/types';
 import styles from './CustomerHome.module.css';
 import { amountOwed } from '../../utils/bill';
+import { rejectionKey } from '../Messages/Messages';
 
 const SEEN_KEY = 'mubazi.decisionSeen';
 
@@ -71,6 +72,7 @@ function DecisionBanner({ flag, meterId }: { flag: AnomalyFlag; meterId: string 
       }
     >
       {t(accepted ? 'home.decision.acceptedBody' : 'home.decision.rejectedBody')}
+      {!accepted && rejectionKey(flag) && ` ${t(rejectionKey(flag) ?? '')}`}
     </Notice>
   );
 }

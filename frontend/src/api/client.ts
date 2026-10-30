@@ -259,8 +259,11 @@ export const api = {
   },
 
   /** POST /calculate-bill: tariff breakdown for a volume. */
-  calculateBill(consumptionM3: number): Promise<CalculateBillResponse> {
-    return request('/calculate-bill', { method: 'POST', json: { consumption_m3: consumptionM3 } });
+  calculateBill(consumptionM3: number, tariffVersion?: string | null): Promise<CalculateBillResponse> {
+    return request('/calculate-bill', {
+      method: 'POST',
+      json: { consumption_m3: consumptionM3, ...(tariffVersion ? { tariff_version: tariffVersion } : {}) },
+    });
   },
 
   /** GET /customers/{id}: the household's own details. */
@@ -379,13 +382,27 @@ export const api = {
   },
 
   /** POST /customers/{id}/meter-correction (supervisors, admins): set the meter's current reading. */
+  /** Ask MTN again about an open attempt. Never sends a prompt. */
+  recheckPayment(id: number): Promise<Payment> {
+    return request(`/api/payments/${id}/recheck`, { method: 'POST', auth: 'staff' });
+  },
+
+  /** A supervisor settles an attempt from MTN's records. */
+  reconcilePayment(id: number, body: { outcome: 'paid' | 'failed'; evidence: string; transaction_id?: string }): Promise<Payment> {
+    return request(`/api/payments/${id}/reconcile`, { method: 'POST', json: body, auth: 'staff' });
+  },
+
+  markPaymentReviewed(id: number): Promise<Payment> {
+    return request(`/api/payments/${id}/reviewed`, { method: 'POST', auth: 'staff' });
+  },
+
   /** A household's bills, for staff. */
   staffBills(customerId: string): Promise<BillSummary[]> {
     return request(`/customers/${encodeURIComponent(customerId)}/bills`, { auth: 'staff' });
   },
 
   /** Correct a billed reading (supervisors). apply false: the effect only, nothing stored. */
-  correctBill(customerId: string, readingId: number, body: { corrected_reading: string; reason: string; request_key: string; apply: boolean }): Promise<BillCorrection> {
+  correctBill(customerId: string, readingId: number, body: { corrected_reading: string; start_reading?: string; reason: string; request_key: string; apply: boolean }): Promise<BillCorrection> {
     return request(`/customers/${encodeURIComponent(customerId)}/readings/${readingId}/correction`, { method: 'POST', json: body, auth: 'staff' });
   },
 
@@ -442,11 +459,11 @@ export const api = {
 
   /** PATCH /api/anomaly/flags/{id}/resolve: accept or reject a held reading, or (null) close a follow-up. */
   /** A reject needs a reason; it goes into the audit log. */
-  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null, reason?: string): Promise<ResolveFlagResponse> {
+  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null, reason?: string, reasonCode?: string): Promise<ResolveFlagResponse> {
     return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
       method: 'PATCH',
       auth: 'staff',
-      json: outcome ? { outcome, ...(reason ? { reason } : {}) } : {},
+      json: outcome ? { outcome, ...(reason ? { reason } : {}), ...(reasonCode ? { reason_code: reasonCode } : {}) } : {},
     });
   },
 };

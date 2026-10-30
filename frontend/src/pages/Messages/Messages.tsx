@@ -27,6 +27,11 @@ import styles from './Messages.module.css';
 
 export { SHOWN_TYPES } from '../../household/status';
 
+/** Why a reading was rejected, in fixed words. An officer's own typed reason stays with staff. */
+export function rejectionKey(flag: AnomalyFlag): string | null {
+  return flag.decision_code && flag.decision_code !== 'other' ? `msg.rejected.${flag.decision_code}` : null;
+}
+
 /** How a check by a WASAC officer ended, from the flagged reading's status. */
 function CheckStatus({ flag }: { flag: AnomalyFlag }) {
   const { t } = useI18n();
@@ -44,7 +49,10 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
       <div className={styles.outcome}>
         <p className={styles.status}>
           <Icon name="alert" size={20} />
-          <span>{t('msg.status.rejected')}</span>
+          <span>
+            {t('msg.status.rejected')}
+            {rejectionKey(flag) && ` ${t(rejectionKey(flag) ?? '')}`}
+          </span>
         </p>
         <Button icon="camera" onClick={() => navigate('/submit/camera')}>
           {t('home.read')}

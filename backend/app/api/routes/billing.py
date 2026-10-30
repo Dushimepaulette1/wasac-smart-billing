@@ -231,6 +231,8 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
         .order_by(BillAdjustment.id).all()
     ) if bills else []
     volumes = current_consumption(db, [b.reading_id for b in bills])
+    read = db.query(Reading).filter(Reading.reading_id.in_([b.reading_id for b in bills])).all() if bills else []
+    values = {r.reading_id: r.effective_value for r in read}
     # Only the oldest bill can have been measured from nothing.
     first = bills[-1] if bills else None
     first_reading = db.get(Reading, first.reading_id) if first and first.reading_id else None
@@ -247,6 +249,7 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
             "created_at": b.created_at,
             "tariff_version": b.tariff_version,
             "consumption_current": volumes.get(b.reading_id, b.consumption_m3),
+            "reading_m3": values.get(b.reading_id),
             "unknown_start": unknown.get(b.bill_id, False),
             "charges": money[b.bill_id].charges,
             "paid": round(money[b.bill_id].paid, 2),

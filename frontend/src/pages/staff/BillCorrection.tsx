@@ -46,6 +46,7 @@ function BillCorrection({ households, onCorrected }: BillCorrectionProps) {
   const [bills, setBills] = useState<BillSummary[]>([]);
   const [readingId, setReadingId] = useState('');
   const [value, setValue] = useState('');
+  const [start, setStart] = useState('');
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<Correction | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,6 +59,9 @@ function BillCorrection({ households, onCorrected }: BillCorrectionProps) {
   const billField = useId();
   const valueField = useId();
   const reasonField = useId();
+  const startField = useId();
+  const chosen = bills.find((b) => String(b.reading_id) === readingId);
+  const baseline = Boolean(chosen?.unknown_start);
 
   useEffect(() => {
     setBills([]);
@@ -68,18 +72,24 @@ function BillCorrection({ households, onCorrected }: BillCorrectionProps) {
 
   const fail = (err: unknown) => setResult({ tone: 'error', text: errorMessage(t, err) });
 
+  /** A baseline may leave the reading as it is: an empty value means "keep it". */
+  const body = () => ({
+    corrected_reading: value.trim() || String(chosen?.reading_m3 ?? ''),
+    ...(baseline && start.trim() ? { start_reading: start.trim() } : {}),
+    reason: reason.trim(),
+    request_key: key.current,
+  });
+
   const show = async (e: FormEvent) => {
     e.preventDefault();
-    if (!readingId || !value.trim() || reason.trim().length < 5) {
+    if (!readingId || !(value.trim() || (baseline && start.trim())) || reason.trim().length < 5) {
       setResult({ tone: 'error', text: t('staff.bills.incomplete') });
       return;
     }
     setBusy(true);
     setResult(null);
     try {
-      setPreview(await api.correctBill(customerId, Number(readingId), {
-        corrected_reading: value.trim(), reason: reason.trim(), request_key: key.current, apply: false,
-      }));
+      setPreview(await api.correctBill(customerId, Number(readingId), { ...body(), apply: false }));
     } catch (err) {
       fail(err);
     } finally {
@@ -91,13 +101,12 @@ function BillCorrection({ households, onCorrected }: BillCorrectionProps) {
     setBusy(true);
     setResult(null);
     try {
-      const saved = await api.correctBill(customerId, Number(readingId), {
-        corrected_reading: value.trim(), reason: reason.trim(), request_key: key.current, apply: true,
-      });
+      const saved = await api.correctBill(customerId, Number(readingId), { ...body(), apply: true });
       key.current = crypto.randomUUID();
       setResult({ tone: 'done', text: t(saved.status === 'applied' ? 'staff.bills.applied' : 'staff.bills.waiting') });
       setPreview(null);
       setValue('');
+      setStart('');
       setReason('');
       waiting.retry();
       onCorrected();
@@ -184,6 +193,14 @@ function BillCorrection({ households, onCorrected }: BillCorrectionProps) {
             ))}
           </select>
         </div>
+        {baseline && (
+          <div className={styles.filter}>
+            <label htmlFor={startField}>{t('staff.bills.start')}</label>
+            <input id={startField} className={styles.search} inputMode="decimal" placeholder="420.000" value={start}
+              onChange={(e) => { setStart(e.target.value); setPreview(null); }} />
+            <span className="text-small text-secondary">{t('staff.bills.startHint')}</span>
+          </div>
+        )}
         <div className={styles.filter}>
           <label htmlFor={valueField}>{t('staff.bills.value')}</label>
           <input id={valueField} className={styles.search} inputMode="decimal" placeholder="421.460" value={value}
