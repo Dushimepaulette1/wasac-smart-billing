@@ -19,7 +19,7 @@ from fastapi import Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import Bill
+from app.models import Bill, Customer
 from app.models.bill_correction import APPLIED, OVERPAYMENT, USED, AccountCredit, BillAdjustment, BillCorrection
 from app.models.payment import PENDING, SUCCESSFUL, Payment
 from app.services.audit import record
@@ -104,6 +104,8 @@ def settle(db: Session, customer_id: Optional[str], actor: str = SYSTEM, request
     if not customer_id:
         return
     db.flush()
+    # One at a time per household: two payments settling together must not spend one credit twice.
+    db.query(Customer.customer_id).filter(Customer.customer_id == customer_id).with_for_update().first()
     for b in balances(db, customer_id).values():
         if b.net <= -0.01:
             db.add(AccountCredit(customer_id=customer_id, amount=-b.net, kind=OVERPAYMENT, source_bill_id=b.bill_id))

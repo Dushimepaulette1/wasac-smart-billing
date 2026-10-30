@@ -304,3 +304,12 @@ def test_when_a_customer_row_has_old_paid_bills_without_payments_should_treat_th
     db.add(bill)
     db.commit()
     assert bill_balance(db, bill).settled and db.get(Customer, CUSTOMER)
+
+
+def test_when_credit_waited_for_an_open_attempt_should_use_it_on_the_next_try(db, anon_client, staff, account, monkeypatch):
+    _, b1, _, _ = account
+    db.add(AccountCredit(customer_id=CUSTOMER, amount=1000.0, kind="overpayment"))
+    db.commit()
+    monkeypatch.setenv("PAYMENTS_SIMULATE", "1")
+    body = anon_client.post(f"/bills/{b1.bill_id}/pay", headers=bearer(household_token())).json()
+    assert body["amount"] == pytest.approx(b1.amount_due - 1000)
