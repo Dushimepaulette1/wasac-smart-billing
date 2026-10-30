@@ -74,6 +74,9 @@ LIMITS = {
                      "Too many live checks. Live tips will pause; you can still take the photo."),
     "/submit-photo": (RateLimiter(limit=10, window=60.0),
                       "Too many photos in a short time. Wait a minute, then try again."),
+    # The check before sending a reading: a person checks a few times; more is probing values.
+    "/check-reading": (RateLimiter(limit=20, window=60.0),
+                       "Too many checks in a short time. Wait a minute, then try again."),
 }
 
 

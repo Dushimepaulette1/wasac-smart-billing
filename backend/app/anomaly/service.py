@@ -337,6 +337,26 @@ def evaluate_reading(
     return evaluation
 
 
+# Why a reading waits for an officer, in one word the household app translates (POST /check-reading).
+REVIEW_REASONS = {
+    AnomalyType.NO_BASELINE: "first_reading",
+    AnomalyType.SPIKE: "high_use",
+    AnomalyType.EDITED_DOWN: "edited_down",
+    AnomalyType.LOCATION_CHECK: "location",
+}
+
+
+def review_reason(evaluation: Evaluation) -> Optional[str]:
+    """The household-facing reason a reading would be held, or None if it would be billed."""
+    anomaly = evaluation.anomaly
+    if anomaly is None or not anomaly.pending_review:
+        return None
+    kind = AnomalyType(anomaly.anomaly_type)
+    if kind == AnomalyType.MISREAD_SUSPECTED:
+        return "below_previous" if evaluation.consumption_m3 < 0 else "misread"
+    return REVIEW_REASONS.get(kind, "misread")
+
+
 def _edit_hold(meter: Meter, scored: AnomalyResult, edit: EditCheck) -> AnomalyResult:
     """Record the AI read and the household's value for the officer; hold the reading if the
     household lowered a reliable read by edit_hold_m3 or more and nothing else holds it already."""

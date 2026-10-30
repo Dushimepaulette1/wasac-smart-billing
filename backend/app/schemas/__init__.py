@@ -47,6 +47,7 @@ from app.schemas.reading import (  # noqa: F401
     GeoPoint,
     ConfirmReadingRequest,
     ConfirmReadingResponse,
+    ReadingCheckResponse,
 )
 from app.schemas.staff_auth import (  # noqa: F401
     LoginRequest,

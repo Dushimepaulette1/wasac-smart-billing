@@ -14,6 +14,7 @@ import type {
   CalculateBillResponse,
   CodeSent,
   ConfirmReadingResponse,
+  ReadingCheckResponse,
   CustomerInfo,
   HouseholdEdit,
   HouseholdImportResult,
@@ -168,6 +169,30 @@ async function request<T>(
  * The 8 wheel digits as cubic metres for /confirm-reading, which reads the
  * value with float(): "02813450" -> "02813.450".
  */
+/** A reading as /check-reading and /confirm-reading both take it. */
+export interface ReadingToSend {
+  customerId: string;
+  meterId: string;
+  cells: Cells;
+  /** Where and how the photo was taken, for the location check. */
+  evidence?: PhotoEvidence;
+  /** From /submit-photo: the photo is kept for the officer checking the reading. */
+  photoId?: string | null;
+}
+
+function readingBody({ customerId, meterId, cells, evidence, photoId }: ReadingToSend) {
+  return {
+    customer_id: customerId,
+    meter_id: meterId,
+    confirmed_reading: cellsToCubicMetreString(cells),
+    photo_source: evidence?.photoSource ?? 'camera',
+    photo_id: photoId ?? null,
+    location: evidence?.location
+      ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
+      : null,
+  };
+}
+
 export function cellsToCubicMetreString(cells: Cells): string {
   const digits = cells.join('');
   return `${digits.slice(0, CUBIC_METRE_DIGITS)}.${digits.slice(CUBIC_METRE_DIGITS)}`;
@@ -188,35 +213,14 @@ export const api = {
     return request('/guide-frame', { method: 'POST', body: form, timeout: GUIDE_FRAME_TIMEOUT_MS });
   },
 
-  /** POST /confirm-reading */
-  confirmReading({
-    customerId,
-    meterId,
-    cells,
-    evidence,
-    photoId,
-  }: {
-    customerId: string;
-    meterId: string;
-    cells: Cells;
-    /** Where and how the photo was taken, for the location check. */
-    evidence?: PhotoEvidence;
-    /** From /submit-photo: the photo is kept for the officer checking the reading. */
-    photoId?: string | null;
-  }): Promise<ConfirmReadingResponse> {
-    return request('/confirm-reading', {
-      method: 'POST',
-      json: {
-        customer_id: customerId,
-        meter_id: meterId,
-        confirmed_reading: cellsToCubicMetreString(cells),
-        photo_source: evidence?.photoSource ?? 'camera',
-        photo_id: photoId ?? null,
-        location: evidence?.location
-          ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
-          : null,
-      },
-    });
+  /** POST /check-reading: what sending this reading would lead to. Nothing is stored. */
+  checkReading(reading: ReadingToSend): Promise<ReadingCheckResponse> {
+    return request('/check-reading', { method: 'POST', json: readingBody(reading) });
+  },
+
+  /** POST /confirm-reading (checks everything again) */
+  confirmReading(reading: ReadingToSend): Promise<ConfirmReadingResponse> {
+    return request('/confirm-reading', { method: 'POST', json: readingBody(reading) });
   },
 
   // ---- Phone alerts (web push) -------------------------------------------------

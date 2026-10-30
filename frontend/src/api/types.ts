@@ -170,6 +170,22 @@ export interface ConfirmReadingResponse {
   /** Null when the reading is held for review (no bill yet). */
   bill_id: number | null;
   anomaly: AnomalyResult | null;
+  /** The same photo was sent again: this is the reading it was already used for. */
+  repeated?: boolean;
+}
+
+/** Why a reading would wait for an officer (schemas.ReadingCheckResponse.reason). */
+export type ReviewReason = 'first_reading' | 'below_previous' | 'high_use' | 'misread' | 'edited_down' | 'location';
+
+/** schemas.ReadingCheckResponse: POST /check-reading, nothing stored. */
+export interface ReadingCheckResponse {
+  needs_review: boolean;
+  reason: ReviewReason | null;
+  previous_reading_m3: number | null;
+  consumption_m3: number | null;
+  /** It cannot be sent now: pending, too_soon (see opens_on) or duplicate. */
+  refused: 'pending' | 'too_soon' | 'duplicate' | null;
+  opens_on: IsoDateTime | null;
 }
 
 // ---------------------------------------------------------------------------
