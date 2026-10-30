@@ -1,0 +1,10 @@
+[
+  {
+    "version": "v1-provisional",
+    "effective_from": "2024-01-01",
+    "provisional": true,
+    "note": "From the project brief; confirm against the current RURA/WASAC tariff. Never edit a version once bills use it: add a new one.",
+    "tiers": [[5, 350], [10, 530], [15, 791], [null, 1000]],
+    "service_charge": 1000
+  }
+]

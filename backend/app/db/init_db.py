@@ -30,6 +30,7 @@ LATE_INDEXES = (
 # Columns added after their table existed: (table, column, SQL type). Added only when missing.
 LATE_COLUMNS = (
     ("meters", "serial_number", "VARCHAR(40)"),
+    ("bills", "tariff_version", "VARCHAR(40)"),
 )
 
 

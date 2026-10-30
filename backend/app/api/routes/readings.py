@@ -244,13 +244,12 @@ async def confirm_reading(
 @router.post("/calculate-bill")
 async def calculate_bill(body: BillCalculateRequest):
     data = billing.calculate_bill(body.consumption_m3)
+    rates = [rate for _, rate in billing.tariff()["tiers"]]
     return {
         "consumption_m3": body.consumption_m3,
         "breakdown": {
-            "tier1": {"units": data["tier1_units"], "rate_rwf": 350, "amount": data["tier1_amount"]},
-            "tier2": {"units": data["tier2_units"], "rate_rwf": 530, "amount": data["tier2_amount"]},
-            "tier3": {"units": data["tier3_units"], "rate_rwf": 791, "amount": data["tier3_amount"]},
-            "tier4": {"units": data["tier4_units"], "rate_rwf": 1000, "amount": data["tier4_amount"]},
+            f"tier{n}": {"units": data[f"tier{n}_units"], "rate_rwf": rates[n - 1], "amount": data[f"tier{n}_amount"]}
+            for n in range(1, 5)
         },
         "service_charge": data["service_charge"],
         "total_amount_due": data["total"],
