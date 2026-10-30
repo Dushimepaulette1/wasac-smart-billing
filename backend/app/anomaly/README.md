@@ -70,6 +70,8 @@ Ratios use the same 0.01 m³/day smoothing as below, so "3× a 0.40 m³/day medi
 
 ### Thresholds are provisional
 
+What each one still needs is in `docs/decisions/OPEN_ITEMS.md`.
+
 None of these values has been validated against real WASAC consumption histories (none were
 available; the demo households are synthetic). They are starting points chosen so that suspicious
 readings go to an officer rather than straight to a bill; a held reading is never rejected

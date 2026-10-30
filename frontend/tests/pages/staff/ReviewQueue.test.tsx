@@ -43,6 +43,24 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('when a rollover is held, should show the use from the backend, not a negative', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(7, 'Wrap House', { anomaly_type: 'ROLLOVER' }), reading_m3: 7, previous_reading_m3: 99950, consumption_m3: 57,
+    }]);
+    const { container } = renderQueue();
+    expect(await screen.findAllByText('57.0 m³')).not.toHaveLength(0);
+    expect(container.textContent).not.toMatch(/-\s?99/);
+  });
+
+  it('when a past reading was corrected, should show the corrected use and what it was', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(8, 'Fixed House', { anomaly_type: 'SPIKE' }),
+      history: [{ date: '2026-09-01T08:00:00', reading_m3: 440, consumption_m3: 10, original_reading_m3: 442, original_consumption_m3: 12 }],
+    }]);
+    renderQueue();
+    expect(await screen.findByText('corrected from 12.0 m³')).toBeInTheDocument();
+  });
+
   it('when rejecting, should ask why and send the reason', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([item(5, 'Reject House', { anomaly_type: 'SPIKE', reading_status: 'pending_review' })]);
     vi.mocked(api.resolveFlag).mockClear();
@@ -57,7 +75,7 @@ describe('ReviewQueue', () => {
     vi.useFakeTimers();
     fireEvent.click(confirmReject);
     await act(async () => { vi.runAllTimers(); });
-    expect(api.resolveFlag).toHaveBeenCalledWith(5, 'reject', 'Meter was replaced');
+    expect(api.resolveFlag).toHaveBeenCalledWith(5, 'reject', 'Meter was replaced', 'other');
   });
 
   it('when the server gives the previous reading, should show it', async () => {

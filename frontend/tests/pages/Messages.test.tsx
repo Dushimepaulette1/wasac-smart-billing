@@ -56,6 +56,14 @@ describe('Messages', () => {
     expect(message).not.toHaveTextContent('lower than your last one');
   });
 
+  it('when a reading was rejected, should give the reason in fixed words', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(10, 'SPIKE', { status: 'resolved', requires_staff_review: true, reading_status: 'rejected', decision_code: 'digits' }),
+    ]);
+    renderMessages();
+    expect(await screen.findByText(/The numbers did not match the photo\./)).toBeInTheDocument();
+  });
+
   it('when a first reading was recorded as the starting point, should say the first bill comes next time', async () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([
       flag(8, 'NO_BASELINE', { status: 'resolved', requires_staff_review: true, reading_status: 'valid' }),
