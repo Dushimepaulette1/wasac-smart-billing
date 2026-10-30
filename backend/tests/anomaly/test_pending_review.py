@@ -87,7 +87,7 @@ def test_when_an_officer_rejects_should_discard_the_reading_and_ask_for_a_new_on
     held = confirm(client, customer_id, last + 200)
     flag_id = held["anomaly"]["flag_id"]
 
-    body = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"}).json()
+    body = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"}).json()
     assert body["status"] == "resolved" and body["outcome"] == "reject"
     assert body["reading_status"] == "rejected" and body["bill_id"] is None
     assert "sms_household_not_sent" in body["actions"]  # SMS is off in tests
@@ -154,7 +154,7 @@ def test_when_a_household_lists_its_flags_should_include_the_reading_outcome(cli
     flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
     assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["pending_review"]
 
-    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"})
+    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"})
     flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
     assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["rejected"]
 

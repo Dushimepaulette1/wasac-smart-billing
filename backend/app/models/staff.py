@@ -46,7 +46,7 @@ class StaffAction(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     username = Column(String(64), nullable=False, index=True)
-    # sign_in, sign_in_failed, accept, reject, close, account_created,
+    # sign_in, sign_in_failed, accept, reject, close, reading_entered, account_created,
     # account_updated, password_reset, password_changed
     action = Column(String(32), nullable=False)
     target = Column(String(64), nullable=True)  # flag id, username, ...

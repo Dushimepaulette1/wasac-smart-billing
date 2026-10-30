@@ -388,6 +388,8 @@ export interface HistoryPoint {
 export interface ReviewItem {
   flag: AnomalyFlag;
   reading_m3: number | null;
+  /** The last accepted reading, as billing measures from it. */
+  previous_reading_m3?: number | null;
   submitted_at: IsoDateTime | null;
   reading_confidence: number | null;
   customer_id: string | null;
