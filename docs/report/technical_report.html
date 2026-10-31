@@ -60,7 +60,7 @@ Live app: wasac-smart-billing-qt9t.vercel.app · Code: github.com/Dushimepaulett
 <div class="cap">Figure 3. Upload preview with mistakes found: each row says what is wrong, and nothing can be saved until they are fixed.</div>
 <h2>4. Testing approaches and results</h2>
 <table><tr><th style="width:20%">Strategy</th><th style="width:37%">Why, and how</th><th>Results and improvement made</th></tr>
-<tr><td>Unit and integration</td><td>Money and rules must be exact. pytest and Vitest run on every push in GitHub Actions</td><td>482 backend passed (4 skipped: need private model files), 225 frontend passed. Coverage 94% backend, 83% of frontend lines</td></tr>
+<tr><td>Unit and integration</td><td>Money and rules must be exact. pytest and Vitest run on every push in GitHub Actions</td><td>569 backend passed (5 skipped: need private files), 232 frontend passed. Coverage 94% backend, 83% of frontend lines</td></tr>
 <tr><td>Concurrency</td><td>Two taps must not charge twice; SQLite cannot show this. Race tests on PostgreSQL 16, with a control that shows the race without the guards</td><td>Passed in CI. Led to row locks and partial unique indexes</td></tr>
 <tr><td>End-to-end</td><td>Proves the layers work together. Playwright drives a household and an officer through a real browser</td><td>25 of 25 steps, 0 problems on the merged code run locally. <span class="fill">[FILL IN: live site result]</span></td></tr>
 <tr><td>Model evaluation</td><td>Locked test set of 79 photos from 34 meters, split by meter, used once</td><td>55.7% reading accuracy (95% CI 42 to 69%), 70.9% right or within one digit</td></tr>
