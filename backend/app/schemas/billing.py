@@ -100,6 +100,36 @@ class MeterCorrectionRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=200)
 
 
+class MeterCorrectionOut(BaseModel):
+    id: int
+    status: str  # applied, awaiting_approval, declined or stale
+    customer_id: str
+    customer_name: Optional[str] = None
+    meter_id: str
+    current_m3: float
+    reading_m3: float
+    reason: str
+    requested_by: str
+    requested_at: datetime
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    decision_reason: Optional[str] = None
+
+
+class MeterCorrectionDecline(BaseModel):
+    reason: str = Field(min_length=3, max_length=200)
+
+
+class PaymentStatementUpload(BaseModel):
+    csv: str = Field(min_length=1, max_length=2_000_000)
+
+
+class PaymentStatementOut(BaseModel):
+    added: int
+    updated: int
+    errors: List[str] = []
+
+
 class PaymentOut(BaseModel):
     """One attempt to pay a bill. status: pending (waiting for the payer's PIN, or for an officer to
     check a MoMo Pay payment), successful, failed."""
@@ -136,6 +166,8 @@ class PaymentToCheck(BaseModel):
     for information: the household paid more than once)."""
     kind: Literal["momo_pay_check", "paid_twice", "needs_reconciliation"] = "momo_pay_check"
     reason: Optional[str] = None
+    # Against the uploaded payments list: None when no list exists, or the row is not a MoMo Pay check.
+    statement: Optional[str] = None
     id: int
     bill_id: int
     customer_id: str

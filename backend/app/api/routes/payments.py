@@ -12,9 +12,18 @@ from sqlalchemy.orm import Session
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
 from app.models import Bill, Customer, Payment, StaffUser
-from app.schemas import PaymentDecline, PaymentOut, PaymentReconcile, PaymentReference, PaymentToCheck
+from app.schemas import (
+    PaymentDecline,
+    PaymentOut,
+    PaymentReconcile,
+    PaymentReference,
+    PaymentStatementOut,
+    PaymentStatementUpload,
+    PaymentToCheck,
+)
 from app.services.audit import record
 from app.services.balance import bill_balance
+from app.services.payment_statement import StatementError, import_statement, statement_status
 from app.services.payments import (
     MOMO_PAY,
     PaymentError,
@@ -109,7 +118,8 @@ async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = D
     return [
         PaymentToCheck(id=p.id, bill_id=b.bill_id, customer_id=c.customer_id, customer_name=c.name,
                        meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
-                       created_at=p.created_at, submitted_at=p.updated_at)
+                       created_at=p.created_at, submitted_at=p.updated_at,
+                       statement=statement_status(db, p.transaction_id, p.amount))
         for p, b, c in rows
     ] + [
         PaymentToCheck(kind="paid_twice", id=p.id, bill_id=b.bill_id, customer_id=c.customer_id,
@@ -122,6 +132,22 @@ async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = D
                        created_at=p.created_at, submitted_at=p.updated_at, reason=p.reason)
         for p, b, c in needs_reconciliation(db)
     ]
+
+
+@router.post("/api/payments/statement", response_model=PaymentStatementOut)
+async def upload_statement(body: PaymentStatementUpload, request: Request, db: Session = Depends(get_db),
+                           staff: StaffUser = Depends(require_role("supervisor"))):
+    """The list of payments received (synthetic: app/services/payment_statement.py). A file with any
+    mistake saves nothing and lists the lines."""
+    try:
+        result = import_statement(db, body.csv, staff.username)
+    except StatementError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    if not result.errors:
+        record(db, staff.username, "payment_statement_uploaded", target="payments list",
+               detail=f"{result.added} added, {result.updated} updated", request=request, commit=False)
+        db.commit()
+    return PaymentStatementOut(added=result.added, updated=result.updated, errors=result.errors)
 
 
 @router.post("/api/payments/{payment_id}/recheck", response_model=PaymentOut)
