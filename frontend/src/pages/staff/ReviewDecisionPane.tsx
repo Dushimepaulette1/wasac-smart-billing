@@ -109,6 +109,12 @@ function DecisionPane({ item }: { item: ReviewItem }) {
             <p className="text-secondary">{t('staff.review.noReading')}</p>
           )}
           <dl className={styles.facts}>
+            {item.meter_serial && (
+              <div>
+                <dt>{t('staff.review.serial')}</dt>
+                <dd className="code">{item.meter_serial}</dd>
+              </div>
+            )}
             <div>
               <dt>{t('staff.review.previous')}</dt>
               <dd>{previous !== null ? `${formatReading(cellsFromCubicMetres(previous))} m³` : '–'}</dd>

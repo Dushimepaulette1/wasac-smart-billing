@@ -28,7 +28,7 @@ from app.services.households import (
     edit_household,
     import_csv,
 )
-from app.services.meter_correction import CORRECTION, CorrectionError, correct_meter
+from app.services.meter_correction import CORRECTION
 from app.services.reading_window import PENDING, TOO_SOON, reading_block
 
 router = APIRouter()
@@ -158,31 +158,6 @@ async def update_customer(
     if changed:
         record(db, staff.username, "household_updated", target=customer.meter_id, detail=", ".join(changed),
                request=request, commit=False)
-    db.commit()
-    return _customer_info(db, customer)
-
-
-@router.post("/customers/{customer_id}/meter-correction", response_model=CustomerInfo)
-async def meter_correction(
-    customer_id: str,
-    body: MeterCorrectionRequest,
-    request: Request,
-    db: Session = Depends(get_db),
-    staff: StaffUser = Depends(require_role("supervisor")),
-):
-    """Set the meter's current reading (supervisors and admins). Logged in Activity."""
-    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
-    meter = db.query(Meter).filter(Meter.meter_id == customer.meter_id).first() if customer else None
-    if not meter:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    old = meter.last_reading
-    try:
-        correct_meter(db, meter, body.reading_m3)
-    except CorrectionError as e:
-        db.rollback()
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
-    record(db, staff.username, "meter_corrected", target=meter.meter_id,
-           detail=f"{old:.3f} -> {meter.last_reading:.3f} m3: {body.reason.strip()}", request=request, commit=False)
     db.commit()
     return _customer_info(db, customer)
 

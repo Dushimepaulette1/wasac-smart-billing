@@ -43,6 +43,14 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('should show the serial number on file and how to decide', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(1, 'Serial House', { anomaly_type: 'SPIKE' }), meter_serial: 'ITR24123456' }]);
+    vi.mocked(api.readingPhoto).mockRejectedValue(new Error('none'));
+    renderQueue();
+    expect(await screen.findByText('ITR24123456')).toBeInTheDocument();
+    expect(screen.getByText('How to decide')).toBeInTheDocument();
+  });
+
   it('when a rollover is held, should show the use from the backend, not a negative', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([{
       ...item(7, 'Wrap House', { anomaly_type: 'ROLLOVER' }), reading_m3: 7, previous_reading_m3: 99950, consumption_m3: 57,

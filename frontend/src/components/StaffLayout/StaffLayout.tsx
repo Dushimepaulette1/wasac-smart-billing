@@ -41,6 +41,7 @@ const NAV: NavItem[] = [
   { to: '/staff/review', icon: 'queue', label: 'staff.nav.review' },
   { to: '/staff/households', icon: 'households', label: 'staff.nav.households' },
   { to: '/staff/payments', icon: 'wallet', label: 'staff.nav.payments' },
+  { to: '/staff/corrections', icon: 'gauge', label: 'staff.nav.corrections', role: 'supervisor' },
   { to: '/staff/activity', icon: 'activity', label: 'staff.nav.activity' },
   { to: '/staff/accounts', icon: 'user', label: 'staff.nav.accounts', role: 'admin' },
   { to: '/staff/sms', icon: 'messages', label: 'staff.nav.sms', role: 'admin' },
@@ -77,6 +78,15 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
     reviewCount === undefined ? { immediate: true, args: [] } : {},
   );
   const waiting = reviewCount ?? (queueCount.status === 'success' ? queueCount.data : undefined);
+  const approvals = useRequest(
+    () => Promise.all([api.meterCorrections('awaiting_approval'), api.billCorrections('awaiting_approval')])
+      .then(([meters, bills]) => meters.length + bills.length),
+    hasRole(user, 'supervisor') ? { immediate: true, args: [] } : {},
+  );
+  const counts: Partial<Record<IconName, number>> = {
+    queue: waiting,
+    gauge: approvals.status === 'success' ? approvals.data : undefined,
+  };
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -165,9 +175,9 @@ function StaffLayout({ title, lede, reviewCount, children }: StaffLayoutProps) {
                 >
                   <Icon name={item.icon} size={22} />
                   <span className={isCollapsed ? 'visually-hidden' : styles.linkLabel}>{t(item.label)}</span>
-                  {item.icon === 'queue' && waiting !== undefined && waiting > 0 && (
+                  {(counts[item.icon] ?? 0) > 0 && (
                     <span className={styles.count}>
-                      {waiting}
+                      {counts[item.icon]}
                       <span className="visually-hidden"> {t('staff.waiting')}</span>
                     </span>
                   )}

@@ -26,6 +26,7 @@ backend/app/anomaly/artifacts/
 
 # Generated DEMO data (anomaly pipeline testing only)
 backend/scripts/demo/output/
+backend/simulation/output/
 
 # Node
 node_modules/

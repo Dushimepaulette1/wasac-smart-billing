@@ -77,8 +77,17 @@ describe('Activity', () => {
     renderPage(<Activity />);
     expect(await screen.findByText('Nothing recorded yet.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Who'), { target: { value: 'officer1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Show' }));
-    expect(api.activity).toHaveBeenLastCalledWith({ username: 'officer1', action: undefined });
+    await vi.waitFor(() => expect(api.activity).toHaveBeenLastCalledWith({ username: 'officer1', action: undefined }));
+  });
+
+  it('when a filter is chosen, should show it with no button to press', async () => {
+    signInAs('supervisor');
+    vi.mocked(api.activity).mockResolvedValue([]);
+    renderPage(<Activity />);
+    await screen.findByText('Nothing recorded yet.');
+    expect(screen.queryByRole('button', { name: 'Show' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('What'), { target: { value: 'sign_in' } });
+    await vi.waitFor(() => expect(api.activity).toHaveBeenLastCalledWith({ username: undefined, action: 'sign_in' }));
   });
 });
 

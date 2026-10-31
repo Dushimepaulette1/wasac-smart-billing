@@ -2,8 +2,7 @@
  * @file Households.tsx
  * @description Every household, searchable by name, meter or sector. Staff
  * add a household or edit one (a new phone number, say); supervisors and
- * admins can also upload WASAC's customer list as a CSV and correct a
- * meter's current reading.
+ * admins can also upload WASAC's customer list as a CSV.
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
@@ -17,8 +16,6 @@ import loadOverview, { type HouseholdRow } from '../../staff/loadOverview';
 import HouseholdTable from './HouseholdTable';
 import HouseholdForm from './HouseholdForm';
 import HouseholdImport from './HouseholdImport';
-import MeterCorrection from './MeterCorrection';
-import BillCorrection from './BillCorrection';
 import { hasRole, useAuth } from '../../staff/auth';
 import type { CustomerInfo } from '../../api/types';
 import styles from '../../staff/staff.module.css';
@@ -119,8 +116,6 @@ function Households() {
           <HouseholdTable households={shown} onEdit={(h) => { setSaved(null); setOpen({ kind: 'edit', household: h }); }} />
         </section>
 
-        {supervisor && <MeterCorrection households={data.data.households} onCorrected={data.retry} />}
-        {supervisor && <BillCorrection households={data.data.households} onCorrected={data.retry} />}
       </div>
     </StaffLayout>
   );
