@@ -1,4 +1,4 @@
-import { applyTheme, THEME_COLOR } from '../../src/theme/theme';
+import { applyTheme, currentTheme, THEME_COLOR } from '../../src/theme/theme';
 
 function addThemeColorMetas() {
   document.head.innerHTML = `
@@ -7,6 +7,12 @@ function addThemeColorMetas() {
 }
 
 describe('applyTheme', () => {
+  it('when nobody has chosen, should be light even on a phone set to dark', () => {
+    delete document.documentElement.dataset.theme;
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    expect(currentTheme()).toBe('light');
+  });
+
   it('when the household picks a theme, should colour the status bar to match it', () => {
     addThemeColorMetas();
     applyTheme('light');
