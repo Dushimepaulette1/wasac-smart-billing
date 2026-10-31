@@ -87,6 +87,8 @@ class ReviewItem(BaseModel):
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
     sector: Optional[str] = None
+    # The maker's number on the meter, to compare with the photo.
+    meter_serial: Optional[str] = None
     history: List[HistoryPoint] = []
     # The photo the reading came from (GET /api/anomaly/readings/{reading_id}/photo), if kept.
     reading_id: Optional[int] = None

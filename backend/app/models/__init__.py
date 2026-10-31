@@ -9,6 +9,7 @@
     household_code.py  household_codes (SMS sign-in)
     sms_outbox.py      sms_outbox (sandbox SMS, for admins)
     payment.py         payments (MTN Mobile Money attempts)
+    meter_correction.py meter_corrections (starting readings, with a second approval)
     photo_read.py      photo_reads (the photo and what the reader saw, for reviewers)
     push_subscription.py  push_subscriptions (phones that turned alerts on)
 """
@@ -17,7 +18,8 @@ from app.models.bill import Bill
 from app.models.bill_correction import AccountCredit, BillAdjustment, BillCorrection
 from app.models.household import Customer, Meter
 from app.models.household_code import HouseholdCode
-from app.models.payment import Payment
+from app.models.meter_correction import MeterCorrection
+from app.models.payment import Payment, PaymentStatementEntry
 from app.models.photo_read import PhotoRead
 from app.models.push_subscription import PushSubscription
 from app.models.reading import Reading, ReadingEvidence
@@ -26,6 +28,6 @@ from app.models.staff import ROLES, StaffAction, StaffTemporaryPassword, StaffUs
 
 __all__ = [
     "AccountCredit", "AnomalyFlag", "Bill", "BillAdjustment", "BillCorrection", "MessageDismissal", "Customer", "FLAG_STATUS_OPEN", "FLAG_STATUS_RESOLVED", "HouseholdCode",
-    "Meter", "Payment", "PhotoRead", "PushSubscription", "ROLES", "Reading", "ReadingEvidence", "SmsOutbox", "StaffAction",
+    "Meter", "MeterCorrection", "Payment", "PaymentStatementEntry", "PhotoRead", "PushSubscription", "ROLES", "Reading", "ReadingEvidence", "SmsOutbox", "StaffAction",
     "StaffTemporaryPassword", "StaffUser",
 ]

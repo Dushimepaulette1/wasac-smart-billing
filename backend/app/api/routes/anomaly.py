@@ -195,6 +195,7 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             customer_id=customer.customer_id if customer else None,
             customer_name=customer.name if customer else None,
             sector=customer.sector if customer else None,
+            meter_serial=meter.serial_number if meter else None,
             reading_id=reading.reading_id if reading else None,
             photo_available=bool(photo and photo.image_jpeg),
             reader_digits=photo.reader_digits if photo else None,

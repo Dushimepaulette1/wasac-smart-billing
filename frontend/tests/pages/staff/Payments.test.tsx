@@ -33,6 +33,27 @@ function renderPage(role = 'officer') {
 afterEach(() => window.sessionStorage.clear());
 
 describe('Payments', () => {
+  it('when a payment is not on the list received, should say so and not allow confirming', async () => {
+    vi.mocked(api.paymentsToCheck).mockResolvedValue([{ ...row(1, 'momo_pay_check', 'Waiting House'), statement: 'not_found' }]);
+    renderPage();
+    expect(await screen.findByText(/Not on the list/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeDisabled();
+  });
+
+  it('when a payment matches the list, should allow confirming', async () => {
+    vi.mocked(api.paymentsToCheck).mockResolvedValue([{ ...row(1, 'momo_pay_check', 'Waiting House'), statement: 'matched' }]);
+    renderPage();
+    expect(await screen.findByText(/same amount/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeEnabled();
+  });
+
+  it('only a supervisor sees the list upload', async () => {
+    vi.mocked(api.paymentsToCheck).mockResolvedValue([]);
+    renderPage();
+    await vi.waitFor(() => expect(api.paymentsToCheck).toHaveBeenCalled());
+    expect(screen.queryByText(/test data/)).not.toBeInTheDocument();
+  });
+
   it('when a bill was paid twice, should say so and offer no confirm or decline', async () => {
     vi.mocked(api.paymentsToCheck).mockResolvedValue([row(1, 'momo_pay_check', 'Waiting House'), row(2, 'paid_twice', 'Twice House')]);
     renderPage();

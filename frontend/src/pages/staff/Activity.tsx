@@ -5,10 +5,9 @@
  * everyone's and can narrow it to one person.
  */
 
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import StaffLayout from '../../components/StaffLayout/StaffLayout';
 import RequestState from '../../components/RequestState/RequestState';
-import Button from '../../components/Button/Button';
 import { api } from '../../api/client';
 import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -18,8 +17,10 @@ import type { AnomalyType, StaffAction } from '../../api/types';
 import { ISSUE_KEY } from '../../staff/issues';
 import styles from '../../staff/staff.module.css';
 
+const TYPING_PAUSE_MS = 350;
+
 /** Filter choices: '' is everything. */
-const KINDS = ['', 'sign_in', 'sign_in_failed', 'accept', 'reject', 'close', 'reading_entered', 'account_created', 'account_updated', 'password_reset', 'password_changed', 'meter_corrected', 'payment_confirmed', 'payment_declined', 'household_added', 'household_updated', 'households_imported', 'bill_correction_requested', 'bill_corrected', 'correction_approved', 'correction_declined', 'credit_added', 'credit_applied', 'payment_reconciled_paid', 'payment_reconciled_failed', 'paid_twice_reviewed'] as const;
+const KINDS = ['', 'sign_in', 'sign_in_failed', 'accept', 'reject', 'close', 'reading_entered', 'account_created', 'account_updated', 'password_reset', 'password_changed', 'meter_correction_requested', 'meter_corrected', 'meter_correction_declined', 'payment_confirmed', 'payment_declined', 'payment_statement_uploaded', 'household_added', 'household_updated', 'households_imported', 'bill_correction_requested', 'bill_corrected', 'correction_approved', 'correction_declined', 'credit_added', 'credit_applied', 'payment_reconciled_paid', 'payment_reconciled_failed', 'paid_twice_reviewed'] as const;
 
 /** Actions worth a second look get the held (brass) colour. */
 const WATCH = new Set(['sign_in_failed', 'password_reset', 'account_updated', 'meter_corrected', 'bill_corrected', 'correction_approved', 'payment_reconciled_paid', 'payment_reconciled_failed', 'payment_declined', 'household_updated']);
@@ -37,10 +38,19 @@ function Activity() {
   const kindId = useId();
   const personId = useId();
 
-  const apply = (e?: FormEvent) => {
-    e?.preventDefault();
-    rows.run({ action: kind || undefined, username: everyone ? person.trim() || undefined : undefined });
-  };
+  // Filters apply as they change; typing a name waits for a pause so each letter is not a request.
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      rows.run({ action: kind || undefined, username: everyone ? person.trim() || undefined : undefined });
+    }, TYPING_PAUSE_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, person, everyone]);
 
   /** A decision's details are "<meter> <ANOMALY_TYPE>", then ": <why>": say the type in plain words. */
   const details = (a: StaffAction) => {
@@ -59,7 +69,7 @@ function Activity() {
   return (
     <StaffLayout title={t('staff.nav.activity')} lede={everyone ? t('staff.activity.ledeAll') : t('staff.activity.ledeOwn')}>
       <section className="panel" aria-label={t('staff.nav.activity')}>
-        <form className={styles.filters} onSubmit={apply}>
+        <form className={styles.filters} onSubmit={(e) => e.preventDefault()}>
           <div className={styles.filter}>
             <label htmlFor={kindId}>{t('staff.activity.what')}</label>
             <select id={kindId} className={styles.select} value={kind} onChange={(e) => setKind(e.target.value)}>
@@ -84,9 +94,6 @@ function Activity() {
               />
             </div>
           )}
-          <Button type="submit" variant="secondary" loading={rows.status === 'loading'}>
-            {t('staff.activity.show')}
-          </Button>
         </form>
 
         {rows.status === 'success' ? (

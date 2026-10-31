@@ -16,6 +16,7 @@ import StaffLayout from '../../components/StaffLayout/StaffLayout';
 import RequestState, { errorMessage } from '../../components/RequestState/RequestState';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
+import PaymentStatement from './PaymentStatement';
 import { api } from '../../api/client';
 import useRequest from '../../api/useRequest';
 import type { PaymentToCheck } from '../../api/types';
@@ -107,6 +108,7 @@ function Payments() {
       <div className={styles.stack}>
         {result && <Notice tone="done" live>{result}</Notice>}
         {Boolean(error) && <Notice tone="error" live>{errorMessage(t, error)}</Notice>}
+        {supervisor && <PaymentStatement onUploaded={rows.retry} />}
         <section className="panel" aria-label={t('staff.nav.payments')}>
           <div className={styles.filters}>
             <Button variant="secondary" onClick={rows.retry} loading={rows.status === 'loading'}>
@@ -137,7 +139,10 @@ function Payments() {
                         <span className={`${styles.cellSub} code`}>{r.meter_id} · {t('staff.payments.bill', { id: r.bill_id })}</span>
                       </td>
                       <td data-label={t('pay.amount')} className={`${styles.right} num`}>{rwf(r.amount)}</td>
-                      <td data-label={t('staff.payments.transaction')} className="code">{r.transaction_id}</td>
+                      <td data-label={t('staff.payments.transaction')} className="code">
+                        {r.transaction_id}
+                        {r.statement && <span className={styles.cellSub}>{t(`staff.statement.${r.statement}`)}</span>}
+                      </td>
                       <td data-label={t('staff.payments.sent')} className="num">{dateTime(r.submitted_at)}</td>
                       <td data-label={t('staff.payments.check')}>
                         {r.kind === 'paid_twice' ? (
@@ -205,7 +210,8 @@ function Payments() {
                           </div>
                         ) : (
                           <div className={styles.rowActions}>
-                            <Button loading={busy === r.id} onClick={() => act(r, 'confirm')}>
+                            <Button loading={busy === r.id} disabled={Boolean(r.statement) && r.statement !== 'matched'}
+                              onClick={() => act(r, 'confirm')}>
                               {t('staff.payments.confirm')}
                             </Button>
                             <Button variant="text" onClick={() => { setDeclining(r.id); setReason(''); }}>

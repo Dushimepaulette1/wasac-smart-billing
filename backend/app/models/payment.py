@@ -36,3 +36,15 @@ class Payment(Base):
     # A second success on a paid bill, looked at by staff (it stays on record, off their list).
     reviewed_by = Column(String(64), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
+
+
+class PaymentStatementEntry(Base):
+    """A payment WASAC received, from an uploaded list. Synthetic until WASAC shares real records
+    (app/services/payment_statement.py)."""
+    __tablename__ = "payment_statement_entries"
+
+    transaction_id = Column(String(64), primary_key=True)
+    amount = Column(Float, nullable=False)
+    reference = Column(String(64))  # the meter serial or bill the payer quoted
+    uploaded_by = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, nullable=False, default=datetime.utcnow)
