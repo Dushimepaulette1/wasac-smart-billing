@@ -18,6 +18,7 @@ import HouseholdTable from './HouseholdTable';
 import HouseholdForm from './HouseholdForm';
 import HouseholdImport from './HouseholdImport';
 import MeterCorrection from './MeterCorrection';
+import BillCorrection from './BillCorrection';
 import { hasRole, useAuth } from '../../staff/auth';
 import type { CustomerInfo } from '../../api/types';
 import styles from '../../staff/staff.module.css';
@@ -119,6 +120,7 @@ function Households() {
         </section>
 
         {supervisor && <MeterCorrection households={data.data.households} onCorrected={data.retry} />}
+        {supervisor && <BillCorrection households={data.data.households} onCorrected={data.retry} />}
       </div>
     </StaffLayout>
   );

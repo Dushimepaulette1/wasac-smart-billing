@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_RESOLVED
 from app.anomaly.location import env_float
-from app.anomaly.notifications import RESUBMIT_MESSAGE, confirmed_message, sms_household
-from app.anomaly.service import household_phone, lock_meter
+from app.anomaly.readings import rollover_consumption
+from app.anomaly.notifications import confirmed_message, resubmit_message, sms_household, starting_point_message
+from app.anomaly.service import has_baseline, household_phone, lock_meter
 from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING, READING_REJECTED, READING_VALID
 from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
+from app.services.balance import settle
 from app.services.billing import build_bill
 from app.services.push import send_to_phone
 
@@ -33,7 +35,9 @@ class Resolution:
     actions: List[str] = field(default_factory=list)
 
 
-def _accept(db: Session, reading: Reading) -> Bill:
+def _accept(db: Session, reading: Reading) -> Optional[Bill]:
+    """Confirm a pending reading and bill it. A meter with no starting value yet (has_baseline) gets
+    this reading as its starting point instead, with no bill: there is nothing to measure it from."""
     newer_confirmed = (
         db.query(Reading.reading_id)
         .filter(
@@ -47,8 +51,16 @@ def _accept(db: Session, reading: Reading) -> Bill:
         raise ReviewError(409, "A newer reading for this meter is already confirmed; reject this one instead.")
 
     meter = lock_meter(db, reading.meter_id)
+    if not has_baseline(db, meter):
+        reading.validation_status = READING_VALID
+        reading.implied_consumption = None
+        meter.last_reading = reading.submitted_value
+        meter.last_reading_date = reading.submission_time
+        return None
     # Accepting a lower reading (e.g. a replaced meter) resets the baseline and bills nothing for this period.
-    consumption = max(0.0, reading.submitted_value - meter.last_reading)
+    consumption = rollover_consumption(meter.last_reading, reading.submitted_value)
+    if consumption is None:
+        consumption = max(0.0, round(reading.submitted_value - meter.last_reading, 3))
     reading.validation_status = READING_VALID
     reading.implied_consumption = consumption
     customer_id = db.query(Customer.customer_id).filter(Customer.meter_id == reading.meter_id).scalar()
@@ -56,6 +68,7 @@ def _accept(db: Session, reading: Reading) -> Bill:
     db.add(bill)
     meter.last_reading = reading.submitted_value
     meter.last_reading_date = reading.submission_time
+    settle(db, customer_id)  # any credit goes towards the new bill
     return bill
 
 
@@ -82,8 +95,15 @@ def _save_meter_location(db: Session, reading: Reading) -> bool:
 def decision_alert(outcome: str, amount_due: Optional[float]) -> tuple[str, str, str]:
     """(title, body, url) of the phone alert: Kinyarwanda first, then English (the server does
     not know the household's language). Kinyarwanda drafts: docs/i18n/kinyarwanda_review_push.csv."""
+    if outcome == ACCEPT and amount_due is None:  # a first reading, recorded as the starting point
+        return (
+            "Mubazi: igipimo cya mbere cyanditswe",
+            "Igipimo cyawe cya mbere cyanditswe nk'aho tuzahera. Fagitire ya mbere izaza n'igipimo gikurikira."
+            "\nYour first reading is recorded as your starting point. Your first bill comes with your next reading.",
+            "/messages",
+        )
     if outcome == ACCEPT:
-        amount = f"RWF {amount_due:,.0f}" if amount_due is not None else ""
+        amount = f"RWF {amount_due:,.0f}"
         return (
             "Mubazi: igipimo cyemejwe",
             f"Fagitire yawe ni {amount}. Kanda wishyure.\nYour reading was accepted. Bill: {amount}.",
@@ -96,7 +116,7 @@ def decision_alert(outcome: str, amount_due: Optional[float]) -> tuple[str, str,
     )
 
 
-def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Resolution:
+def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str], reason_code: Optional[str] = None) -> Resolution:
     """Close a flag. A flag on a pending reading needs an outcome; other flags must not have one.
 
     The flag and its reading are read again under a row lock, so when two officers decide at once
@@ -125,6 +145,7 @@ def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Reso
             resolution.actions.append("meter_location_saved")
     elif outcome == REJECT:
         reading.validation_status = READING_REJECTED
+        flag.decision_code = reason_code
 
     if flag.status != FLAG_STATUS_RESOLVED:
         flag.status = FLAG_STATUS_RESOLVED
@@ -136,11 +157,12 @@ def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str]) -> Reso
     if outcome is not None:
         phone = household_phone(db, flag.household_id)
         if phone:
-            message = (
-                confirmed_message(reading.submitted_value, resolution.bill.amount_due)
-                if outcome == ACCEPT
-                else RESUBMIT_MESSAGE
-            )
+            if outcome == ACCEPT and resolution.bill is None:
+                message = starting_point_message(reading.submitted_value)
+            elif outcome == ACCEPT:
+                message = confirmed_message(reading.submitted_value, resolution.bill.amount_due)
+            else:
+                message = resubmit_message(reason_code)
             resolution.actions.append(sms_household(phone, message))
             title, body, url = decision_alert(outcome, resolution.bill.amount_due if resolution.bill else None)
             if send_to_phone(db, phone, title, body, url):

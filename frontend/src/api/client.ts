@@ -11,9 +11,11 @@ import type {
   AnomalyFlag,
   ApiErrorBody,
   BillSummary,
+  BillCorrection,
   CalculateBillResponse,
   CodeSent,
   ConfirmReadingResponse,
+  ReadingCheckResponse,
   CustomerInfo,
   HouseholdEdit,
   HouseholdImportResult,
@@ -168,6 +170,30 @@ async function request<T>(
  * The 8 wheel digits as cubic metres for /confirm-reading, which reads the
  * value with float(): "02813450" -> "02813.450".
  */
+/** A reading as /check-reading and /confirm-reading both take it. */
+export interface ReadingToSend {
+  customerId: string;
+  meterId: string;
+  cells: Cells;
+  /** Where and how the photo was taken, for the location check. */
+  evidence?: PhotoEvidence;
+  /** From /submit-photo: the photo is kept for the officer checking the reading. */
+  photoId?: string | null;
+}
+
+function readingBody({ customerId, meterId, cells, evidence, photoId }: ReadingToSend) {
+  return {
+    customer_id: customerId,
+    meter_id: meterId,
+    confirmed_reading: cellsToCubicMetreString(cells),
+    photo_source: evidence?.photoSource ?? 'camera',
+    photo_id: photoId ?? null,
+    location: evidence?.location
+      ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
+      : null,
+  };
+}
+
 export function cellsToCubicMetreString(cells: Cells): string {
   const digits = cells.join('');
   return `${digits.slice(0, CUBIC_METRE_DIGITS)}.${digits.slice(CUBIC_METRE_DIGITS)}`;
@@ -188,35 +214,14 @@ export const api = {
     return request('/guide-frame', { method: 'POST', body: form, timeout: GUIDE_FRAME_TIMEOUT_MS });
   },
 
-  /** POST /confirm-reading */
-  confirmReading({
-    customerId,
-    meterId,
-    cells,
-    evidence,
-    photoId,
-  }: {
-    customerId: string;
-    meterId: string;
-    cells: Cells;
-    /** Where and how the photo was taken, for the location check. */
-    evidence?: PhotoEvidence;
-    /** From /submit-photo: the photo is kept for the officer checking the reading. */
-    photoId?: string | null;
-  }): Promise<ConfirmReadingResponse> {
-    return request('/confirm-reading', {
-      method: 'POST',
-      json: {
-        customer_id: customerId,
-        meter_id: meterId,
-        confirmed_reading: cellsToCubicMetreString(cells),
-        photo_source: evidence?.photoSource ?? 'camera',
-        photo_id: photoId ?? null,
-        location: evidence?.location
-          ? { lat: evidence.location.lat, lng: evidence.location.lng, accuracy_m: evidence.location.accuracyM }
-          : null,
-      },
-    });
+  /** POST /check-reading: what sending this reading would lead to. Nothing is stored. */
+  checkReading(reading: ReadingToSend): Promise<ReadingCheckResponse> {
+    return request('/check-reading', { method: 'POST', json: readingBody(reading) });
+  },
+
+  /** POST /confirm-reading (checks everything again) */
+  confirmReading(reading: ReadingToSend): Promise<ConfirmReadingResponse> {
+    return request('/confirm-reading', { method: 'POST', json: readingBody(reading) });
   },
 
   // ---- Phone alerts (web push) -------------------------------------------------
@@ -254,8 +259,11 @@ export const api = {
   },
 
   /** POST /calculate-bill: tariff breakdown for a volume. */
-  calculateBill(consumptionM3: number): Promise<CalculateBillResponse> {
-    return request('/calculate-bill', { method: 'POST', json: { consumption_m3: consumptionM3 } });
+  calculateBill(consumptionM3: number, tariffVersion?: string | null): Promise<CalculateBillResponse> {
+    return request('/calculate-bill', {
+      method: 'POST',
+      json: { consumption_m3: consumptionM3, ...(tariffVersion ? { tariff_version: tariffVersion } : {}) },
+    });
   },
 
   /** GET /customers/{id}: the household's own details. */
@@ -374,6 +382,38 @@ export const api = {
   },
 
   /** POST /customers/{id}/meter-correction (supervisors, admins): set the meter's current reading. */
+  /** Ask MTN again about an open attempt. Never sends a prompt. */
+  recheckPayment(id: number): Promise<Payment> {
+    return request(`/api/payments/${id}/recheck`, { method: 'POST', auth: 'staff' });
+  },
+
+  /** A supervisor settles an attempt from MTN's records. */
+  reconcilePayment(id: number, body: { outcome: 'paid' | 'failed'; evidence: string; transaction_id?: string }): Promise<Payment> {
+    return request(`/api/payments/${id}/reconcile`, { method: 'POST', json: body, auth: 'staff' });
+  },
+
+  markPaymentReviewed(id: number): Promise<Payment> {
+    return request(`/api/payments/${id}/reviewed`, { method: 'POST', auth: 'staff' });
+  },
+
+  /** A household's bills, for staff. */
+  staffBills(customerId: string): Promise<BillSummary[]> {
+    return request(`/customers/${encodeURIComponent(customerId)}/bills`, { auth: 'staff' });
+  },
+
+  /** Correct a billed reading (supervisors). apply false: the effect only, nothing stored. */
+  correctBill(customerId: string, readingId: number, body: { corrected_reading: string; start_reading?: string; reason: string; request_key: string; apply: boolean }): Promise<BillCorrection> {
+    return request(`/customers/${encodeURIComponent(customerId)}/readings/${readingId}/correction`, { method: 'POST', json: body, auth: 'staff' });
+  },
+
+  billCorrections(status?: string): Promise<BillCorrection[]> {
+    return request(`/bill-corrections${status ? `?status=${encodeURIComponent(status)}` : ''}`, { auth: 'staff' });
+  },
+
+  decideBillCorrection(id: number, how: 'approve' | 'decline', reason?: string): Promise<BillCorrection> {
+    return request(`/bill-corrections/${id}/${how}`, { method: 'POST', auth: 'staff', ...(how === 'decline' ? { json: { reason } } : {}) });
+  },
+
   correctMeter(customerId: string, readingM3: number, reason: string): Promise<CustomerInfo> {
     return request(`/customers/${encodeURIComponent(customerId)}/meter-correction`, {
       method: 'POST',
@@ -418,11 +458,12 @@ export const api = {
   },
 
   /** PATCH /api/anomaly/flags/{id}/resolve: accept or reject a held reading, or (null) close a follow-up. */
-  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null): Promise<ResolveFlagResponse> {
+  /** A reject needs a reason; it goes into the audit log. */
+  resolveFlag(flagId: number, outcome: 'accept' | 'reject' | null, reason?: string, reasonCode?: string): Promise<ResolveFlagResponse> {
     return request(`/api/anomaly/flags/${encodeURIComponent(flagId)}/resolve`, {
       method: 'PATCH',
       auth: 'staff',
-      json: outcome ? { outcome } : {},
+      json: outcome ? { outcome, ...(reason ? { reason } : {}), ...(reasonCode ? { reason_code: reasonCode } : {}) } : {},
     });
   },
 };

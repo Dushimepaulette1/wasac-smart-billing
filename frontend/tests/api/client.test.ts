@@ -20,6 +20,16 @@ describe('cellsToCubicMetreString', () => {
 });
 
 describe('api', () => {
+  it('when checking a reading, should send the same body to /check-reading', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, { success: true }));
+    const reading = { customerId: 'CUST001', meterId: 'MTR001', cells: normalizeReading('00464500').cells, photoId: 'p1' };
+    await api.checkReading(reading);
+    await api.confirmReading(reading);
+    const [[url, check], [, confirm]] = fetchMock.mock.calls as [[string, RequestInit], [string, RequestInit]];
+    expect(url).toBe('/check-reading');
+    expect(check.body).toEqual(confirm.body);
+  });
+
   it('when confirming a reading, should send it in cubic metres', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(jsonResponse(200, { success: true }));
     await api.confirmReading({

@@ -41,6 +41,11 @@ class SubmissionFeatures:
     ratio_to_recent: float
     recent_ratios: List[float]
     zero_streak_days: float
+    # For the rule-based history check (rules.compare_with_history), not the model: periods of at
+    # least config.min_period_days, their median daily use, and this reading's ratio to it.
+    n_suitable_periods: int = 0
+    suitable_median_daily: Optional[float] = None
+    ratio_to_suitable_median: float = 1.0
 
     def model_vector(self) -> List[float]:
         return [
@@ -119,6 +124,9 @@ def compute_features(
                 break
             zero_streak += p.days
 
+    suitable = [p.daily_consumption for p in past if p.days >= config.min_period_days]
+    suitable_median = median(suitable) if suitable else None
+
     return SubmissionFeatures(
         previous_reading_m3=previous.reading_m3,
         days_since_last=days,
@@ -131,4 +139,7 @@ def compute_features(
         ratio_to_recent=ratio_to_recent,
         recent_ratios=recent_ratios,
         zero_streak_days=zero_streak,
+        n_suitable_periods=len(suitable),
+        suitable_median_daily=suitable_median,
+        ratio_to_suitable_median=_ratio(daily, suitable_median) if suitable else 1.0,
     )

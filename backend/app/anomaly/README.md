@@ -52,11 +52,41 @@ produce infinite ratios. The model sees three columns: `log(ratio_to_median)`,
 
 | Condition | Result |
 |---|---|
-| First reading ever | `BASELINE`, never an anomaly |
-| Reading lower than the previous one | `MISREAD_SUSPECTED`, retake photo (meters cannot run backwards) |
-| Daily use above `ANOMALY_MAX_DAILY_M3` (default 5) | `SPIKE` |
-| Zero consumption for `ANOMALY_STUCK_DAYS` or more (default 30, may span several readings) | `METER_STUCK` |
+| Meter has no starting value (no confirmed reading, `last_reading` 0) | `NO_BASELINE`, held; accepting it records the starting point, no bill |
+| First reading after a starting value | `BASELINE`, never an anomaly |
+| Previous reading 99,000 m³ or more and new reading under 1,000 m³ | `ROLLOVER`, held; accepting it bills the use across the wrap |
+| Reading lower than the previous one | `MISREAD_SUSPECTED`, held for an officer (meters cannot run backwards, but the previous reading may have been wrong, or the meter replaced) |
+| Daily use above `ANOMALY_MAX_DAILY_M3` (default 5) | `SPIKE`, held |
+| Zero consumption for `ANOMALY_STUCK_DAYS` or more (default 30, may span several readings) | `METER_STUCK`, billed, staff follow-up |
+| Daily use about 10× or 100× the household's median (history check below) | `MISREAD_SUSPECTED` (`features.digit_shift`), held |
+| Daily use ≥ `ANOMALY_SPIKE_RATIO` (default 3) × the household's median (history check below) | `SPIKE`, held |
 | Fewer than `ANOMALY_MIN_HISTORY_PERIODS` previous periods (default 3) | Cold start: rules only, no model |
+
+**History check (rules only, no model needed).** A reading is compared with the household's own
+median daily use only when there are at least `ANOMALY_MIN_HISTORY_PERIODS` (3) past periods of at
+least `ANOMALY_MIN_PERIOD_DAYS` (7) days since the last meter reset, and the reading's own period is
+7 days or more. Otherwise `features.insufficient_history` is true and only the fixed rules apply.
+Ratios use the same 0.01 m³/day smoothing as below, so "3× a 0.40 m³/day median" is 1.22 m³/day.
+
+### Thresholds are provisional
+
+What each one still needs is in `docs/decisions/OPEN_ITEMS.md`.
+
+None of these values has been validated against real WASAC consumption histories (none were
+available; the demo households are synthetic). They are starting points chosen so that suspicious
+readings go to an officer rather than straight to a bill; a held reading is never rejected
+automatically. Review them once real histories are available: the share of readings held and how
+often officers accept them are the numbers to look at.
+
+| Variable | Default | Why this value |
+|---|---|---|
+| `ANOMALY_MAX_DAILY_M3` | 5 | ~150 m³ a month, far above household use; catches gross misreads with no history |
+| `ANOMALY_SPIKE_RATIO` | 3 | Three times the household's usual daily use |
+| `ANOMALY_MIN_HISTORY_PERIODS` | 3 | A median of fewer than three periods is not a usual |
+| `ANOMALY_MIN_PERIOD_DAYS` | 7 | Daily rates over a few days are too noisy to compare |
+| `ANOMALY_STUCK_DAYS` | 30 | A month with no movement |
+| `ANOMALY_EDIT_HOLD_M3` | 1 | A household lowering a reliable AI read by 1 m³ or more (app/anomaly/edits.py) |
+| `ANOMALY_MISREAD_LOG10_TOLERANCE` | 0.15 | Ratios between ~7× and ~14× (or ~70× and ~140×) look like a shifted digit |
 
 ## Model
 
@@ -153,7 +183,8 @@ billing". Both responses include an `anomaly` object with `pending_review`.
 `ANOMALY_STUCK_DAYS` (30), `ANOMALY_MIN_HISTORY_PERIODS` (3), `ANOMALY_CONTAMINATION` (0.05),
 `ANOMALY_RANDOM_STATE` (42), `ANOMALY_N_ESTIMATORS` (200), `ANOMALY_SPIKE_RATIO` (3),
 `ANOMALY_SUSTAINED_RATIO` (1.5), `ANOMALY_SUSTAINED_PERIODS` (3),
-`ANOMALY_MISREAD_LOG10_TOLERANCE` (0.15), `ANOMALY_MODEL_PATH`
+`ANOMALY_MISREAD_LOG10_TOLERANCE` (0.15), `ANOMALY_MIN_PERIOD_DAYS` (7), `ANOMALY_EDIT_HOLD_M3` (1),
+`ANOMALY_MODEL_PATH`
 (default `backend/anomaly/artifacts/isolation_forest.joblib`, gitignored).
 
 ## Train

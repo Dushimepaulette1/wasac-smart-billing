@@ -21,6 +21,9 @@ export const SHOWN_TYPES: readonly AnomalyType[] = [
   'METER_STUCK',
   'UNUSUAL',
   'LOCATION_CHECK',
+  'NO_BASELINE',
+  'EDITED_DOWN',
+  'ROLLOVER',
 ];
 
 const SEEN_KEY = 'wasac.messagesSeenAt';

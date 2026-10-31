@@ -24,7 +24,13 @@ export type AnomalyType =
   | 'METER_STUCK'
   | 'UNUSUAL'
   /** The photo's location or source needs an officer's look (app/anomaly/location.py). */
-  | 'LOCATION_CHECK';
+  | 'LOCATION_CHECK'
+  /** No starting value yet: the first reading becomes the starting point, without a bill. */
+  | 'NO_BASELINE'
+  /** The household lowered a reliable AI read by 1 m³ or more: an officer compares the two. */
+  | 'EDITED_DOWN'
+  /** The register seems to have turned over past 99999: an officer confirms it. */
+  | 'ROLLOVER';
 
 /** app/models/anomaly_flag.py FLAG_STATUS_* */
 export type FlagStatus = 'open' | 'resolved';
@@ -166,6 +172,22 @@ export interface ConfirmReadingResponse {
   /** Null when the reading is held for review (no bill yet). */
   bill_id: number | null;
   anomaly: AnomalyResult | null;
+  /** The same photo was sent again: this is the reading it was already used for. */
+  repeated?: boolean;
+}
+
+/** Why a reading would wait for an officer (schemas.ReadingCheckResponse.reason). */
+export type ReviewReason = 'first_reading' | 'below_previous' | 'high_use' | 'misread' | 'edited_down' | 'location' | 'rollover';
+
+/** schemas.ReadingCheckResponse: POST /check-reading, nothing stored. */
+export interface ReadingCheckResponse {
+  needs_review: boolean;
+  reason: ReviewReason | null;
+  previous_reading_m3: number | null;
+  consumption_m3: number | null;
+  /** It cannot be sent now: pending, too_soon (see opens_on) or duplicate. */
+  refused: 'pending' | 'too_soon' | 'duplicate' | null;
+  opens_on: IsoDateTime | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,6 +241,8 @@ export interface CustomerInfo {
   /** Bills not paid yet (for the staff overview). */
   unpaid_count: number;
   unpaid_amount: number;
+  /** Kept for the next bills; there are no cash refunds in the app. */
+  credit_available?: number;
   /** The maker's serial number printed on the meter, if WASAC has it. */
   serial_number?: string | null;
   /** A DEMO- test household. */
@@ -274,8 +298,61 @@ export interface BillSummary {
   consumption_m3: number;
   /** Can carry half-francs, e.g. 12400.5; shown rounded to whole francs. */
   amount_due: number;
+  /** 'paid' when nothing more is owed (by payment or credit), even if a correction changed the bill. */
   payment_status: PaymentStatus;
   created_at: IsoDateTime;
+  reading_id?: number | null;
+  /** The reading as it stands, and the volume after corrections; consumption_m3 stays as billed. */
+  reading_m3?: number | null;
+  consumption_current?: number;
+  tariff_version?: string | null;
+  /** Staff: this first bill charged the whole register, from no starting reading. */
+  unknown_start?: boolean;
+  /** The bill after corrections, what has been paid, credit used, and what is still owed. */
+  charges?: number;
+  paid?: number;
+  credit_used?: number;
+  outstanding?: number;
+  /** Corrections to this bill. amount_due stays as issued. */
+  adjustments?: BillAdjustmentLine[];
+}
+
+export interface BillAdjustmentLine {
+  amount_delta: number;
+  consumption_after: number;
+  reason: string;
+  at: IsoDateTime;
+}
+
+/** schemas.AdjustmentOut */
+export interface BillCorrectionLine {
+  bill_id: number;
+  consumption_before: number;
+  consumption_after: number;
+  amount_before: number;
+  amount_after: number;
+  amount_delta: number;
+  tariff_version: string;
+}
+
+/** schemas.BillCorrectionOut */
+export interface BillCorrection {
+  id: number | null;
+  status: 'preview' | 'applied' | 'awaiting_approval' | 'declined' | 'stale';
+  customer_id: string;
+  customer_name: string | null;
+  reading_id: number;
+  value_before_m3: number;
+  corrected_value_m3: number;
+  kind?: 'reading' | 'baseline';
+  start_m3?: number | null;
+  reason: string;
+  requested_by: string;
+  decided_by: string | null;
+  decision_reason: string | null;
+  needs_approval: boolean;
+  net_delta: number;
+  adjustments: BillCorrectionLine[];
 }
 
 /** app/api/routes/billing.py pay_bill: a new payment. */
@@ -302,6 +379,10 @@ export interface Payment {
 
 /** GET /api/payments/to-check: a MoMo Pay payment waiting for an officer. */
 export interface PaymentToCheck {
+  /** momo_pay_check: waits for an officer; paid_twice: a second success on a paid bill, already credit;
+   *  needs_reconciliation: MTN has not settled it, a supervisor checks MTN's records. */
+  kind: 'momo_pay_check' | 'paid_twice' | 'needs_reconciliation';
+  reason?: string | null;
   id: number;
   bill_id: number;
   customer_id: string;
@@ -339,6 +420,8 @@ export interface AnomalyFlag {
   resolved_at: IsoDateTime | null;
   /** The flagged reading's status: 'pending_review', 'valid' (accepted), 'rejected', 'anomaly_flagged'. */
   reading_status?: ReadingStatus | null;
+  /** Why it was rejected: photo, digits, meter, other. */
+  decision_code?: string | null;
 }
 
 /** schemas.ResolveFlagRequest */
@@ -360,12 +443,19 @@ export interface HistoryPoint {
   date: IsoDateTime;
   reading_m3: number;
   consumption_m3: number | null;
+  /** Set when a correction changed them: what was sent and billed at the time. */
+  original_reading_m3?: number | null;
+  original_consumption_m3?: number | null;
 }
 
 /** schemas.ReviewItem: a held reading with what a decision needs. */
 export interface ReviewItem {
   flag: AnomalyFlag;
   reading_m3: number | null;
+  /** The use this reading stands for, from the backend (across the wrap for a rollover). */
+  consumption_m3?: number | null;
+  /** The last accepted reading, as billing measures from it. */
+  previous_reading_m3?: number | null;
   submitted_at: IsoDateTime | null;
   reading_confidence: number | null;
   customer_id: string | null;
@@ -380,6 +470,9 @@ export interface ReviewItem {
   reader_digits?: string | null;
   /** The household changed the reader's digits before sending. */
   edited_by_household?: boolean | null;
+  /** The household's value as 8 wheels, and which wheels (0 = leftmost) differ from reader_digits. */
+  household_digits?: string | null;
+  changed_positions?: number[];
 }
 
 // ---------------------------------------------------------------------------

@@ -92,7 +92,7 @@ def test_when_an_officer_decides_should_log_the_decision(db, client):
         "customer_id": customer_id, "meter_id": "MTR900", "confirmed_reading": str(round(points[-1].reading_m3 + 200, 3)),
     }).json()
     flag_id = held["anomaly"]["flag_id"]
-    assert client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"}).status_code == 200
+    assert client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"}).status_code == 200
     assert ("officer1", "reject", f"flag {flag_id}") in actions(db)
 
 

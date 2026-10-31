@@ -14,19 +14,24 @@ import { useI18n } from '../../i18n/I18nProvider';
 import useCounterLabels from '../../i18n/useCounterLabels';
 import { isComplete, type Cells } from '../../utils/reading';
 import styles from './ReadingHeld.module.css';
+import type { ReviewReason } from '../../api/types';
 
 /** What the confirm screen passes along: the reading sent and its local date. */
 export interface HeldState {
   cells: Cells;
   at: string;
+  /** Why it waits, when the check before sending knew (POST /check-reading). */
+  reason?: ReviewReason;
 }
 
 /** Router state is untyped and may be anything (history, another tab), so check it. */
 function readHeldState(state: unknown): HeldState | null {
   if (!state || typeof state !== 'object') return null;
-  const { cells, at } = state as Partial<Record<keyof HeldState, unknown>>;
+  const { cells, at, reason } = state as Partial<Record<keyof HeldState, unknown>>;
   if (!Array.isArray(cells) || !cells.every((c) => typeof c === 'string')) return null;
-  return isComplete(cells) ? { cells, at: typeof at === 'string' ? at : '' } : null;
+  return isComplete(cells)
+    ? { cells, at: typeof at === 'string' ? at : '', reason: typeof reason === 'string' ? (reason as ReviewReason) : undefined }
+    : null;
 }
 
 function ReadingHeld() {
@@ -48,6 +53,7 @@ function ReadingHeld() {
       }
     >
       <Notice tone="held" live title={t('held.checkingTitle')}>
+        {held?.reason && `${t(`held.why.${held.reason}`)} `}
         {t('held.checkingBody')}
       </Notice>
 

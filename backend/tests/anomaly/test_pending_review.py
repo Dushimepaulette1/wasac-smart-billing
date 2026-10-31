@@ -39,7 +39,9 @@ def reading_for(db, flag_id):
 def test_when_a_10x_misread_is_held_should_not_block_the_next_correct_reading(client, db, household, trained_model_on_disk):
     customer_id, last = household
     misread = confirm(client, customer_id, last + 0.4 * 30 * 10)
-    assert misread["anomaly"]["model_used"]
+    # The rule-based history check catches a 10x jump before the model is asked (it used to be the
+    # model alone); the outcome is the same: held as a suspected misread.
+    assert not misread["anomaly"]["model_used"] and misread["anomaly"]["features"]["digit_shift"]
     assert misread["anomaly"]["anomaly_type"] == "MISREAD_SUSPECTED"
     assert misread["validation_status"] == "pending_review" and misread["bill_id"] is None
     assert db.get(Meter, METER).last_reading == last
@@ -85,7 +87,7 @@ def test_when_an_officer_rejects_should_discard_the_reading_and_ask_for_a_new_on
     held = confirm(client, customer_id, last + 200)
     flag_id = held["anomaly"]["flag_id"]
 
-    body = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"}).json()
+    body = client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"}).json()
     assert body["status"] == "resolved" and body["outcome"] == "reject"
     assert body["reading_status"] == "rejected" and body["bill_id"] is None
     assert "sms_household_not_sent" in body["actions"]  # SMS is off in tests
@@ -152,7 +154,7 @@ def test_when_a_household_lists_its_flags_should_include_the_reading_outcome(cli
     flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
     assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["pending_review"]
 
-    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"})
+    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"})
     flags = client.get("/api/anomaly/flags", params={"household_id": METER}).json()
     assert [f["reading_status"] for f in flags if f["id"] == flag_id] == ["rejected"]
 

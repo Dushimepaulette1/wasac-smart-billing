@@ -60,7 +60,7 @@ def test_when_min_days_is_0_should_allow_readings_any_time(household_client, hou
 def test_when_a_rejected_reading_is_followed_by_a_new_one_should_allow_it(household_client, client, household):
     customer_id, last = household
     flag_id = confirm(household_client, customer_id, last + 300).json()["anomaly"]["flag_id"]
-    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject"})
+    client.patch(f"/api/anomaly/flags/{flag_id}/resolve", json={"outcome": "reject", "reason": "Photo not clear"})
     assert confirm(household_client, customer_id, last + 12).status_code == 200
 
 

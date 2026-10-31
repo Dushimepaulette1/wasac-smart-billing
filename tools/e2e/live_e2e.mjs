@@ -1,8 +1,15 @@
-// End-to-end on the LIVE site, as real people use it:
-//   household signs in, reads the meter (real photo), is held for checking, cannot send another;
-//   officer accepts it; household sees the bill, pays it, gets the confirmation.
+// End-to-end in a real browser, as real people use it:
+//   household signs in, reads the meter (real photo), checks it (check-first), is held for
+//   checking, cannot send another; officer accepts it; household sees the bill, pays it, gets the
+//   confirmation. With a second phone: that household is rejected, and sees the reason.
 //
 //   node live_e2e.mjs <app url> <meter photo> <staff password> <demo phone> [chrome path]
+//
+//   E2E_STAFF_USER   the staff username (default dushime)
+//   E2E_READING      8 digits to type on the confirm page (default: what the reader read)
+//   E2E_REJECT_PHONE a second demo household, for the reject path
+//   E2E_NO_MODELS=1  the models are not installed, so the officer has no photo to see
+//   E2E_ALLOW_LIVE=1 needed for anything but localhost: this script changes data
 //
 // Use a demo household that has no reading waiting and none in the last 25 days. Prints each step
 // and every problem (failed requests, page errors, console errors); screenshots go to ./out/.
@@ -16,7 +23,15 @@ if (!APP || !PHOTO || !STAFF_PW || !PHONE) {
   console.error('usage: node live_e2e.mjs <app url> <meter photo> <staff password> <demo phone> [chrome path]');
   process.exit(2);
 }
-const HOUSEHOLD = 'DEMO Household ' + PHONE.replace(/\D/g, '').slice(-3);
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(APP) && process.env.E2E_ALLOW_LIVE !== '1') {
+  console.error('Refusing to run against ' + APP + ': this script changes data. Set E2E_ALLOW_LIVE=1 only if you mean it.');
+  process.exit(2);
+}
+const STAFF_USER = process.env.E2E_STAFF_USER || 'dushime';
+const READING = process.env.E2E_READING;
+const REJECT_PHONE = process.env.E2E_REJECT_PHONE;
+const householdName = (phone) => 'DEMO Household ' + phone.replace(/\D/g, '').slice(-3);
+const HOUSEHOLD = householdName(PHONE);
 const OUT = 'out';
 mkdirSync(OUT, { recursive: true });
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
@@ -34,6 +49,57 @@ function watch(page, who) {
     if (r.status() >= 400 && !u.includes('/guide-frame')) problems.push(`${who} HTTP ${r.status()} ${r.request().method()} ${u.replace(/^https?:\/\/[^/]+/, '')}`);
   });
 }
+/** Type a reading on the meter counter (needed when the reader could not read the photo). */
+async function typeReading(page, digits) {
+  await page.locator('main input').first().focus(); // one real input lies over the wheels
+  await page.keyboard.type(digits);
+}
+
+/** "Confirm reading" checks first. A reading that needs review offers the two choices: send it. */
+async function confirmAndSend(page) {
+  log('     confirm page says:', (await page.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 160));
+  await page.getByRole('button', { name: 'Confirm reading' }).click();
+  const review = page.getByRole('button', { name: 'Send for review' });
+  const done = page.waitForURL(/submit\/held|\/bill/, { timeout: 60000 });
+  await Promise.race([done, review.waitFor({ timeout: 60000 })]);
+  if (await review.isVisible().catch(() => false)) {
+    log('     check says:', (await page.getByRole('status').first().innerText()).replace(/\s+/g, ' ').slice(0, 160));
+    if (!(await page.getByRole('button', { name: 'Check the digits' }).isVisible())) throw new Error('no Check the digits choice');
+    await review.click();
+  }
+  await done;
+  log('     went to', new URL(page.url()).pathname);
+}
+
+async function signIn(page, phone) {
+  await page.goto(APP + '/sign-in');
+  await page.getByLabel('Your phone number').fill(phone);
+  await page.getByRole('button', { name: 'Send me a code' }).click();
+  await page.getByText('Demo account', { exact: true }).waitFor({ timeout: 30000 });
+  const code = ((await page.locator('main').innerText()).match(/Your code is\s*(\d{6})/) || [])[1];
+  if (!code) throw new Error('no demo code on screen');
+  await page.getByLabel('6-digit code').fill(code);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.waitForURL(/\/home/, { timeout: 30000 });
+  await page.getByText('Your meter', { exact: true }).waitFor({ timeout: 30000 });
+}
+
+async function readMeter(page) {
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Read' }).click();
+  await page.waitForURL(/submit\/camera/);
+  await page.locator('video').waitFor({ timeout: 30000 });
+  await page.locator('input[type=file]').setInputFiles(PHOTO);
+  for (let i = 0; i < 60 && !/submit\/confirm/.test(page.url()); i++) {
+    const anyway = page.getByRole('button', { name: 'Use this photo anyway' });
+    const type = page.getByRole('button', { name: 'Type the numbers instead' });
+    if (await anyway.isVisible().catch(() => false)) await anyway.click();
+    else if (await page.getByText('We could not read the numbers').isVisible().catch(() => false) && await type.isVisible()) await type.click();
+    await page.waitForTimeout(1000);
+  }
+  if (!/submit\/confirm/.test(page.url())) throw new Error('never reached the confirm page');
+  if (READING) await typeReading(page, READING);
+}
+
 async function step(name, page, fn) {
   try { await fn(); log('OK  ', name); }
   catch (e) { problems.push(`STEP FAILED: ${name}: ${String(e).split('\n')[0]}`); log('FAIL', name, String(e).split('\n')[0]); }
@@ -45,41 +111,9 @@ const hh = await browser.newContext({ viewport: { width: 390, height: 844 }, per
 await hh.addInitScript(() => localStorage.setItem('wasac.locale', 'en'));
 const p = await hh.newPage(); watch(p, 'household');
 await step('01 landing loads', p, async () => { await p.goto(APP + '/', { waitUntil: 'networkidle' }); await p.getByRole('heading', { level: 1 }).waitFor(); });
-await step('02 sign in with code', p, async () => {
-  await p.goto(APP + '/sign-in');
-  await p.getByLabel('Your phone number').fill(PHONE);
-  await p.getByRole('button', { name: 'Send me a code' }).click();
-  await p.getByText('Demo account', { exact: true }).waitFor({ timeout: 30000 });
-  const code = ((await p.locator('main').innerText()).match(/Your code is\s*(\d{6})/) || [])[1];
-  if (!code) throw new Error('no demo code on screen');
-  await p.getByLabel('6-digit code').fill(code);
-  await p.getByRole('button', { name: 'Sign in' }).click();
-  await p.waitForURL(/\/home/, { timeout: 30000 });
-  await p.getByText('Your meter', { exact: true }).waitFor({ timeout: 30000 });
-});
-await step('03 open the camera', p, async () => {
-  // Phones read the meter from the bottom bar's raised Read button.
-  await p.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Read' }).click();
-  await p.waitForURL(/submit\/camera/);
-  await p.locator('video').waitFor({ timeout: 30000 });
-});
-await step('04 upload a meter photo', p, async () => {
-  await p.locator('input[type=file]').setInputFiles(PHOTO);
-  for (let i = 0; i < 60 && !/submit\/confirm/.test(p.url()); i++) {
-    const anyway = p.getByRole('button', { name: 'Use this photo anyway' });
-    const type = p.getByRole('button', { name: 'Type the numbers instead' });
-    if (await anyway.isVisible().catch(() => false)) await anyway.click();
-    else if (await p.getByText('We could not read the numbers').isVisible().catch(() => false) && await type.isVisible()) await type.click();
-    await p.waitForTimeout(1000);
-  }
-  if (!/submit\/confirm/.test(p.url())) throw new Error('never reached the confirm page');
-});
-await step('05 confirm the reading', p, async () => {
-  log('     confirm page says:', (await p.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 160));
-  await p.getByRole('button', { name: 'Confirm reading' }).click();
-  await p.waitForURL(/submit\/held|\/bill/, { timeout: 60000 });
-  log('     went to', new URL(p.url()).pathname);
-});
+await step('02 sign in with code', p, () => signIn(p, PHONE));
+await step('03-04 read the meter', p, () => readMeter(p));
+await step('05 check first, then send', p, () => confirmAndSend(p));
 await step('06 messages explain the check', p, async () => {
   await p.goto(APP + '/messages');
   await p.locator('article').first().waitFor({ timeout: 30000 });
@@ -96,7 +130,7 @@ await st.addInitScript(() => localStorage.setItem('wasac.locale', 'en'));
 const s = await st.newPage(); watch(s, 'staff');
 await step('08 staff sign in', s, async () => {
   await s.goto(APP + '/staff/sign-in');
-  await s.getByLabel('Username').fill('dushime');
+  await s.getByLabel('Username').fill(STAFF_USER);
   await s.getByLabel('Password').fill(STAFF_PW);
   await s.getByRole('button', { name: 'Sign in' }).click();
   await s.waitForURL(/\/staff\/?$/, { timeout: 30000 });
@@ -109,8 +143,11 @@ await step('09 review queue: see the photo, accept our reading', s, async () => 
   const pane = (await s.locator('main').innerText()).replace(/\s+/g, ' ');
   log('     decision pane mentions location:', /Where the photo was taken/.test(pane), '| map link:', await s.getByRole('link', { name: 'Open in map' }).count());
   // The officer sees the photo the household sent (kept by /submit-photo, linked on confirm).
-  await s.getByRole('img', { name: /Meter photo sent by/ }).waitFor({ timeout: 20000 });
-  log('     photo shown to the officer; reader read:', /Photo reader read/.test(pane));
+  if (process.env.E2E_NO_MODELS === '1') log('     no models here: no photo is kept, not checked');
+  else {
+    await s.getByRole('img', { name: /Meter photo sent by/ }).waitFor({ timeout: 20000 });
+    log('     photo shown to the officer; reader read:', /Photo reader read/.test(pane));
+  }
   await s.getByRole('button', { name: 'Accept reading' }).click();
   await s.waitForTimeout(8000); // 5 s undo window, then the request
 });
@@ -142,7 +179,7 @@ await step('12 sent SMS page lists messages', s, async () => {
 });
 await step('13 staff accounts page', s, async () => {
   await s.goto(APP + '/staff/accounts');
-  await s.getByText('dushime').first().waitFor({ timeout: 30000 });
+  await s.getByText(STAFF_USER).first().waitFor({ timeout: 30000 });
 });
 
 // ---- Household again: the bill and payment ----------------------------------
@@ -192,6 +229,37 @@ await step('18 a new reading waits for the next period', p, async () => {
   await p.goto(APP + '/submit/camera');
   await p.getByText(/next one opens|next reading from/).waitFor({ timeout: 30000 });
 });
+
+// ---- A second household: rejected, with the reason ----------------------------
+if (REJECT_PHONE) {
+  const name = householdName(REJECT_PHONE);
+  const rh = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera', 'geolocation'], geolocation: { latitude: -1.95, longitude: 30.07, accuracy: 15 } });
+  await rh.addInitScript(() => localStorage.setItem('wasac.locale', 'en'));
+  const q = await rh.newPage(); watch(q, 'household 2');
+  await step('19 second household sends a reading', q, async () => {
+    await signIn(q, REJECT_PHONE);
+    await readMeter(q);
+    await confirmAndSend(q);
+  });
+  await step('20 officer rejects it, with a reason', s, async () => {
+    await s.goto(APP + '/staff/review');
+    const item = s.getByRole('button', { name: new RegExp(name) }).first();
+    await item.waitFor({ timeout: 30000 });
+    await item.click();
+    await s.getByRole('button', { name: 'Reject, ask for a new photo' }).click();
+    await s.getByLabel('Why are you rejecting this reading?').selectOption('digits');
+    await s.getByRole('button', { name: 'Reject the reading' }).click();
+    await s.waitForTimeout(8000); // 5 s undo window, then the request
+  });
+  await step('21 household sees why', q, async () => {
+    await q.goto(APP + '/messages');
+    await q.getByText(/The numbers did not match the photo/).first().waitFor({ timeout: 30000 });
+  });
+  await step('22 activity keeps the reason', s, async () => {
+    await s.goto(APP + '/staff/activity');
+    await s.getByText(/do not match the photo/).first().waitFor({ timeout: 30000 });
+  });
+}
 
 console.log('\n==== PROBLEMS (' + problems.length + ') ====');
 for (const x of problems) console.log(' -', x);

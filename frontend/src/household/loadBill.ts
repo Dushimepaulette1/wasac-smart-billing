@@ -42,7 +42,7 @@ export default async function loadBill(customerId: string, billId: number | null
   if (index === -1) throw new ApiError('notFound', 404, `Bill ${billId} not found`);
   const bill = bills[index];
   if (!bill) throw new ApiError('notFound', 404, `Bill ${billId} not found`);
-  const tariff = await api.calculateBill(bill.consumption_m3);
+  const tariff = await api.calculateBill(bill.consumption_m3, bill.tariff_version);
 
   const isNewest = index === 0;
   return {
@@ -58,7 +58,7 @@ export default async function loadBill(customerId: string, billId: number | null
     reading: isNewest
       ? {
           cells: cellsFromCubicMetres(customer.last_reading),
-          previous: customer.last_reading - bill.consumption_m3,
+          previous: customer.last_reading - (bill.consumption_current ?? bill.consumption_m3),
         }
       : null,
     // Oldest first, ending with this bill, for the usage bars.

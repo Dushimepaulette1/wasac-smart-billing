@@ -78,7 +78,7 @@ def test_when_asking_for_the_bill_and_paying_should_answer_and_pay(anon_client, 
     assert "RWF 6,460, not paid" in dial(anon_client, "9*2")[1]
     assert dial(anon_client, "9*3")[1].startswith("CON Pay RWF 6,460 with MoMo")
     # Without the MoMo API, USSD gives WASAC's MoMo Pay code to dial.
-    assert dial(anon_client, "9*3*1")[1] == "END Pay with WASAC's MoMo Pay code, then enter the transaction ID in the Mubazi app."
+    assert dial(anon_client, "9*3*1")[1] == "END Pay with WASAC's MoMo Pay code, then choose 4 in the menu to send the transaction ID."
     assert dial(anon_client, "9*3")[1].startswith("CON Pay RWF 6,460")  # still unpaid until an officer confirms
 
 
@@ -94,3 +94,42 @@ def test_when_the_choice_is_not_on_the_menu_should_say_so(anon_client, household
                                          ("565846", None), ("abc", None), ("", None)])
 def test_when_reading_typed_digits_should_accept_8_digits_or_a_decimal(typed, value):
     assert parse_reading(typed) == value
+
+
+@pytest.fixture
+def bill_to_pay(db, household):
+    db.add(Bill(customer_id=household[0], consumption_m3=12, amount_due=6460.0, payment_status="unpaid"))
+    db.commit()
+
+
+def test_when_paying_by_momo_pay_should_take_the_transaction_id_on_ussd(anon_client, db, bill_to_pay):
+    from app.models import Payment
+
+    dial(anon_client, "9*3*1")
+    assert dial(anon_client, "9*4")[1].startswith("CON Type the transaction ID")
+    answer = dial(anon_client, "9*4*MP12345678")[1]
+    assert answer.startswith("END Thank you. WASAC is checking your payment")
+    assert db.query(Payment).one().transaction_id == "MP12345678"
+    assert dial(anon_client, "9*4")[1].startswith("END You have no payment")  # nothing left to give
+
+
+def test_when_the_transaction_id_is_malformed_should_say_so_and_keep_waiting(anon_client, db, bill_to_pay):
+    from app.models import Payment
+
+    dial(anon_client, "9*3*1")
+    assert "letters and numbers" in dial(anon_client, "9*4*a!")[1]
+    assert db.query(Payment).one().transaction_id is None
+
+
+def test_when_the_transaction_id_was_used_for_another_payment_should_refuse_it(anon_client, db, bill_to_pay, household):
+    from app.models import Payment
+
+    dial(anon_client, "9*3*1")
+    db.add(Payment(bill_id=db.query(Payment).one().bill_id, provider="momo_pay", reference_id="old", status="successful",
+                   amount=1.0, currency="RWF", transaction_id="MP12345678"))
+    db.commit()
+    assert "already used" in dial(anon_client, "9*4*MP12345678")[1]
+
+
+def test_when_there_is_no_payment_waiting_should_not_ask_for_a_transaction_id(anon_client, household):
+    assert dial(anon_client, "9*4")[1] == "END You have no payment waiting for a transaction ID."

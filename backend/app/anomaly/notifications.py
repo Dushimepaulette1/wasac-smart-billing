@@ -21,6 +21,9 @@ ACTIONS = {
     AnomalyType.METER_STUCK: Action(sms_household=False, staff_review=True),
     AnomalyType.UNUSUAL: Action(sms_household=False, staff_review=True),
     AnomalyType.LOCATION_CHECK: Action(sms_household=False, staff_review=True),
+    AnomalyType.NO_BASELINE: Action(sms_household=False, staff_review=True),
+    AnomalyType.EDITED_DOWN: Action(sms_household=False, staff_review=True),
+    AnomalyType.ROLLOVER: Action(sms_household=False, staff_review=True),
 }
 NO_ACTION = Action(sms_household=False, staff_review=False)
 
@@ -46,6 +49,18 @@ MESSAGES = {
         "WASAC: We could not confirm this photo was taken at your meter, so an officer will check "
         "the reading before billing."
     ),
+    AnomalyType.NO_BASELINE: (
+        "WASAC: This is the first reading for your meter. An officer will check it and record it as your "
+        "starting point. Your first bill will come with your next reading."
+    ),
+    AnomalyType.EDITED_DOWN: (
+        "WASAC: The reading you sent is lower than what we read in your photo, so an officer will compare "
+        "the two before billing."
+    ),
+    AnomalyType.ROLLOVER: (
+        "WASAC: Your meter seems to have gone past its highest number and started again from zero. "
+        "An officer will check the reading before billing."
+    ),
 }
 
 
@@ -55,8 +70,27 @@ RESUBMIT_MESSAGE = (
 )
 
 
+RESUBMIT_REASONS = {
+    "photo": "The photo was not clear enough.",
+    "digits": "The numbers did not match the photo.",
+    "meter": "The photo did not show your meter.",
+}
+
+
+def resubmit_message(reason_code: Optional[str] = None) -> str:
+    """The officer's reason in fixed words; anything they typed stays with staff."""
+    why = RESUBMIT_REASONS.get(reason_code or "")
+    return f"WASAC: We could not confirm your last meter reading. {why} Please submit a new, clear photo of your water meter." \
+        if why else RESUBMIT_MESSAGE
+
+
 def confirmed_message(reading_m3: float, amount_rwf: float) -> str:
     return f"WASAC: Your meter reading of {reading_m3:.3f} m3 has been confirmed. Bill: RWF {amount_rwf:,.0f}."
+
+
+def starting_point_message(reading_m3: float) -> str:
+    return (f"WASAC: Your first meter reading of {reading_m3:.3f} m3 is recorded as your starting point. "
+            "Your first bill will come with your next reading.")
 
 
 def action_for(anomaly_type: AnomalyType) -> Action:
