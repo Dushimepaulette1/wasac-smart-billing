@@ -235,7 +235,7 @@ waits for it to start again (about a minute: start, model download, model loadin
 ## Project Structure
 
 ```
-wasac-platform/
+wasac-smart-billing/
 ├── backend/
 │   ├── app/                     # the API (run: uvicorn app.main:app)
 │   │   ├── main.py              # builds the app: start-up, guards (rate limits, CORS), routes
@@ -243,7 +243,9 @@ wasac-platform/
 │   │   │   ├── deps.py          # who is asking? require_staff, require_role, household_access
 │   │   │   └── routes/          # one file per area:
 │   │   │       ├── readings.py        # /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
-│   │   │       ├── billing.py         # /customers, /customers/{id}/bills, /bills/{id}/pay
+│   │   │       ├── billing.py         # /customers, /customers/{id}/bills
+│   │   │       ├── payments.py        # /bills/{id}/pay, /payments/{id}, /api/payments/* (staff checks)
+│   │   │       ├── bill_corrections.py # correcting billed readings, with a second approver
 │   │   │       ├── anomaly.py         # /api/anomaly/* (messages, review queue, decisions)
 │   │   │       ├── household_auth.py  # /household/* (SMS sign-in)
 │   │   │       ├── staff_auth.py      # /auth/* (staff sign-in, activity, accounts)
@@ -253,8 +255,10 @@ wasac-platform/
 │   │   ├── db/                  # session.py (connection), init_db.py (tables), seed.py (local samples)
 │   │   ├── models/              # database tables (from app.models import Customer, Bill, ...)
 │   │   ├── schemas/             # request/response shapes (from app.schemas import ...)
-│   │   ├── services/            # billing.py (tariff), sms.py (Africa's Talking), audit.py (staff log)
-│   │   ├── anomaly/             # leaks and wrong readings: rules + Isolation Forest, location check, review
+│   │   ├── services/            # billing (tariff), payments and payment_providers, balance, bill_corrections,
+│   │   │                        # households, sms (Africa's Talking), audit (staff log)
+│   │   ├── anomaly/             # scoring (rules + Isolation Forest), evaluation (every check), service (store),
+│   │   │                        # location check, review
 │   │   ├── vision/              # meter-photo models (PyTorch or ONNX), pipeline, live guidance
 │   │   └── utils/               # small helpers (phone numbers)
 │   ├── ml/                      # model code + config shared with the training notebook; weights downloaded here
@@ -276,8 +280,10 @@ wasac-platform/
 │       ├── pages/           # One folder per screen
 │       ├── router/          # HouseholdRoutes, and StaffRoutes under /staff
 │       └── styles/          # Design tokens, fonts, base typography
+├── docs/                    # decisions, testing evidence, report, Kinyarwanda review sheets, reviews
 ├── notebooks/
 │   └── wasac_meter_reading_pipeline.ipynb
+├── tools/e2e/               # Playwright end-to-end check
 └── README.md
 ```
 
@@ -306,7 +312,7 @@ Render. The sandbox uses test money in EUR and approves by itself.
 
 `POST /ussd` is the Africa's Talking USSD callback (`backend/app/services/ussd_menu.py`):
 Kinyarwanda first (9 for English), 1 send a reading (8 digits, then confirm), 2 my bill, 3 pay
-my bill (MoMo prompt). The same rules apply as in the app. The callback URL must carry the
+my bill (MoMo prompt, or the MoMo Pay code), 4 send the MoMo Pay transaction ID. The same rules apply as in the app. The callback URL must carry the
 secret `?token=<USSD_CALLBACK_TOKEN>` (Render generates it); without it the endpoint refuses, so
 nobody can act for someone else's number. In the Africa's Talking sandbox: USSD → create a
 channel → callback `https://wasac-api.onrender.com/ussd?token=<the token>`.

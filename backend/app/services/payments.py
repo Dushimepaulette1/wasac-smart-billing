@@ -38,7 +38,7 @@ from app.models.payment import FAILED, MOMO_PAY, PENDING, SUCCESSFUL, Payment
 from app.services import momo
 from app.services.balance import bill_balance, settle
 from app.services.billing import whole_francs
-from app.services.payment_providers import API_PROVIDERS, SIMULATED, choose_provider
+from app.services.payment_providers import API_PROVIDERS, choose_provider
 from app.services.sms import send_sms
 
 # After this an attempt MTN has not settled is shown as still being confirmed (it stays pending).
