@@ -45,9 +45,9 @@ jobs:
       # What the API serves with, plus CPU-only torch for the three tests that check the ONNX
       # steps match torchvision and the torch decoder (tests/vision/test_onnx_models.py).
       - run: >
-          pip install -r requirements-serve.txt pytest==8.3.3
+          pip install -r requirements-serve.txt pytest==8.3.3 pytest-cov==5.0.0
           torch==2.3.0 torchvision==0.18.0 --extra-index-url https://download.pytorch.org/whl/cpu
-      - run: python -m pytest -q
+      - run: python -m pytest -q --cov=app --cov-report=term
 
   frontend:
     runs-on: ubuntu-latest
@@ -64,5 +64,5 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: npx vitest run
+      - run: npx vitest run --coverage --coverage.reporter=text-summary
       - run: npm run build
