@@ -30,9 +30,8 @@ from app.models import Bill, Customer, Meter, Payment, Reading
 from app.models.bill_correction import (
     APPLIED, AWAITING, BASELINE, DECLINED, READING, STALE, BillAdjustment, BillCorrection,
 )
-from app.models.payment import PENDING
 from app.services.audit import record
-from app.services.balance import balances, settle
+from app.services.balance import balances, in_flight, settle
 from app.services.billing import bill_tariff, calculate_bill
 from app.services.meter_correction import CORRECTION, MAX_READING_M3
 from app.services.sms import send_sms
@@ -138,7 +137,7 @@ def plan_correction(db: Session, reading: Reading, corrected: float, start_m3: O
             changes.append(_change(db, next_bill, following.effective_value - corrected, money[next_bill.bill_id].charges))
 
     open_payment = db.query(Payment.id).filter(Payment.bill_id.in_([c.bill.bill_id for c in changes]),
-                                               Payment.status == PENDING).first()
+                                               in_flight()).first()
     if open_payment:
         raise BillCorrectionError(409, "A payment on this bill is still open. Wait for it to finish, then correct it.")
     return changes

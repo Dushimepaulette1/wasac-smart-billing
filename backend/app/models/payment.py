@@ -7,6 +7,7 @@ from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, Stri
 from app.db.session import Base
 
 PENDING, SUCCESSFUL, FAILED = "pending", "successful", "failed"
+MOMO_PAY = "momo_pay"
 
 
 class Payment(Base):

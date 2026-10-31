@@ -195,7 +195,8 @@ def test_when_a_reading_is_waiting_for_review_should_refuse(db, anon_client, sta
 
 def test_when_a_payment_is_open_on_the_bill_should_refuse(db, anon_client, staff, account):
     _, _, r2, b2 = account
-    db.add(Payment(bill_id=b2.bill_id, provider="momo_pay", reference_id="open", status="pending", amount=1.0, currency="RWF"))
+    db.add(Payment(bill_id=b2.bill_id, provider="momo_pay", reference_id="open", status="pending", amount=1.0, currency="RWF",
+                   transaction_id="MP1234"))
     db.commit()
     r = correct(anon_client, staff["sup1"], r2, "440.000")
     assert r.status_code == 409 and "payment" in r.json()["detail"]

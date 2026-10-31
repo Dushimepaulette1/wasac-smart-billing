@@ -9,23 +9,30 @@ a payment arrived). Nothing here changes a bill or a payment.
     outstanding  net when above zero; a net below zero is an overpayment, which settle moves to credit
 
 Credits are applied by settle, oldest bill first, whenever a credit or a bill appears. A bill with a
-payment attempt open is skipped: the prompt is for the amount it showed.
+payment in flight is skipped: the prompt is for the amount it showed.
 """
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, Optional
 
 from fastapi import Request
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.models import Bill, Customer
 from app.models.bill_correction import APPLIED, OVERPAYMENT, USED, AccountCredit, BillAdjustment, BillCorrection
-from app.models.payment import PENDING, SUCCESSFUL, Payment
+from app.models.payment import MOMO_PAY, PENDING, SUCCESSFUL, Payment
 from app.services.audit import record
 
 SETTLED_BELOW = 0.5  # under half a franc: MoMo takes whole francs, so a bill can end on a remainder
 SYSTEM = "system"
+
+
+def in_flight():
+    """Payment filter: money that may be moving. An MTN prompt, or a MoMo Pay payment with its
+    transaction ID. A MoMo Pay attempt with no ID only means Pay was tapped: the household may never
+    have paid, and such an attempt never expires, so it must not hold a bill's figures still."""
+    return and_(Payment.status == PENDING, or_(Payment.provider != MOMO_PAY, Payment.transaction_id.isnot(None)))
 
 
 @dataclass
@@ -132,7 +139,7 @@ def settle(db: Session, customer_id: Optional[str], actor: str = SYSTEM, request
     if available < 0.01:
         return
     busy = {bill_id for (bill_id,) in db.query(Payment.bill_id).join(Bill, Bill.bill_id == Payment.bill_id).filter(
-        Bill.customer_id == customer_id, Payment.status == PENDING).all()}
+        Bill.customer_id == customer_id, in_flight()).all()}
     for b in balances(db, customer_id).values():
         if available < 0.01:
             break

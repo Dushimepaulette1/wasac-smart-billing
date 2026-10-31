@@ -9,7 +9,7 @@ The code cannot settle these. Nothing here was guessed into the app as if it wer
 | Tariff rates and service charge | `v1-provisional` in `backend/app/services/tariffs.json`, from the project brief | Every bill depends on it. When confirmed, add a new version; never edit one that bills use |
 | Tier scaling for long periods | Tiers apply per bill, however long the period | A 60-day gap pushes use into higher tiers. Whether tiers scale with days is a tariff rule |
 | Charge for a period with no known start | A baseline correction bills reading minus start; start equal to the reading bills nothing, not even the service charge | Follows the decision that a first reading creates no bill. WASAC may want the service charge |
-| Rounding of bills | Bills keep 2 decimals; payments are whole francs, half up | WASAC's own rounding rule is unknown |
+| Rounding of bills | Bills keep 2 decimals; payments are whole francs, half up, so a bill can leave under one franc of credit | WASAC's own rounding rule is unknown |
 | Refunds | No cash refunds: overpayments stay as credit | Credit on a closed account needs a process outside the app |
 
 ## Needs real consumption histories
