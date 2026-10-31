@@ -38,6 +38,7 @@ from app.models.payment import FAILED, MOMO_PAY, PENDING, SUCCESSFUL, Payment
 from app.services import momo
 from app.services.balance import bill_balance, settle
 from app.services.billing import whole_francs
+from app.services.payment_providers import API_PROVIDERS, SIMULATED, choose_provider
 from app.services.sms import send_sms
 
 # After this an attempt MTN has not settled is shown as still being confirmed (it stays pending).
@@ -49,7 +50,6 @@ OLD_LOCAL_FAILURE = "no answer from MTN Mobile Money"
 RECHECK_WINDOW = timedelta(hours=24)
 NO_RECORD = "MTN has no record yet: a staff check is needed"
 CLOSED_BY_STAFF = "closed by staff: "
-SIMULATED = "simulated"
 
 
 def pay_code():
@@ -75,7 +75,6 @@ class PaymentError(Exception):
 
 FINAL_FAILURES = {"FAILED", "REJECTED", "TIMEOUT", "EXPIRED", "CANCELLED"}
 NOT_FOUND = "NOT_FOUND"
-API_PROVIDERS = ("momo", "momo_sandbox")
 
 
 def _lock_bill(db: Session, bill_id: int) -> Bill:
@@ -165,8 +164,8 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         db.commit()
         return refresh(db, open_attempt)  # never ask MTN twice, never two MoMo Pay attempts
 
-    configured = momo.momo_configured()
-    if configured:
+    provider = choose_provider()
+    if provider.asks_mtn:
         try:
             settled = _settle_old_failures(db, bill)
         except PaymentError:
@@ -175,19 +174,18 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         if settled:
             db.commit()
             return settled
-    simulate = not configured and os.getenv("PAYMENTS_SIMULATE", "0") == "1"
     payment = Payment(
         bill_id=bill.bill_id,
-        provider=momo.provider_name() if configured else (SIMULATED if simulate else MOMO_PAY),
+        provider=provider.name,
         reference_id=str(uuid.uuid4()),
         status=PENDING,
         amount=whole_francs(owed.outstanding),  # what is actually collected, so the record matches MTN's
-        currency=momo.currency() if configured else "RWF",
+        currency=provider.currency,
     )
     db.add(payment)
-    if simulate:
+    if provider.settles_at_once:
         db.flush()
-        _mark_paid(db, payment, bill, f"SIM-{bill.bill_id:06d}-{payment.id}")
+        _mark_paid(db, payment, bill, provider.receipt_id(payment, bill))
     try:
         db.commit()
     except IntegrityError:  # another request opened an attempt first (uq_payments_one_pending)
@@ -196,12 +194,9 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
         if existing is None:
             raise
         return refresh(db, existing)
-    if simulate or not configured:  # simulated: paid; MoMo Pay: wait for the household's transaction ID
-        return payment
 
     try:
-        momo.request_to_pay(payment.reference_id, payment.amount, phone, external_id=f"bill-{bill.bill_id}",
-                            note=f"WASAC water bill {bill.bill_id}")
+        provider.start(payment, bill, phone)
     except momo.MomoError as e:
         payment = _lock_payment(db, payment.id)
         if e.uncertain:  # MTN may have it: keep the attempt open and let MTN's status decide
@@ -215,7 +210,7 @@ def start_payment(db: Session, bill: Bill, phone: str) -> Payment:
 
 def refresh(db: Session, payment: Payment) -> Payment:
     """Ask MTN how a pending API attempt ended. Only MTN's answer closes it. Commits."""
-    if payment.status != PENDING or payment.provider in (SIMULATED, MOMO_PAY):
+    if payment.status != PENDING or payment.provider not in API_PROVIDERS:
         return payment
     try:
         answer = momo.payment_status(payment.reference_id)
