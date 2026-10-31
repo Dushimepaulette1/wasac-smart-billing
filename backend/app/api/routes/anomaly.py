@@ -5,15 +5,19 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from sqlalchemy.orm import Session
 
 from app.models import AnomalyFlag, FLAG_STATUS_OPEN, FLAG_STATUS_RESOLVED, MessageDismissal
+from app.anomaly.config import AnomalyConfig
+from app.anomaly.edits import changed_positions, household_digits
 from app.anomaly.review import ReviewError, resolve_flag
 from app.anomaly.service import notify_household, score_submission
 from app.services.audit import record
+from app.services.balance import current_consumption
 from app.services.photo_evidence import photo_for_reading
 from app.models import StaffUser
 from app.api.deps import Access, household_access
 from app.api.deps import require_staff, staff_from_header
 from app.db.session import get_db
-from app.models import Customer, Reading
+from app.anomaly.statuses import NOT_CONFIRMED, READING_PENDING
+from app.models import Customer, Meter, Reading
 from app.schemas import (
     AnomalyFlagOut,
     AnomalyResultSchema,
@@ -25,6 +29,24 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/anomaly")
+CONFIG = AnomalyConfig()  # only the meter's digit layout (8 wheels, 3 for litres) is used here
+
+
+def _history_point(r: Reading, corrected: dict) -> HistoryPoint:
+    used = corrected.get(r.reading_id, r.implied_consumption)
+    return HistoryPoint(
+        date=r.submission_time, reading_m3=r.effective_value, consumption_m3=used,
+        original_reading_m3=r.submitted_value if r.effective_value != r.submitted_value else None,
+        original_consumption_m3=r.implied_consumption if used != r.implied_consumption else None,
+    )
+
+
+def _previous_reading(flag: AnomalyFlag, reading: Optional[Reading], meter: Optional[Meter]) -> Optional[float]:
+    """A held reading is measured from the meter's last accepted reading (what _accept bills from).
+    An already-billed one moved the meter on, so its flag's own record of the previous reading is used."""
+    if reading is not None and reading.validation_status == READING_PENDING and meter is not None:
+        return meter.last_reading
+    return (flag.features or {}).get("previous_reading_m3")
 
 
 @router.post("/score", response_model=AnomalyResultSchema)
@@ -104,13 +126,21 @@ async def resolve(
     flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == flag_id).first()
     if not flag:
         raise HTTPException(status_code=404, detail="Anomaly flag not found")
+    reason = (body.reason or "").strip() if body else ""
+    if body and body.outcome == "reject" and len(reason) < 3:
+        raise HTTPException(status_code=422, detail="Say why the reading is rejected.")
     try:
-        result = resolve_flag(db, flag, body.outcome if body else None)
+        result = resolve_flag(db, flag, body.outcome if body else None, body.reason_code if body else None)
     except ReviewError as e:
         db.rollback()
         raise HTTPException(status_code=e.status_code, detail=e.detail)
+    detail = f"{flag.household_id} {flag.anomaly_type}"
+    if result.bill:
+        reason = f"bill {result.bill.bill_id}, RWF {result.bill.amount_due:,.0f}" + (f", {reason}" if reason else "")
+    elif result.outcome == "accept":
+        reason = "starting point, no bill" + (f", {reason}" if reason else "")
     record(db, staff.username, result.outcome or "close", target=f"flag {flag.id}",
-           detail=f"{flag.household_id} {flag.anomaly_type}", request=request)
+           detail=f"{detail}: {reason}" if reason else detail, request=request)
     db.refresh(flag)
     return ResolveFlagResponse(
         **AnomalyFlagOut.model_validate(flag).model_dump(exclude={"reading_status"}),
@@ -137,14 +167,20 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
     for flag in flags:
         reading = db.query(Reading).filter(Reading.reading_id == flag.reading_id).first() if flag.reading_id else None
         customer = db.query(Customer).filter(Customer.meter_id == flag.household_id).first()
+        meter = db.get(Meter, flag.household_id)
+        history_query = db.query(Reading).filter(
+            Reading.meter_id == flag.household_id, Reading.validation_status.notin_(NOT_CONFIRMED),
+        )
+        if reading:
+            history_query = history_query.filter(Reading.submission_time < reading.submission_time)
         history = (
-            db.query(Reading)
-            .filter(Reading.meter_id == flag.household_id, Reading.validation_status == "valid")
+            history_query
             .order_by(Reading.submission_time.desc())
             .limit(6)
             .all()
         )
         photo = photo_for_reading(db, reading.reading_id) if reading else None
+        corrected = current_consumption(db, [r.reading_id for r in history])
         items.append(ReviewItem(
             # reading_status tells the two kinds apart: pending_review needs accept or reject;
             # an already-billed reading (valid, anomaly_flagged) only needs closing after follow-up.
@@ -152,6 +188,8 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
                 update={"reading_status": reading.validation_status if reading else None}
             ),
             reading_m3=reading.submitted_value if reading else None,
+            consumption_m3=reading.implied_consumption if reading else None,
+            previous_reading_m3=_previous_reading(flag, reading, meter),
             submitted_at=reading.submission_time if reading else None,
             reading_confidence=reading.crnn_confidence if reading else None,
             customer_id=customer.customer_id if customer else None,
@@ -160,10 +198,13 @@ async def review_queue(db: Session = Depends(get_db), _staff: StaffUser = Depend
             reading_id=reading.reading_id if reading else None,
             photo_available=bool(photo and photo.image_jpeg),
             reader_digits=photo.reader_digits if photo else None,
+            household_digits=household_digits(reading.submitted_value, CONFIG) if reading else None,
+            changed_positions=(changed_positions(photo.reader_digits, household_digits(reading.submitted_value, CONFIG))
+                               if photo and reading else []),
             edited_by_household=photo.edited if photo else None,
             reader_models=photo.models if photo else None,
             history=[
-                HistoryPoint(date=r.submission_time, reading_m3=r.submitted_value, consumption_m3=r.implied_consumption)
+                _history_point(r, corrected)
                 for r in reversed(history)
             ],
         ))

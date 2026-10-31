@@ -4,7 +4,11 @@
  * code by USSD enters the transaction ID from MTN's SMS; the bill stays unpaid until an officer
  * finds that transaction in WASAC's MoMo merchant account (portal or statement) and confirms it
  * here, or declines it with a reason (the household gets an SMS and can pay again). Every
- * decision is in Activity.
+ * decision is in Activity. Bills paid more than once are listed too (the extra is already credit).
+ *
+ * MTN payments that have not settled are here too. Nothing here ever sends a prompt or retries a
+ * charge: an officer can ask MTN again, and a supervisor who has looked in MTN's own records closes
+ * the attempt, with the evidence. MTN's live status overrules them (backend payments.reconcile).
  */
 
 import { useState } from 'react';
@@ -17,6 +21,7 @@ import useRequest from '../../api/useRequest';
 import type { PaymentToCheck } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
 import { dateTime } from '../../staff/time';
+import { hasRole, useAuth } from '../../staff/auth';
 import styles from '../../staff/staff.module.css';
 
 function Payments() {
@@ -28,6 +33,11 @@ function Payments() {
   const [busy, setBusy] = useState<number | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const { user } = useAuth();
+  const supervisor = hasRole(user, 'supervisor');
+  const [settling, setSettling] = useState<{ id: number; outcome: 'paid' | 'failed' } | null>(null);
+  const [evidence, setEvidence] = useState('');
+  const [reference, setReference] = useState('');
 
   const act = async (row: PaymentToCheck, how: 'confirm' | 'decline') => {
     setBusy(row.id);
@@ -43,6 +53,48 @@ function Payments() {
       }));
     } catch (err) {
       setError(err);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const quick = async (row: PaymentToCheck, how: 'recheck' | 'reviewed') => {
+    setBusy(row.id);
+    setError(null);
+    try {
+      if (how === 'reviewed') {
+        await api.markPaymentReviewed(row.id);
+        setDone((d) => [...d, row.id]);
+      } else {
+        const p = await api.recheckPayment(row.id);
+        setResult(t(p.status === 'pending' ? 'staff.payments.stillOpen' : 'staff.payments.settledByMtn'));
+        if (p.status !== 'pending') setDone((d) => [...d, row.id]);
+      }
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const reconcile = async (row: PaymentToCheck) => {
+    if (!settling) return;
+    setBusy(row.id);
+    setError(null);
+    try {
+      await api.reconcilePayment(row.id, {
+        outcome: settling.outcome,
+        evidence: evidence.trim(),
+        ...(settling.outcome === 'paid' ? { transaction_id: reference.trim() } : {}),
+      });
+      setDone((d) => [...d, row.id]);
+      setSettling(null);
+      setEvidence('');
+      setReference('');
+      setResult(t(settling.outcome === 'paid' ? 'staff.payments.reconciledPaid' : 'staff.payments.reconciledFailed'));
+    } catch (err) {
+      setError(err);
+      rows.retry();
     } finally {
       setBusy(null);
     }
@@ -88,7 +140,56 @@ function Payments() {
                       <td data-label={t('staff.payments.transaction')} className="code">{r.transaction_id}</td>
                       <td data-label={t('staff.payments.sent')} className="num">{dateTime(r.submitted_at)}</td>
                       <td data-label={t('staff.payments.check')}>
-                        {declining === r.id ? (
+                        {r.kind === 'paid_twice' ? (
+                          <div className={styles.form}>
+                            <p className="text-small">{t('staff.payments.paidTwice')}</p>
+                            <Button variant="text" loading={busy === r.id} onClick={() => quick(r, 'reviewed')}>
+                              {t('staff.payments.markReviewed')}
+                            </Button>
+                          </div>
+                        ) : r.kind === 'needs_reconciliation' ? (
+                          <div className={styles.form}>
+                            <p className="text-small">{t('staff.payments.notSettled')}{r.reason ? ` (${r.reason})` : ''}</p>
+                            {settling?.id === r.id ? (
+                              <>
+                                {settling.outcome === 'paid' && (
+                                  <label className={styles.filter}>
+                                    {t('staff.payments.mtnTransaction')}
+                                    <input className={styles.search} value={reference} onChange={(e) => setReference(e.target.value)} />
+                                  </label>
+                                )}
+                                <label className={styles.filter}>
+                                  {t('staff.payments.evidence')}
+                                  <input className={styles.search} maxLength={160} value={evidence} onChange={(e) => setEvidence(e.target.value)} />
+                                </label>
+                                <div className={styles.rowActions}>
+                                  <Button variant="secondary" loading={busy === r.id}
+                                    disabled={evidence.trim().length < 10 || (settling.outcome === 'paid' && reference.trim().length < 3)}
+                                    onClick={() => reconcile(r)}>
+                                    {t('staff.payments.saveDecision')}
+                                  </Button>
+                                  <Button variant="text" onClick={() => setSettling(null)}>{t('action.cancel')}</Button>
+                                </div>
+                              </>
+                            ) : (
+                              <div className={styles.rowActions}>
+                                <Button variant="secondary" loading={busy === r.id} onClick={() => quick(r, 'recheck')}>
+                                  {t('staff.payments.recheck')}
+                                </Button>
+                                {supervisor && (
+                                  <>
+                                    <Button variant="text" onClick={() => setSettling({ id: r.id, outcome: 'paid' })}>
+                                      {t('staff.payments.mtnPaid')}
+                                    </Button>
+                                    <Button variant="text" onClick={() => setSettling({ id: r.id, outcome: 'failed' })}>
+                                      {t('staff.payments.mtnNotPaid')}
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : declining === r.id ? (
                           <div className={styles.form}>
                             <label className={styles.filter}>
                               {t('staff.payments.reason')}

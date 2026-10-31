@@ -27,6 +27,11 @@ import styles from './Messages.module.css';
 
 export { SHOWN_TYPES } from '../../household/status';
 
+/** Why a reading was rejected, in fixed words. An officer's own typed reason stays with staff. */
+export function rejectionKey(flag: AnomalyFlag): string | null {
+  return flag.decision_code && flag.decision_code !== 'other' ? `msg.rejected.${flag.decision_code}` : null;
+}
+
 /** How a check by a WASAC officer ended, from the flagged reading's status. */
 function CheckStatus({ flag }: { flag: AnomalyFlag }) {
   const { t } = useI18n();
@@ -44,7 +49,10 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
       <div className={styles.outcome}>
         <p className={styles.status}>
           <Icon name="alert" size={20} />
-          <span>{t('msg.status.rejected')}</span>
+          <span>
+            {t('msg.status.rejected')}
+            {rejectionKey(flag) && ` ${t(rejectionKey(flag) ?? '')}`}
+          </span>
         </p>
         <Button icon="camera" onClick={() => navigate('/submit/camera')}>
           {t('home.read')}
@@ -56,7 +64,9 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
     <p className={styles.status}>
       <Icon name="check" size={20} />
       <span>
-        {flag.reading_status === 'valid' ? (
+        {flag.reading_status === 'valid' && flag.anomaly_type === 'NO_BASELINE' ? (
+          t('msg.status.startingPoint')
+        ) : flag.reading_status === 'valid' ? (
           <>
             {t('msg.status.accepted')} <Link to="/history">{t('msg.seeBills')}</Link>
           </>
@@ -68,8 +78,11 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
   );
 }
 
+const isDigitShift = (flag: AnomalyFlag) => flag.anomaly_type === 'MISREAD_SUSPECTED' && Boolean(flag.features?.digit_shift);
+
 /** What was noticed; for a location check, which reason (camera photo far away, no location, gallery photo). */
 function noticedKey(flag: AnomalyFlag): string {
+  if (isDigitShift(flag)) return 'msg.MISREAD_SUSPECTED.digitShift';
   if (flag.anomaly_type !== 'LOCATION_CHECK') return `msg.${flag.anomaly_type}.noticed`;
   const reason = locationFinding(flag.features)?.reason ?? 'no_location';
   return `msg.LOCATION_CHECK.${reason}`;
@@ -98,7 +111,7 @@ function Message({ flag, onDelete }: { flag: AnomalyFlag; onDelete: (id: number)
 
   return (
     <article className={`panel ${styles.message}`}>
-      <h2 className="panel-title">{t(`msg.${type}.title`)}</h2>
+      <h2 className="panel-title">{t(isDigitShift(flag) ? 'msg.MISREAD_SUSPECTED.digitShiftTitle' : `msg.${type}.title`)}</h2>
 
       <p>{t(noticedKey(flag), { date: when })}</p>
 

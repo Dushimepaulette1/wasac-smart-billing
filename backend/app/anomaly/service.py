@@ -1,41 +1,39 @@
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
-from typing import List, Optional, Sequence
+"""Storing a reading: lock the meter, evaluate it, then bill it or hold it for an officer.
+
+    app/anomaly/scoring.py      rules and model, on the household's history
+    app/anomaly/evaluation.py   every check, read-only
+"""
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.anomaly.config import AnomalyConfig
-from app.models import AnomalyFlag, FLAG_STATUS_OPEN
-from app.anomaly.features import ReadingPoint, compute_features
-from app.anomaly.location import PhotoEvidence, check_location
-from app.models import ReadingEvidence
-from app.anomaly.model import AnomalyModel, load_model_if_available
-from app.anomaly.notifications import RETAKE_MESSAGE, action_for, dispatch, message_for, sms_household
-from app.anomaly.readings import digits_to_m3
-from app.anomaly.rules import AnomalyType, apply_rules, classify_model_anomaly, is_cold_start
-from app.anomaly.statuses import (
-    NOT_CONFIRMED,
-    PENDING_REVIEW_TYPES,
-    READING_FLAGGED,
-    READING_PENDING,
-    READING_REJECTED,
-    READING_VALID,
+from app.anomaly.evaluation import (  # noqa: F401  (imported from here by routes and tests)
+    DUPLICATE_WINDOW,
+    Evaluation,
+    ReadingRefused,
+    evaluate_reading,
+    has_baseline,
+    review_reason,
 )
-from app.models import Bill, Customer, Meter, Reading
+from app.anomaly.location import PhotoEvidence
+from app.anomaly.notifications import dispatch, sms_household
+from app.anomaly.rules import AnomalyType
+from app.anomaly.scoring import (  # noqa: F401
+    AnomalyResult,
+    assess,
+    load_history,
+    save_flag,
+    score_reading,
+    score_submission,
+    since_last_reset,
+)
+from app.anomaly.statuses import READING_FLAGGED, READING_PENDING, READING_VALID
+from app.models import Bill, Customer, Meter, PhotoRead, Reading, ReadingEvidence
+from app.services.balance import settle
 from app.services.billing import build_bill
-from app.services.reading_window import ReadingBlock, reading_block
-
-# The same value for the same meter again within this time is a retry or a double tap, not a reading.
-DUPLICATE_WINDOW = timedelta(minutes=2)
-
-
-class ReadingRefused(Exception):
-    """The reading was not stored: the household must wait (block), or it was just sent (duplicate)."""
-
-    def __init__(self, message: str, block: Optional[ReadingBlock] = None):
-        super().__init__(message)
-        self.message = message
-        self.block = block
+from app.services.photo_evidence import link_photo
 
 
 def lock_meter(db: Session, meter_id: str) -> Meter:
@@ -49,170 +47,6 @@ def lock_meter(db: Session, meter_id: str) -> Meter:
         .populate_existing()
         .one()
     )
-
-
-@dataclass
-class AnomalyResult:
-    household_id: str
-    reading_m3: Optional[float]
-    daily_consumption: Optional[float]
-    anomaly_score: Optional[float]
-    is_anomaly: bool
-    anomaly_type: str
-    needs_retake: bool
-    message_for_household: str
-    features: dict = field(default_factory=dict)
-    model_used: bool = False
-    flag_id: Optional[int] = None
-    # True when the reading must wait for WASAC staff before it is confirmed or billed.
-    pending_review: bool = False
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-def assess(
-    household_id: str,
-    history: Sequence[ReadingPoint],
-    reading_m3: float,
-    reading_date: datetime,
-    model: Optional[AnomalyModel],
-    config: AnomalyConfig,
-) -> AnomalyResult:
-    """Pure scoring of one reading against the household's history. No database access."""
-    features = compute_features(history, reading_m3, reading_date, config)
-    rule = apply_rules(features, config)
-
-    score: Optional[float] = None
-    model_used = False
-    if rule is not None:
-        anomaly_type = rule
-        score = 0.0 if rule == AnomalyType.BASELINE else 1.0
-    elif is_cold_start(features, config) or model is None:
-        anomaly_type = AnomalyType.NORMAL
-        score = 0.0
-    else:
-        score, flagged = model.score(features.model_vector())
-        model_used = True
-        anomaly_type = classify_model_anomaly(features, config) if flagged else AnomalyType.NORMAL
-
-    is_anomaly = anomaly_type not in (AnomalyType.NORMAL, AnomalyType.BASELINE)
-    feature_dict = features.to_dict() if features else {}
-    feature_dict["cold_start"] = features is None or is_cold_start(features, config)
-    return AnomalyResult(
-        household_id=household_id,
-        reading_m3=reading_m3,
-        daily_consumption=round(features.daily_consumption, 6) if features else None,
-        anomaly_score=score,
-        is_anomaly=is_anomaly,
-        anomaly_type=anomaly_type.value,
-        needs_retake=False,
-        message_for_household=message_for(anomaly_type),
-        features=feature_dict,
-        model_used=model_used,
-        pending_review=anomaly_type in PENDING_REVIEW_TYPES,
-    )
-
-
-def load_history(
-    db: Session, household_id: str, before: datetime, exclude_reading_id: Optional[int] = None
-) -> List[ReadingPoint]:
-    """Confirmed previous readings for this meter. Pending and rejected readings are never history."""
-    query = db.query(Reading.submitted_value, Reading.submission_time).filter(
-        Reading.meter_id == household_id,
-        Reading.submission_time < before,
-        Reading.validation_status.notin_(NOT_CONFIRMED),
-    )
-    if exclude_reading_id is not None:
-        query = query.filter(Reading.reading_id != exclude_reading_id)
-    points = [ReadingPoint(date=t, reading_m3=v) for v, t in query.order_by(Reading.submission_time).all()]
-    return since_last_reset(points)
-
-
-def since_last_reset(points: List[ReadingPoint]) -> List[ReadingPoint]:
-    """Meters only count up, so a drop in confirmed readings is a fresh start: a replaced meter,
-    a staff correction (app/services/meter_correction.py) or an accepted lower reading. History
-    begins there; earlier readings describe the old count and would look like negative use."""
-    start = 0
-    for i in range(1, len(points)):
-        if points[i].reading_m3 < points[i - 1].reading_m3:
-            start = i
-    return points[start:]
-
-
-def _save_flag(
-    db: Session, result: AnomalyResult, reading_id: Optional[int], staff_review: Optional[bool] = None
-) -> None:
-    flag = AnomalyFlag(
-        household_id=result.household_id,
-        reading_id=reading_id,
-        anomaly_type=result.anomaly_type,
-        anomaly_score=result.anomaly_score,
-        features=result.features,
-        requires_staff_review=(
-            action_for(AnomalyType(result.anomaly_type)).staff_review if staff_review is None else staff_review
-        ),
-        message_for_household=result.message_for_household,
-        status=FLAG_STATUS_OPEN,
-    )
-    db.add(flag)
-    db.flush()
-    result.flag_id = flag.id
-
-
-def _resolve(config: Optional[AnomalyConfig], model: Optional[AnomalyModel]):
-    config = config or AnomalyConfig.from_env()
-    return config, (model if model is not None else load_model_if_available(config))
-
-
-def score_reading(
-    db: Session,
-    household_id: str,
-    reading_m3: float,
-    reading_date: datetime,
-    reading_id: Optional[int] = None,
-    config: Optional[AnomalyConfig] = None,
-    model: Optional[AnomalyModel] = None,
-) -> AnomalyResult:
-    """Score an already-converted reading. Flags are flushed, not committed; the caller commits."""
-    config, model = _resolve(config, model)
-    history = load_history(db, household_id, reading_date, exclude_reading_id=reading_id)
-    result = assess(household_id, history, reading_m3, reading_date, model, config)
-    if result.is_anomaly:
-        _save_flag(db, result, reading_id)
-    return result
-
-
-def score_submission(
-    db: Session,
-    household_id: str,
-    reading_digits: str,
-    reading_date: datetime,
-    config: Optional[AnomalyConfig] = None,
-    model: Optional[AnomalyModel] = None,
-) -> AnomalyResult:
-    """Score raw CRNN digits. Wrong-length or non-digit input returns a retake result, never a guess."""
-    if db.query(Meter.meter_id).filter(Meter.meter_id == household_id).first() is None:
-        raise LookupError(f"Household/meter '{household_id}' not found")
-
-    config, model = _resolve(config, model)
-    conversion = digits_to_m3(reading_digits, config)
-    if not conversion.ok:
-        result = AnomalyResult(
-            household_id=household_id,
-            reading_m3=None,
-            daily_consumption=None,
-            anomaly_score=None,
-            is_anomaly=True,
-            anomaly_type=AnomalyType.MISREAD_SUSPECTED.value,
-            needs_retake=True,
-            message_for_household=RETAKE_MESSAGE,
-            features={"conversion_error": conversion.reason, "reading_digits": reading_digits},
-        )
-        _save_flag(db, result, reading_id=None, staff_review=False)  # nothing for staff to decide
-        return result
-
-    return score_reading(db, household_id, conversion.reading_m3, reading_date, config=config, model=model)
 
 
 @dataclass
@@ -231,39 +65,27 @@ def submit_reading(
     method: str,
     evidence: Optional[PhotoEvidence] = None,
     household: bool = False,
+    photo: Optional[PhotoRead] = None,
 ) -> Submission:
     """Store a household reading, score it, and either confirm and bill it or hold it for staff review.
 
-    The meter is locked first, then the checks run: a household (household=True) must be allowed
-    to send a reading now (app/services/reading_window.py), and nobody may send the same value
-    twice within DUPLICATE_WINDOW. Either raises ReadingRefused with nothing stored.
+    The meter is locked first, then evaluate_reading runs every check: a household (household=True)
+    must be allowed to send a reading now (app/services/reading_window.py), and nobody may send the
+    same value twice within DUPLICATE_WINDOW. Either raises ReadingRefused with nothing stored.
 
     Held readings (MISREAD_SUSPECTED, SPIKE, anything below the last confirmed reading, or a photo
     whose location or source needs checking, see app/anomaly/location.py) are not billed and do not move
-    meters.last_reading. Commits; call notify_household afterwards.
+    meters.last_reading. photo (the caller's own, from photo_evidence.claim) is linked to the reading
+    in the same transaction. Commits; call notify_household afterwards.
     """
     now = datetime.utcnow()
     meter = lock_meter(db, meter.meter_id)
-    if household:
-        block = reading_block(db, meter, now)
-        if block:
-            db.rollback()
-            raise ReadingRefused(block.message, block)
-    duplicate = (
-        db.query(Reading.reading_id)
-        .filter(
-            Reading.meter_id == meter.meter_id,
-            Reading.submitted_value == reading_m3,
-            Reading.submission_time > now - DUPLICATE_WINDOW,
-            Reading.validation_status != READING_REJECTED,
-        )
-        .first()
-    )
-    if duplicate:
+    evaluation = evaluate_reading(db, meter, reading_m3, now, evidence=evidence, household=household, photo=photo)
+    if evaluation.refusal:
         db.rollback()
-        raise ReadingRefused("This reading was just sent. Check your bills and messages before sending it again.")
+        raise evaluation.refusal
 
-    consumption = reading_m3 - meter.last_reading
+    consumption = evaluation.consumption_m3
     reading = Reading(
         meter_id=meter.meter_id,
         submitted_value=reading_m3,
@@ -274,27 +96,20 @@ def submit_reading(
     db.add(reading)
     db.flush()
 
-    anomaly = score_reading(db, meter.meter_id, reading_m3, now, reading_id=reading.reading_id)
-    if consumption < 0 and anomaly.anomaly_type != AnomalyType.MISREAD_SUSPECTED.value:
-        # The meter's confirmed reading is higher, even if no reading rows explain it (e.g. imported meters).
-        if anomaly.flag_id:
-            db.delete(db.get(AnomalyFlag, anomaly.flag_id))
-        anomaly = AnomalyResult(
-            household_id=meter.meter_id,
-            reading_m3=reading_m3,
-            daily_consumption=None,
-            anomaly_score=1.0,
-            is_anomaly=True,
-            anomaly_type=AnomalyType.MISREAD_SUSPECTED.value,
-            needs_retake=False,
-            message_for_household=message_for(AnomalyType.MISREAD_SUSPECTED),
-            features={"below_last_confirmed_m3": meter.last_reading},
-            pending_review=True,
-        )
-        _save_flag(db, anomaly, reading.reading_id)
+    scored, anomaly = evaluation.scored, evaluation.anomaly
+    if scored.is_anomaly:
+        save_flag(db, scored, reading.reading_id)
+    if anomaly is not scored:
+        save_flag(db, anomaly, reading.reading_id)
+    check = evaluation.location
+    if check is not None:
+        db.add(ReadingEvidence(
+            reading_id=reading.reading_id, photo_source=evidence.photo_source, lat=evidence.lat, lng=evidence.lng,
+            accuracy_m=evidence.accuracy_m, distance_m=check.distance_m, outcome=check.outcome,
+        ))
 
-    if evidence is not None:
-        anomaly = _apply_location_check(db, meter, reading, anomaly, evidence)
+    if photo is not None:
+        link_photo(photo, reading, evaluation.edit.household_digits)
 
     reading.anomaly_score = anomaly.anomaly_score
     submission = Submission(reading=reading, anomaly=anomaly, consumption_m3=consumption)
@@ -306,46 +121,11 @@ def submit_reading(
         db.add(submission.bill)
         meter.last_reading = reading_m3
         meter.last_reading_date = now
+        settle(db, customer_id)  # any credit goes towards the new bill
     db.commit()
     if submission.bill is not None:
         db.refresh(submission.bill)
     return submission
-
-
-def _apply_location_check(
-    db: Session, meter: Meter, reading: Reading, anomaly: AnomalyResult, evidence: PhotoEvidence
-) -> AnomalyResult:
-    """Record where the photo was taken; hold the reading if that needs an officer's look."""
-    check = check_location(meter.gps_lat, meter.gps_lng, evidence)
-    db.add(ReadingEvidence(
-        reading_id=reading.reading_id, photo_source=evidence.photo_source, lat=evidence.lat, lng=evidence.lng,
-        accuracy_m=evidence.accuracy_m, distance_m=check.distance_m, outcome=check.outcome,
-    ))
-    if not check.needs_review:
-        return anomaly
-    extra = check.features(evidence)
-    if anomaly.pending_review:
-        # Already held for another reason: add the location to what the officer sees.
-        anomaly.features = {**(anomaly.features or {}), **extra}
-        if anomaly.flag_id:
-            flag = db.get(AnomalyFlag, anomaly.flag_id)
-            flag.features = {**(flag.features or {}), **extra}
-        return anomaly
-    held = AnomalyResult(
-        household_id=meter.meter_id,
-        reading_m3=reading.submitted_value,
-        daily_consumption=anomaly.daily_consumption,
-        anomaly_score=anomaly.anomaly_score,
-        is_anomaly=True,
-        anomaly_type=AnomalyType.LOCATION_CHECK.value,
-        needs_retake=False,
-        message_for_household=message_for(AnomalyType.LOCATION_CHECK),
-        features={**(anomaly.features or {}), **extra},
-        model_used=anomaly.model_used,
-        pending_review=True,
-    )
-    _save_flag(db, held, reading.reading_id)
-    return held
 
 
 def household_phone(db: Session, household_id: str) -> Optional[str]:

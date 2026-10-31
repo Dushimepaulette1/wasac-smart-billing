@@ -46,6 +46,34 @@ describe('Messages', () => {
     }
   });
 
+  it('when a reading looks like a shifted digit, should not call it lower than the last one', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(9, 'MISREAD_SUSPECTED', { features: { digit_shift: true }, reading_status: 'pending_review' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'A reading far above your usual use' }));
+    expect(message).toHaveTextContent('about ten times');
+    expect(message).not.toHaveTextContent('lower than your last one');
+  });
+
+  it('when a reading was rejected, should give the reason in fixed words', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(10, 'SPIKE', { status: 'resolved', requires_staff_review: true, reading_status: 'rejected', decision_code: 'digits' }),
+    ]);
+    renderMessages();
+    expect(await screen.findByText(/The numbers did not match the photo\./)).toBeInTheDocument();
+  });
+
+  it('when a first reading was recorded as the starting point, should say the first bill comes next time', async () => {
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(8, 'NO_BASELINE', { status: 'resolved', requires_staff_review: true, reading_status: 'valid' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'Your first reading' }));
+    expect(message).toHaveTextContent('recorded as your starting point');
+    expect(within(message).queryByRole('link', { name: 'See your bills' })).not.toBeInTheDocument();
+  });
+
   it('when where a photo was taken is being checked, should tell the household why', async () => {
     vi.mocked(api.getHouseholdFlags).mockResolvedValue([
       flag(5, 'LOCATION_CHECK', { features: { location_check: 'upload' }, reading_status: 'pending_review' }),

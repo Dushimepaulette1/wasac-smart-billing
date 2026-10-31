@@ -24,12 +24,19 @@ _token: dict = {"value": None, "expires": 0.0}
 
 
 class MomoError(Exception):
-    """A safe message (no keys, no full numbers) for logs and the payment record."""
+    """A safe message (no keys, no full numbers) for logs and the payment record.
+
+    uncertain: the request may have reached MTN (a timeout after sending, a 5xx), so MTN may still
+    send the payer a prompt. The attempt must stay open until MTN's status says how it ended."""
+
+    def __init__(self, message: str, uncertain: bool = False):
+        super().__init__(message)
+        self.uncertain = uncertain
 
 
 @dataclass
 class MomoStatus:
-    status: str                       # PENDING, SUCCESSFUL, FAILED, REJECTED, TIMEOUT, ...
+    status: str                       # PENDING, SUCCESSFUL, FAILED, REJECTED, TIMEOUT, ..., NOT_FOUND
     transaction_id: Optional[str] = None
     reason: Optional[str] = None
 
@@ -104,22 +111,32 @@ def request_to_pay(reference_id: str, amount: float, phone: str, external_id: st
         "payerMessage": note[:160],
         "payeeNote": note[:160],
     }
+    headers = _headers(reference_id)  # a token failure here means nothing was sent
     try:
         r = httpx.post(f"{base_url()}/collection/v1_0/requesttopay", json=body,
-                       headers=_headers(reference_id), timeout=TIMEOUT_SECONDS)
-    except httpx.HTTPError as e:
+                       headers=headers, timeout=TIMEOUT_SECONDS)
+    except (httpx.ConnectError, httpx.ConnectTimeout) as e:  # no connection: the request never left
         raise MomoError(f"MTN MoMo could not be reached ({type(e).__name__})")
+    except httpx.HTTPError as e:  # sent, but no answer: MTN may have it
+        raise MomoError(f"No answer from MTN MoMo ({type(e).__name__})", uncertain=True)
+    if r.status_code >= 500:
+        raise MomoError(f"MTN MoMo had an error (HTTP {r.status_code})", uncertain=True)
     if r.status_code != 202:
         raise MomoError(f"MTN MoMo did not accept the request (HTTP {r.status_code})")
     logger.info("[MoMo] request to pay sent: ref=%s amount=%s %s", reference_id, body["amount"], body["currency"])
 
 
 def payment_status(reference_id: str) -> MomoStatus:
+    """MTN's answer for one request to pay. NOT_FOUND (HTTP 404): MTN does not know this reference
+    id. MTN's documentation ties that to a request that was not registered, but says nothing about
+    a 404 after a 202, or a request still in flight, so it is not proof of no charge: see payments.py."""
     try:
         r = httpx.get(f"{base_url()}/collection/v1_0/requesttopay/{reference_id}",
                       headers=_headers(), timeout=TIMEOUT_SECONDS)
     except httpx.HTTPError as e:
         raise MomoError(f"MTN MoMo could not be reached ({type(e).__name__})")
+    if r.status_code == 404:
+        return MomoStatus(status="NOT_FOUND")
     if r.status_code != 200:
         raise MomoError(f"MTN MoMo did not answer the status check (HTTP {r.status_code})")
     data = r.json()

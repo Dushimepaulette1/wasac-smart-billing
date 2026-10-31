@@ -1,13 +1,12 @@
-from typing import List
-
+"""Households and their bills. Paying them is in app/api/routes/payments.py."""
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.concurrency import run_in_threadpool
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.anomaly.statuses import NOT_CONFIRMED
 from app.api.deps import Access, household_access, require_role, require_staff
 from app.db.session import get_db
-from app.models import Bill, Customer, Meter, Payment, Reading, StaffUser
+from app.models import Bill, BillAdjustment, BillCorrection, Customer, Meter, Reading, StaffUser
+from app.models.bill_correction import APPLIED
 from app.schemas import (
     CustomerInfo,
     HouseholdEdit,
@@ -16,12 +15,10 @@ from app.schemas import (
     HouseholdImportRow,
     HouseholdIn,
     MeterCorrectionRequest,
-    PaymentDecline,
-    PaymentOut,
-    PaymentReference,
-    PaymentToCheck,
 )
 from app.services.audit import record
+from app.services.balance import available_credit, balances, current_consumption
+from app.services.bill_corrections import measured_from_zero
 from app.services.households import (
     DEMO_PREFIX,
     HouseholdError,
@@ -31,18 +28,7 @@ from app.services.households import (
     edit_household,
     import_csv,
 )
-from app.services.meter_correction import CorrectionError, correct_meter
-from app.services.payments import (
-    MOMO_PAY,
-    PaymentError,
-    confirm,
-    decline,
-    pay_code,
-    refresh,
-    start_payment,
-    submit_reference,
-    ussd_code,
-)
+from app.services.meter_correction import CORRECTION, CorrectionError, correct_meter
 from app.services.reading_window import PENDING, TOO_SOON, reading_block
 
 router = APIRouter()
@@ -53,15 +39,15 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
 
     past = (
         db.query(Reading)
-        .filter(Reading.meter_id == c.meter_id, Reading.validation_status == "valid")
+        .filter(Reading.meter_id == c.meter_id, Reading.validation_status.notin_(NOT_CONFIRMED),
+                Reading.submission_method != CORRECTION)
         .order_by(Reading.submission_time.desc())
         .limit(6)
         .all()
     )
-    avg = (
-        sum(r.implied_consumption for r in past if r.implied_consumption) / len(past)
-        if past else None
-    )
+    corrected = current_consumption(db, [r.reading_id for r in past])
+    used = [v for v in (corrected.get(r.reading_id, r.implied_consumption) for r in past) if v]
+    avg = sum(used) / len(used) if used else None
     anomaly_flagged = any(
         r.validation_status in ("anomaly_flagged", "pending_review")
         for r in (db.query(Reading)
@@ -72,11 +58,7 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
     )
 
     block = reading_block(db, meter) if meter else None
-    unpaid_count, unpaid_amount = (
-        db.query(func.count(Bill.bill_id), func.coalesce(func.sum(Bill.amount_due), 0.0))
-        .filter(Bill.customer_id == c.customer_id, Bill.payment_status != "paid")
-        .one()
-    )
+    owed = [b for b in balances(db, c.customer_id).values() if not b.settled]
     return CustomerInfo(
         customer_id=c.customer_id,
         name=c.name,
@@ -89,8 +71,9 @@ def _customer_info(db: Session, c: Customer) -> CustomerInfo:
         anomaly_flagged=anomaly_flagged,
         reading_pending=bool(block and block.reason == PENDING),
         next_reading_from=block.opens_on if block and block.reason == TOO_SOON else None,
-        unpaid_count=unpaid_count,
-        unpaid_amount=round(float(unpaid_amount), 2),
+        unpaid_count=len(owed),
+        unpaid_amount=round(sum(b.outstanding for b in owed), 2),
+        credit_available=available_credit(db, c.customer_id),
         serial_number=meter.serial_number if meter else None,
         is_demo=c.customer_id.startswith(DEMO_PREFIX),
     )
@@ -218,122 +201,43 @@ async def customer_bills(customer_id: str, db: Session = Depends(get_db), access
         .limit(12)
         .all()
     )
+    money = balances(db, customer_id)
+    applied = (
+        db.query(BillAdjustment, BillCorrection)
+        .join(BillCorrection, BillCorrection.id == BillAdjustment.correction_id)
+        .filter(BillAdjustment.bill_id.in_([b.bill_id for b in bills]), BillCorrection.status == APPLIED)
+        .order_by(BillAdjustment.id).all()
+    ) if bills else []
+    volumes = current_consumption(db, [b.reading_id for b in bills])
+    read = db.query(Reading).filter(Reading.reading_id.in_([b.reading_id for b in bills])).all() if bills else []
+    values = {r.reading_id: r.effective_value for r in read}
+    # Only the oldest bill can have been measured from nothing.
+    first = bills[-1] if bills else None
+    first_reading = db.get(Reading, first.reading_id) if first and first.reading_id else None
+    unknown = {first.bill_id: measured_from_zero(db, first, first_reading)} if first_reading else {}
+    # amount_due is the bill as issued. payment_status answers "is anything still owed?" (a bill can
+    # be settled by credit, or owe more after a correction); the money fields show how.
     return [
         {
             "bill_id": b.bill_id,
+            "reading_id": b.reading_id,
             "consumption_m3": b.consumption_m3,
             "amount_due": b.amount_due,
-            "payment_status": b.payment_status,
+            "payment_status": "paid" if money[b.bill_id].settled else "unpaid",
             "created_at": b.created_at,
+            "tariff_version": b.tariff_version,
+            "consumption_current": volumes.get(b.reading_id, b.consumption_m3),
+            "reading_m3": values.get(b.reading_id),
+            "unknown_start": unknown.get(b.bill_id, False),
+            "charges": money[b.bill_id].charges,
+            "paid": round(money[b.bill_id].paid, 2),
+            "credit_used": round(money[b.bill_id].credit_used, 2),
+            "outstanding": money[b.bill_id].outstanding,
+            "adjustments": [
+                {"amount_delta": a.amount_delta, "consumption_after": a.consumption_after,
+                 "reason": c.reason, "at": c.decided_at or c.created_at}
+                for a, c in applied if a.bill_id == b.bill_id
+            ],
         }
         for b in bills
     ]
-
-
-@router.post("/bills/{bill_id}/pay", response_model=PaymentOut)
-async def pay_bill(bill_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
-    """Start paying a bill with MTN Mobile Money (simulated without MoMo keys). A pending answer means
-    the payer has a PIN prompt on their phone: check GET /payments/{id} until it is final."""
-    bill = db.query(Bill).filter(Bill.bill_id == bill_id).first()
-    if not bill or not access.owns_customer(bill.customer_id):
-        raise HTTPException(status_code=404, detail="Bill not found")
-    if bill.payment_status == "paid":
-        done = (db.query(Payment).filter(Payment.bill_id == bill_id, Payment.status == "successful")
-                .order_by(Payment.id.desc()).first())
-        out = PaymentOut.model_validate(done) if done else PaymentOut(
-            id=0, bill_id=bill_id, provider="unknown", status="successful", amount=bill.amount_due, currency="RWF")
-        return out.model_copy(update={"already_paid": True})
-    customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first()
-    payment = await run_in_threadpool(start_payment, db, bill, customer.phone if customer else "")
-    return payment_out(payment)
-
-
-def payment_out(payment: Payment) -> PaymentOut:
-    out = PaymentOut.model_validate(payment)
-    if payment.provider == MOMO_PAY:
-        out = out.model_copy(update={"ussd_code": ussd_code(payment.amount), "pay_code": pay_code(),
-                                     "reference": str(payment.bill_id)})
-    return out
-
-
-@router.get("/payments/{payment_id}", response_model=PaymentOut)
-async def get_payment(payment_id: int, db: Session = Depends(get_db), access: Access = Depends(household_access)):
-    """Where a payment stands; a pending one is checked with MTN first."""
-    payment = db.get(Payment, payment_id)
-    bill = db.get(Bill, payment.bill_id) if payment else None
-    if not payment or not bill or not access.owns_customer(bill.customer_id):
-        raise HTTPException(status_code=404, detail="Payment not found")
-    return payment_out(await run_in_threadpool(refresh, db, payment))
-
-
-def _own_payment(db: Session, access: Access, payment_id: int) -> Payment:
-    payment = db.get(Payment, payment_id)
-    bill = db.get(Bill, payment.bill_id) if payment else None
-    if not payment or not bill or not access.owns_customer(bill.customer_id):
-        raise HTTPException(status_code=404, detail="Payment not found")
-    return payment
-
-
-@router.post("/payments/{payment_id}/reference", response_model=PaymentOut)
-async def payment_reference(payment_id: int, body: PaymentReference, db: Session = Depends(get_db),
-                            access: Access = Depends(household_access)):
-    """After paying by MoMo Pay: the transaction ID from MTN's SMS. The bill stays unpaid until a
-    WASAC officer finds the payment in WASAC's MoMo merchant account."""
-    try:
-        return payment_out(submit_reference(db, _own_payment(db, access, payment_id), body.transaction_id.strip()))
-    except PaymentError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
-
-
-# ---- Staff: checking MoMo Pay payments --------------------------------------
-
-@router.get("/api/payments/to-check", response_model=List[PaymentToCheck])
-async def payments_to_check(db: Session = Depends(get_db), _staff: StaffUser = Depends(require_staff)):
-    """MoMo Pay payments with a transaction ID, waiting for an officer to find them in WASAC's MoMo
-    merchant account. Oldest first."""
-    rows = (
-        db.query(Payment, Bill, Customer)
-        .join(Bill, Bill.bill_id == Payment.bill_id)
-        .join(Customer, Customer.customer_id == Bill.customer_id)
-        .filter(Payment.provider == MOMO_PAY, Payment.status == "pending", Payment.transaction_id.isnot(None))
-        .order_by(Payment.updated_at.asc())
-        .all()
-    )
-    return [
-        PaymentToCheck(id=p.id, bill_id=b.bill_id, customer_id=c.customer_id, customer_name=c.name,
-                       meter_id=c.meter_id, amount=p.amount, transaction_id=p.transaction_id,
-                       created_at=p.created_at, submitted_at=p.updated_at)
-        for p, b, c in rows
-    ]
-
-
-@router.post("/api/payments/{payment_id}/confirm", response_model=PaymentOut)
-async def confirm_payment(payment_id: int, request: Request, db: Session = Depends(get_db),
-                          staff: StaffUser = Depends(require_staff)):
-    """The officer found the payment in WASAC's MoMo merchant account: the bill is paid."""
-    payment = db.get(Payment, payment_id)
-    if not payment:
-        raise HTTPException(status_code=404, detail="Payment not found")
-    try:
-        payment = await run_in_threadpool(confirm, db, payment)
-    except PaymentError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
-    record(db, staff.username, "payment_confirmed", target=f"bill {payment.bill_id}",
-           detail=f"RWF {payment.amount:,.0f}, MoMo {payment.transaction_id}", request=request)
-    return payment_out(payment)
-
-
-@router.post("/api/payments/{payment_id}/decline", response_model=PaymentOut)
-async def decline_payment(payment_id: int, body: PaymentDecline, request: Request, db: Session = Depends(get_db),
-                          staff: StaffUser = Depends(require_staff)):
-    """The officer could not find the payment: the household is told by SMS and can pay again."""
-    payment = db.get(Payment, payment_id)
-    if not payment:
-        raise HTTPException(status_code=404, detail="Payment not found")
-    try:
-        payment = await run_in_threadpool(decline, db, payment, body.reason.strip())
-    except PaymentError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
-    record(db, staff.username, "payment_declined", target=f"bill {payment.bill_id}",
-           detail=f"MoMo {payment.transaction_id}: {body.reason.strip()}"[:200], request=request)
-    return payment_out(payment)

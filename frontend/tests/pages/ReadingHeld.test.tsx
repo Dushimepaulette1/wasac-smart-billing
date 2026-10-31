@@ -22,6 +22,11 @@ const renderAt = (state: unknown) =>
   );
 
 describe('ReadingHeld', () => {
+  it('when the check said why, should say so', () => {
+    renderAt({ cells: normalizeReading('00431400').cells, at: '2026-10-09', reason: 'below_previous' });
+    expect(screen.getByRole('status')).toHaveTextContent('lower than your previous accepted reading');
+  });
+
   it('when a reading is held, should reassure without accusing and show the reading', () => {
     renderAt({ cells: normalizeReading('00000444').cells, at: '2026-10-09' });
     const status = screen.getByRole('status');

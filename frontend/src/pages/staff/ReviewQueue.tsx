@@ -17,203 +17,32 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StaffLayout from '../../components/StaffLayout/StaffLayout';
 import RequestState, { errorMessage } from '../../components/RequestState/RequestState';
-import MeterCounter from '../../components/MeterCounter/MeterCounter';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
-import Icon from '../../components/Icon/Icon';
 import { api } from '../../api/client';
 import useRequest from '../../api/useRequest';
 import type { ReviewItem } from '../../api/types';
 import { useI18n } from '../../i18n/I18nProvider';
-import useCounterLabels from '../../i18n/useCounterLabels';
-import { cellsFromCubicMetres, formatReading } from '../../utils/reading';
-import { ISSUE_KEY, previousReading, usualUse } from '../../staff/issues';
-import { locationFinding } from '../../utils/location';
+import { issueKey } from '../../staff/issues';
 
-/** 1234 -> "1.2 km", 85 -> "85 m". */
-function formatDistance(m: number): string {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
-}
+import DecisionPane, { isFollowUp } from './ReviewDecisionPane';
 import styles from './ReviewQueue.module.css';
 
 const UNDO_MS = 5000;
 type Outcome = 'accept' | 'reject' | 'close';
-
-/** Already billed: nothing to accept or reject, only follow-up to close. */
-function isFollowUp(item: ReviewItem): boolean {
-  return item.flag.reading_status !== 'pending_review';
-}
 
 const SENT: Record<Outcome, 'accept' | 'reject' | null> = { accept: 'accept', reject: 'reject', close: null };
 
 interface Pending {
   item: ReviewItem;
   outcome: Outcome;
+  reason?: string;
+  reasonCode?: RejectReason;
 }
 
-/** The meter photo the reading came from, fetched with the staff token (an <img src> cannot send it). */
-function ReadingPhoto({ readingId, name }: { readingId: number; name: string }) {
-  const { t } = useI18n();
-  const [url, setUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    let live = true;
-    let made: string | null = null;
-    setUrl(null);
-    setFailed(false);
-    api
-      .readingPhoto(readingId)
-      .then((blob) => {
-        if (!live) return;
-        made = URL.createObjectURL(blob);
-        setUrl(made);
-      })
-      .catch(() => live && setFailed(true));
-    return () => {
-      live = false;
-      if (made) URL.revokeObjectURL(made);
-    };
-  }, [readingId]);
-  if (failed) return <p className="text-small text-secondary">{t('staff.review.photoFailed')}</p>;
-  if (!url) return <p className="text-small text-secondary">{t('staff.review.photoLoading')}</p>;
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className={styles.photo}>
-      <img src={url} alt={t('staff.review.photoAlt', { name })} />
-    </a>
-  );
-}
-
-function DecisionPane({ item }: { item: ReviewItem }) {
-  const { t, volume, date } = useI18n();
-  const labels = useCounterLabels();
-  const previous = previousReading(item.history);
-  const usual = usualUse(item.history);
-  const where = locationFinding(item.flag.features);
-  const used = item.reading_m3 !== null && previous !== null ? item.reading_m3 - previous : null;
-  const ratio = used !== null && usual ? used / usual : null;
-  const months = [...item.history.slice(-5).map((h) => ({ key: h.date, label: date(h.date), m3: h.consumption_m3 ?? 0, current: false })),
-    ...(used !== null ? [{ key: 'this', label: t('staff.review.thisReading'), m3: used, current: true }] : [])];
-  const max = Math.max(...months.map((m) => Math.abs(m.m3)), 1);
-
-  return (
-    <>
-      <div className={styles.paneHead}>
-        <div>
-          <h2 className="panel-title">{item.customer_name ?? item.flag.household_id}</h2>
-          <p className="text-secondary">
-            {item.sector && <span>{item.sector}</span>}
-            <span className="code">{item.flag.household_id}</span>
-          </p>
-        </div>
-        <p className={styles.issue}>
-          <Icon name="clock" size={20} />
-          {t(ISSUE_KEY[item.flag.anomaly_type])}
-        </p>
-      </div>
-
-      <div className={styles.paneGrid}>
-        <section className={styles.block} aria-labelledby="read-title">
-          <h3 id="read-title" className={styles.blockTitle}>
-            {t('staff.review.read')}
-          </h3>
-          {item.reading_m3 !== null ? (
-            <MeterCounter cells={cellsFromCubicMetres(item.reading_m3)} labels={labels} size="small" />
-          ) : (
-            <p className="text-secondary">{t('staff.review.noReading')}</p>
-          )}
-          <dl className={styles.facts}>
-            <div>
-              <dt>{t('staff.review.previous')}</dt>
-              <dd>{previous !== null ? `${formatReading(cellsFromCubicMetres(previous))} m³` : '–'}</dd>
-            </div>
-            <div>
-              <dt>{t('staff.review.used')}</dt>
-              <dd className={used !== null && used < 0 ? styles.strong : undefined}>{used !== null ? volume(used) : '–'}</dd>
-            </div>
-            <div>
-              <dt>{t('staff.review.usual')}</dt>
-              <dd>{usual !== null ? volume(usual) : '–'}</dd>
-            </div>
-            {ratio !== null && ratio > 0 && (
-              <div>
-                <dt>{t('staff.review.ratio')}</dt>
-                <dd className={ratio >= 2 ? styles.strong : undefined}>{t('staff.review.times', { n: ratio.toFixed(1) })}</dd>
-              </div>
-            )}
-            {item.reader_digits && (
-              <div>
-                <dt>{t('staff.review.readerRead')}</dt>
-                <dd>
-                  {formatReading(cellsFromCubicMetres(Number(item.reader_digits) / 1000))} m³
-                  {item.edited_by_household && <span className={styles.strong}> · {t('staff.review.edited')}</span>}
-                </dd>
-              </div>
-            )}
-            {item.reading_confidence !== null && (
-              <div>
-                <dt>{t('staff.review.confidence')}</dt>
-                <dd>{Math.round(item.reading_confidence * 100)}%</dd>
-              </div>
-            )}
-            <div>
-              <dt>{t('staff.review.sent')}</dt>
-              <dd>{date(item.submitted_at ?? item.flag.created_at)}</dd>
-            </div>
-            {where && (
-              <div>
-                <dt>{t('staff.review.where')}</dt>
-                <dd className={styles.strong}>
-                  {t(`staff.review.where.${where.reason}`, {
-                    distance: where.distanceM !== null ? formatDistance(where.distanceM) : '–',
-                    accuracy: where.accuracyM !== null ? formatDistance(where.accuracyM) : '–',
-                  })}
-                  {where.lat !== null && where.lng !== null && (
-                    <>
-                      {' '}
-                      <a
-                        href={`https://www.openstreetmap.org/?mlat=${where.lat}&mlon=${where.lng}#map=18/${where.lat}/${where.lng}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {t('staff.review.openMap')}
-                      </a>
-                    </>
-                  )}
-                </dd>
-              </div>
-            )}
-          </dl>
-          {item.photo_available && item.reading_id ? (
-            <ReadingPhoto readingId={item.reading_id} name={item.customer_name ?? item.flag.household_id} />
-          ) : (
-            <p className="text-small text-secondary">{t('staff.review.noPhoto')}</p>
-          )}
-        </section>
-
-        <section className={styles.block} aria-labelledby="history-title">
-          <h3 id="history-title" className={styles.blockTitle}>
-            {t('staff.review.history')}
-          </h3>
-          {months.length === 0 ? (
-            <p className="text-secondary">{t('staff.review.noHistory')}</p>
-          ) : (
-            <ol className={styles.bars}>
-              {months.map((m) => (
-                <li key={m.key} className={m.current ? styles.current : undefined}>
-                  <span className={styles.barLabel}>{m.label}</span>
-                  <span className={styles.track} aria-hidden="true">
-                    <span className={styles.bar} style={{ width: `${(Math.max(m.m3, 0) / max) * 100}%` }} />
-                  </span>
-                  <span className={styles.barValue}>{volume(m.m3)}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      </div>
-    </>
-  );
-}
+/** Why a reading is rejected: kept in Activity. 'other' asks the officer to type it. */
+const REJECT_REASONS = ['photo', 'digits', 'meter', 'other'] as const;
+type RejectReason = (typeof REJECT_REASONS)[number];
 
 function ReviewQueue() {
   const { t, rwf } = useI18n();
@@ -222,6 +51,9 @@ function ReviewQueue() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(() => Number(params.get('flag')) || null);
   const [pending, setPending] = useState<Pending | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState<RejectReason>('photo');
+  const [rejectText, setRejectText] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const timer = useRef<number | null>(null);
@@ -232,6 +64,8 @@ function ReviewQueue() {
   useEffect(() => {
     if (queue.status === 'success') setItems(queue.data);
   }, [queue.status, queue.data]);
+
+  useEffect(() => setRejecting(false), [selectedId]);
 
   const visible = items.filter((i) => i.flag.id !== pending?.item.flag.id);
   const selected = visible.find((i) => i.flag.id === selectedId) ?? visible[0] ?? null;
@@ -248,17 +82,19 @@ function ReviewQueue() {
   );
 
   const send = useCallback(
-    async ({ item, outcome }: Pending) => {
+    async ({ item, outcome, reason, reasonCode }: Pending) => {
       setPending(null);
       try {
-        const res = await api.resolveFlag(item.flag.id, SENT[outcome]);
+        const res = await (reason ? api.resolveFlag(item.flag.id, SENT[outcome], reason, reasonCode) : api.resolveFlag(item.flag.id, SENT[outcome]));
         setItems((list) => list.filter((i) => i.flag.id !== item.flag.id));
         const name = item.customer_name ?? item.flag.household_id;
         setResult(
           outcome === 'accept'
             ? res.amount_due !== null
               ? t('staff.review.acceptedBill', { name, amount: rwf(res.amount_due) })
-              : t('staff.review.accepted', { name })
+              : item.flag.anomaly_type === 'NO_BASELINE'
+                ? t('staff.review.acceptedStart', { name })
+                : t('staff.review.accepted', { name })
             : outcome === 'reject'
               ? t('staff.review.rejected', { name })
               : t('staff.review.closed', { name }),
@@ -271,13 +107,18 @@ function ReviewQueue() {
   );
 
   const decide = useCallback(
-    (outcome: Outcome) => {
+    (outcome: Outcome, reason?: string, reasonCode?: RejectReason) => {
       if (!selected || (outcome === 'close') !== isFollowUp(selected)) return;
+      if (outcome === 'reject' && !reason) {
+        setRejecting(true); // a reject needs a reason first
+        return;
+      }
+      setRejecting(false);
       if (pending) send(pending); // a second decision sends the first now
       setError(null);
       setResult(null);
       const next = visible[visible.indexOf(selected) + 1] ?? visible[visible.indexOf(selected) - 1];
-      const decision = { item: selected, outcome };
+      const decision = { item: selected, outcome, reason, reasonCode };
       setPending(decision);
       if (next) setSelectedId(next.flag.id);
       if (timer.current) window.clearTimeout(timer.current);
@@ -298,7 +139,7 @@ function ReviewQueue() {
     () => () => {
       if (timer.current) window.clearTimeout(timer.current);
       const waiting = pendingRef.current;
-      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome]).catch(() => undefined);
+      if (waiting) api.resolveFlag(waiting.item.flag.id, SENT[waiting.outcome], waiting.reason, waiting.reasonCode).catch(() => undefined);
     },
     [],
   );
@@ -382,7 +223,7 @@ function ReviewQueue() {
                       onClick={() => select(item.flag.id, true)}
                     >
                       <span className={styles.itemName}>{item.customer_name ?? item.flag.household_id}</span>
-                      <span className={styles.itemIssue}>{t(ISSUE_KEY[item.flag.anomaly_type])}</span>
+                      <span className={styles.itemIssue}>{t(issueKey(item.flag))}</span>
                     </button>
                   </li>
                 );
@@ -413,7 +254,38 @@ function ReviewQueue() {
                       {t('staff.review.reject')}
                     </Button>
                   </div>
-                  <p className="text-small text-secondary">{t('staff.review.acceptNote')}</p>
+                  {rejecting && (
+                    <div className={styles.form}>
+                      <label className={styles.filter}>
+                        {t('staff.review.rejectWhy')}
+                        <select className={styles.select} value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value as RejectReason)}>
+                          {REJECT_REASONS.map((r) => <option key={r} value={r}>{t(`staff.review.rejectWhy.${r}`)}</option>)}
+                        </select>
+                      </label>
+                      {rejectReason === 'other' && (
+                        <label className={styles.filter}>
+                          {t('staff.review.rejectWhyOther')}
+                          <input className={styles.search} maxLength={160} value={rejectText}
+                            onChange={(e) => setRejectText(e.target.value)} />
+                        </label>
+                      )}
+                      <div className={styles.rowActions}>
+                        <Button variant="secondary" disabled={rejectReason === 'other' && rejectText.trim().length < 3}
+                          onClick={() => {
+                            decide('reject', rejectReason === 'other' ? rejectText.trim() : t(`staff.review.rejectWhy.${rejectReason}`), rejectReason);
+                            setRejectText('');
+                            setRejectReason('photo');
+                          }}>
+                          {t('staff.review.rejectConfirm')}
+                        </Button>
+                        <Button variant="text" onClick={() => setRejecting(false)}>{t('action.cancel')}</Button>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-small text-secondary">
+                    {t(selected.flag.anomaly_type === 'NO_BASELINE' ? 'staff.review.acceptNoteStart' : 'staff.review.acceptNote')}
+                  </p>
                 </>
               )}
             </section>

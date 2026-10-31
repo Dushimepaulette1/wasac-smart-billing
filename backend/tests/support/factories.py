@@ -22,6 +22,7 @@ def make_history(dailies, days=30, start_m3=500.0, start=T0):
 def add_household(db, meter_id, points, phone="+250788000111"):
     customer_id = meter_id.replace("MTR", "CUST")
     db.add(Meter(meter_id=meter_id, last_reading=points[-1].reading_m3, last_reading_date=points[-1].date))
+    db.flush()  # the meter first: PostgreSQL checks customers.meter_id (tests/pg)
     db.add(Customer(customer_id=customer_id, name="Test", phone=phone, meter_id=meter_id, sector="Test"))
     db.flush()
     db.query(Meter).filter(Meter.meter_id == meter_id).update({"customer_id": customer_id})

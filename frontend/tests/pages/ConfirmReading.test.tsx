@@ -41,6 +41,25 @@ function renderWith(fromReader: string, extra: Partial<Submission> = {}) {
   );
 }
 
+const fine = { needs_review: false, reason: null, previous_reading_m3: 464, consumption_m3: 20, refused: null, opens_on: null };
+
+/** The two calls behind "Confirm reading": the check, then the sending. */
+function server(check: unknown, confirm: unknown = makeConfirmResponse()) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
+    String(url).includes('/check-reading')
+      ? check instanceof Error ? Promise.reject(check) : Promise.resolve(jsonResponse(200, check))
+      : Promise.resolve(jsonResponse(200, confirm)),
+  );
+}
+
+const sentTo = (spy: ReturnType<typeof server>) => spy.mock.calls.map(([url]) => String(url).split('/').pop());
+
+const clickConfirm = async () => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
+  });
+};
+
 const counterCells = (container: HTMLElement) =>
   [...container.querySelectorAll('[class*="cell"]')].map((c) => c.textContent).join('|');
 
@@ -48,6 +67,16 @@ afterEach(() => {
   vi.restoreAllMocks();
   window.sessionStorage.clear();
 });
+
+const held = makeConfirmResponse({
+  bill_id: null,
+  bill_amount: null,
+  validation_status: 'pending_review',
+  anomaly_flagged: true,
+  anomaly: makeAnomalyResult({ pending_review: true }),
+});
+
+const lower = { ...fine, needs_review: true, reason: 'below_previous', consumption_m3: -0.06, previous_reading_m3: 431.46 };
 
 describe('ConfirmReading', () => {
   it('when the reading has the wrong length, should show it above an empty counter', () => {
@@ -100,42 +129,96 @@ describe('ConfirmReading', () => {
   });
 
   it('when the reading creates a bill, should go to the bill', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(200, makeConfirmResponse({ bill_id: 7 })));
+    const spy = server(fine, makeConfirmResponse({ bill_id: 7 }));
     renderWith('00484500');
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
-    });
+    await clickConfirm();
     expect(await screen.findByText('Bill page')).toBeInTheDocument();
+    expect(sentTo(spy)).toEqual(['check-reading', 'confirm-reading']); // one tap, no extra step
   });
 
   it('when the reading is held, should go to the held screen', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      jsonResponse(
-        200,
-        makeConfirmResponse({
-          bill_id: null,
-          bill_amount: null,
-          validation_status: 'pending_review',
-          anomaly_flagged: true,
-          anomaly: makeAnomalyResult({ pending_review: true }),
-        }),
-      ),
-    );
+    // The check said fine, but the situation changed before sending: the backend's answer decides.
+    server(fine, held);
     renderWith('00000444');
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
-    });
+    await clickConfirm();
     expect(await screen.findByText('Held page')).toBeInTheDocument();
   });
 
   it('when sending fails, should keep the typed numbers', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
+      String(url).includes('/check-reading')
+        ? Promise.resolve(jsonResponse(200, fine))
+        : Promise.reject(new TypeError('Failed to fetch')),
+    );
     const { container } = renderWith('00484500');
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm reading' }));
-    });
+    await clickConfirm();
     expect(screen.getByRole('alert')).toHaveTextContent('No connection');
     expect(screen.getByRole('alert')).toHaveTextContent('Your numbers are saved.');
     expect(counterCells(container)).toBe('0|0|4|8|4|5|0|0');
+  });
+
+  it('when the reading needs review, should explain why and send nothing yet', async () => {
+    const spy = server(lower);
+    renderWith('00431400');
+    await clickConfirm();
+    const notice = screen.getByRole('status');
+    expect(notice).toHaveTextContent('lower than your previous accepted reading, 431.460 m³');
+    expect(notice).toHaveTextContent('you can send it for review');
+    expect(screen.getByRole('button', { name: 'Check the digits' })).toBeInTheDocument();
+    expect(sentTo(spy)).toEqual(['check-reading']);
+  });
+
+  it('when the household chooses to check the digits, should go back with the numbers kept', async () => {
+    const spy = server(lower);
+    const { container } = renderWith('00431400');
+    await clickConfirm();
+    fireEvent.click(screen.getByRole('button', { name: 'Check the digits' }));
+    expect(screen.queryByRole('button', { name: 'Send for review' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm reading' })).toBeInTheDocument();
+    expect(counterCells(container)).toBe('0|0|4|3|1|4|0|0');
+    expect(sentTo(spy)).toEqual(['check-reading']);
+  });
+
+  it('when the household sends it for review, should submit it and go to the held screen', async () => {
+    const spy = server(lower, held);
+    renderWith('00431400');
+    await clickConfirm();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send for review' }));
+    });
+    expect(await screen.findByText('Held page')).toBeInTheDocument();
+    expect(sentTo(spy)).toEqual(['check-reading', 'confirm-reading']);
+  });
+
+  it.each([
+    ['first_reading', 'first reading for your meter'],
+    ['high_use', 'much more water'],
+    ['misread', 'digit is in the wrong place'],
+    ['edited_down', 'numbers we read in your photo'],
+    ['location', 'could not confirm this photo'],
+    ['rollover', 'started again from zero'],
+  ])('when the reason is %s, should say so in plain words', async (reason, words) => {
+    server({ ...fine, needs_review: true, reason });
+    renderWith('00484500');
+    await clickConfirm();
+    expect(screen.getByRole('status')).toHaveTextContent(words);
+  });
+
+  it('when the check fails, should send nothing, keep the numbers and offer to try again', async () => {
+    const spy = server(new TypeError('Failed to fetch'));
+    const { container } = renderWith('00484500');
+    await clickConfirm();
+    expect(screen.getByRole('alert')).toHaveTextContent('it was not sent');
+    expect(sentTo(spy)).toEqual(['check-reading']);
+    expect(counterCells(container)).toBe('0|0|4|8|4|5|0|0');
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('when the reading cannot be sent now, should say so and send nothing', async () => {
+    const spy = server({ ...fine, refused: 'pending' });
+    renderWith('00484500');
+    await clickConfirm();
+    expect(screen.getByRole('status')).toHaveTextContent("can't be sent now");
+    expect(sentTo(spy)).toEqual(['check-reading']);
   });
 });

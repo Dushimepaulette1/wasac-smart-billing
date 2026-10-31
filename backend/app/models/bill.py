@@ -27,6 +27,7 @@ class Bill(Base):
     service_charge = Column(Float, default=1000.0)
     amount_due = Column(Float)
     payment_status = Column(String, default="unpaid")
+    tariff_version = Column(String(40), nullable=True)  # NULL: from before versions (the original rates)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     customer = relationship("Customer", back_populates="bills")

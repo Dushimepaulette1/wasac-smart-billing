@@ -11,7 +11,7 @@ import Icon from '../../components/Icon/Icon';
 import useRequest from '../../api/useRequest';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useAuth } from '../../staff/auth';
-import { ISSUE_KEY } from '../../staff/issues';
+import { issueKey } from '../../staff/issues';
 import loadOverview from '../../staff/loadOverview';
 import HouseholdTable from './HouseholdTable';
 import styles from '../../staff/staff.module.css';
@@ -88,7 +88,7 @@ function Overview() {
                   <Link to={`/staff/review?flag=${item.flag.id}`} className={styles.queueRow}>
                     <span className={styles.queueName}>{item.customer_name ?? item.flag.household_id}</span>
                     <span className="num">{item.reading_m3 !== null ? volume(item.reading_m3) : ''}</span>
-                    <span className={styles.flagged}>{t(ISSUE_KEY[item.flag.anomaly_type])}</span>
+                    <span className={styles.flagged}>{t(issueKey(item.flag))}</span>
                     <span className="text-small text-secondary num">{date(item.flag.created_at)}</span>
                   </Link>
                 </li>

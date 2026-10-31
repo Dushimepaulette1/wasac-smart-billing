@@ -43,6 +43,57 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('when a rollover is held, should show the use from the backend, not a negative', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(7, 'Wrap House', { anomaly_type: 'ROLLOVER' }), reading_m3: 7, previous_reading_m3: 99950, consumption_m3: 57,
+    }]);
+    const { container } = renderQueue();
+    expect(await screen.findAllByText('57.0 m³')).not.toHaveLength(0);
+    expect(container.textContent).not.toMatch(/-\s?99/);
+  });
+
+  it('when a past reading was corrected, should show the corrected use and what it was', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(8, 'Fixed House', { anomaly_type: 'SPIKE' }),
+      history: [{ date: '2026-09-01T08:00:00', reading_m3: 440, consumption_m3: 10, original_reading_m3: 442, original_consumption_m3: 12 }],
+    }]);
+    renderQueue();
+    expect(await screen.findByText('corrected from 12.0 m³')).toBeInTheDocument();
+  });
+
+  it('when rejecting, should ask why and send the reason', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([item(5, 'Reject House', { anomaly_type: 'SPIKE', reading_status: 'pending_review' })]);
+    vi.mocked(api.resolveFlag).mockClear();
+    vi.mocked(api.resolveFlag).mockResolvedValue({ amount_due: null } as Awaited<ReturnType<typeof api.resolveFlag>>);
+    renderQueue();
+    fireEvent.click(await screen.findByRole('button', { name: /reject, ask for a new photo/i }));
+    expect(api.resolveFlag).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Why are you rejecting this reading?'), { target: { value: 'other' } });
+    const confirmReject = screen.getByRole('button', { name: 'Reject the reading' });
+    expect(confirmReject).toBeDisabled(); // a typed reason is needed
+    fireEvent.change(screen.getByLabelText('The reason'), { target: { value: 'Meter was replaced' } });
+    vi.useFakeTimers();
+    fireEvent.click(confirmReject);
+    await act(async () => { vi.runAllTimers(); });
+    expect(api.resolveFlag).toHaveBeenCalledWith(5, 'reject', 'Meter was replaced', 'other');
+  });
+
+  it('when the server gives the previous reading, should show it', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(6, 'Prev House', { anomaly_type: 'MISREAD_SUSPECTED' }), previous_reading_m3: 431.46 }]);
+    renderQueue();
+    expect(await screen.findByText('431.460 m³')).toBeInTheDocument();
+  });
+
+  it('when the household lowered the photo reading, should show both readings with the changed wheels', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{
+      ...item(4, 'Edited House', { anomaly_type: 'EDITED_DOWN' }),
+      reader_digits: '00443520', household_digits: '00442520', changed_positions: [4], edited_by_household: true,
+    }]);
+    renderQueue();
+    expect(await screen.findByLabelText('Read 00443520, sent 00442520')).toBeInTheDocument();
+    expect(screen.getAllByText('Lowered from the photo\'s reading').length).toBeGreaterThan(0);
+  });
+
   it('when a reading is held, should offer accept and reject', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([item(1, 'Held House', { anomaly_type: 'SPIKE' })]);
     renderQueue();

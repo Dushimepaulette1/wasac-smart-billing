@@ -19,12 +19,22 @@ logger = logging.getLogger(__name__)
 # to run at every start; Postgres and SQLite both accept it.
 LATE_INDEXES = (
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_bills_reading_id ON bills (reading_id)",
+    # Partial indexes (Postgres and SQLite both support WHERE): one open payment attempt per bill,
+    # one MoMo Pay transaction ID per payment that has not failed.
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_one_pending ON payments (bill_id) WHERE status = 'pending'",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_momo_pay_txn ON payments (transaction_id) "
+    "WHERE provider = 'momo_pay' AND status <> 'failed'",
 )
 
 
 # Columns added after their table existed: (table, column, SQL type). Added only when missing.
 LATE_COLUMNS = (
     ("meters", "serial_number", "VARCHAR(40)"),
+    ("bills", "tariff_version", "VARCHAR(40)"),
+    ("readings", "corrected_value_m3", "DOUBLE PRECISION"),
+    ("payments", "reviewed_by", "VARCHAR(64)"),
+    ("payments", "reviewed_at", "TIMESTAMP"),
+    ("anomaly_flags", "decision_code", "VARCHAR(16)"),
 )
 
 

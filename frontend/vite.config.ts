@@ -15,7 +15,7 @@ const API_PATHS = [
   '/household',
   '/submit-photo',
   '/guide-frame',
-  '/confirm-reading',
+  '/check-reading', '/confirm-reading', '/bill-corrections',
   '/calculate-bill',
   '/customers',
   '/bills/',
