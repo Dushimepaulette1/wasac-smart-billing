@@ -4,6 +4,23 @@
 water meter reading and billing in Kigali, Rwanda, for WASAC households and staff. Combines **MobileNetV2** image quality classification, **CRNN** digit sequence recognition, and **Isolation Forest** anomaly detection with a React web interface and FastAPI backend.
 
 **GitHub Repository:** https://github.com/Dushimepaulette1/wasac-smart-billing
+**Live app:** https://wasac-smart-billing-qt9t.vercel.app (staff area at `/staff`)  
+**API docs:** https://wasac-api.onrender.com/docs (the free server sleeps: the first request takes about a minute)  
+**Walkthrough video:** [FILL IN: video link]  
+**Technical report (PDF):** [docs/report/Mubazi_Technical_Report.pdf](docs/report/Mubazi_Technical_Report.pdf)  
+**Testing evidence:** [docs/testing/](docs/testing/README.md) · **Algorithms:** [docs/ALGORITHMS.md](docs/ALGORITHMS.md) · **Open items:** [docs/decisions/OPEN_ITEMS.md](docs/decisions/OPEN_ITEMS.md)
+
+Mubazi is an installable web app (PWA), so there is no APK: open the link on a phone and choose "Install".
+
+## Technical requirements
+
+| Part | Version |
+|---|---|
+| Python, FastAPI, SQLAlchemy | Python 3.10; exact packages in `backend/requirements*.txt` |
+| Node.js, React, Vite | Node 22; exact packages in `frontend/package.json` |
+| Database | PostgreSQL 16 (SQLite works for local trials) |
+| Models | ONNX Runtime on a CPU; weights are downloaded separately (see "Meter reading models") |
+| Hardware | Server: 512 MB RAM runs the API. Phone: any browser with a camera; basic phones use USSD |
 
 ---
 
