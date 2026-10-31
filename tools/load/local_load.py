@@ -1,4 +1,4 @@
-"""Stress test of a local API. Writes docs/testing/load.md. Never point this at the live servers.
+"""Stress test of a local API. Writes tools/e2e/out/load.md. Never point this at the live servers.
 
     python tools/load/local_load.py http://localhost:8000
 
@@ -60,5 +60,7 @@ Not run on the live free servers. Photo reading is timed separately (`backend/sc
 | Endpoint | Concurrent users | Requests/s | Median (ms) | 95th percentile (ms) | Errors |
 |---|---|---|---|---|---|
 """ + "\n".join(rows) + "\n"
-Path(__file__).resolve().parents[2].joinpath("docs/testing/load.md").write_text(report)
+out = Path(__file__).resolve().parents[1] / "e2e" / "out"
+out.mkdir(parents=True, exist_ok=True)
+(out / "load.md").write_text(report)
 print(report)

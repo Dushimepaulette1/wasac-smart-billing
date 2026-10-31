@@ -189,7 +189,7 @@ wasac-smart-billing/
 | Test | Result |
 |---|---|
 | Automated backend tests | 569 passed, 5 skipped, 94% of lines covered |
-| Automated frontend tests | 232 passed, 83% of lines covered |
+| Automated frontend tests | 233 passed, 83% of lines covered |
 | Full journey on the live site, in a real browser | 25 of 25 steps passed |
 | Page checks in Chromium, Firefox and WebKit at four screen sizes | 36 of 36 passed |
 | Load test on a local copy | No errors with 50 users at once |

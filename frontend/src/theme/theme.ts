@@ -1,8 +1,8 @@
 /**
  * @file theme.ts
- * @description Light and dark themes. The choice is remembered on the
- * device; until someone chooses, the phone or computer's own setting is
- * followed. index.html applies the stored theme before the first paint,
+ * @description Light and dark themes. Light is the default on every device,
+ * whatever the phone or computer is set to; a person's own choice is
+ * remembered on the device. index.html applies it before the first paint,
  * so a page never flashes the wrong one.
  */
 
@@ -20,12 +20,8 @@ function stored(): Theme | null {
   }
 }
 
-function system(): Theme {
-  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-}
-
 export function currentTheme(): Theme {
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
 /** The page base colour per theme (tokens.css --stage-base). Phones colour the status bar
@@ -34,8 +30,7 @@ export const THEME_COLOR: Record<Theme, string> = { dark: '#040A16', light: '#FF
 
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
-  // Follow the theme the app shows, not the phone's system setting (index.html has one
-  // theme-color per system scheme; both now carry the chosen one).
+  // The status bar follows the theme the app shows, not the phone's system setting.
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.setAttribute('content', THEME_COLOR[theme]);
   });
@@ -47,17 +42,6 @@ export function useTheme(): { theme: Theme; toggle: () => void } {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
-
-  // Follow the system until the person chooses.
-  useEffect(() => {
-    const query = window.matchMedia?.('(prefers-color-scheme: light)');
-    if (!query) return undefined;
-    const onChange = () => {
-      if (!stored()) setTheme(system());
-    };
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
 
   const toggle = useCallback(() => {
     setTheme((t) => {
