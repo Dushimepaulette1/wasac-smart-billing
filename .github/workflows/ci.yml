@@ -66,3 +66,24 @@ jobs:
       - run: npm run typecheck
       - run: npx vitest run --coverage --coverage.reporter=text-summary
       - run: npm run build
+
+  compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm ci
+        working-directory: tools/e2e
+      - run: npx playwright-core install --with-deps chromium-headless-shell firefox webkit
+        working-directory: tools/e2e
+      - name: Three browser engines on the production build
+        run: |
+          (cd frontend && npx vite preview --port 3000 &)
+          until curl -sf http://localhost:3000/ > /dev/null; do sleep 1; done
+          cd tools/e2e && node compat_check.mjs http://localhost:3000
