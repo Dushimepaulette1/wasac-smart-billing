@@ -6,7 +6,7 @@
 | Concurrency | Two taps or two officers must not charge or bill twice, and SQLite cannot show this | `backend/tests/pg/test_concurrency.py` on PostgreSQL 16 in CI, with a control test showing the race is real without the guards | Passed in CI |
 | End-to-end functional | Only a real browser proves the layers work together | `tools/e2e/live_e2e.mjs`: household and officer, reading to bill to payment, plus a rejected reading | Local 25/25 steps, 0 problems |
 | Model evaluation | Accuracy must be measured on meters the model never saw | Locked test set split by meter, used once | 55.7% reading accuracy (95% CI 42 to 69%), 70.9% right or within one digit |
-| Compatibility | Households use many phones and browsers | `tools/e2e/compat_check.mjs`: see `compatibility.md`; real phones in `real_phone_results.md` | See those files |
+| Compatibility | Households use many phones and browsers | `tools/e2e/compat_check.mjs` on Chromium, Firefox and WebKit at four sizes, in CI; real phones in `real_phone_results.md` | 36 of 36 passed (`compatibility.md`) |
 | Performance and stress | Slow phones, slow data and free servers | Simulated 3G and slow CPU, `tools/load/local_load.py`, deployed timings | No errors at 50 concurrent users locally (`load.md`); 1.3 to 3.7 s to read a photo on the free server |
 | Usability | The proposal planned SUS scores | `usability_test.md` | See that file |
 
