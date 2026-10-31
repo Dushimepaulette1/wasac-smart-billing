@@ -18,6 +18,7 @@ const API_PATHS = [
   '/check-reading', '/confirm-reading', '/bill-corrections',
   '/calculate-bill',
   '/customers',
+  '/meter-corrections',
   '/bills/',
   '/payments/',
   '/ussd',
