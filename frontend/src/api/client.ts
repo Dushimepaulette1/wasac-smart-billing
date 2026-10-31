@@ -17,6 +17,8 @@ import type {
   ConfirmReadingResponse,
   ReadingCheckResponse,
   CustomerInfo,
+  MeterCorrection,
+  PaymentStatementResult,
   HouseholdEdit,
   HouseholdImportResult,
   HouseholdInput,
@@ -414,7 +416,24 @@ export const api = {
     return request(`/bill-corrections/${id}/${how}`, { method: 'POST', auth: 'staff', ...(how === 'decline' ? { json: { reason } } : {}) });
   },
 
-  correctMeter(customerId: string, readingM3: number, reason: string): Promise<CustomerInfo> {
+  meterCorrections(status?: string): Promise<MeterCorrection[]> {
+    return request(`/meter-corrections${status ? `?status=${encodeURIComponent(status)}` : ''}`, { auth: 'staff' });
+  },
+
+  decideMeterCorrection(id: number, how: 'approve' | 'decline', reason?: string): Promise<MeterCorrection> {
+    return request(`/meter-corrections/${id}/${how}`, {
+      method: 'POST',
+      ...(how === 'decline' ? { json: { reason } } : {}),
+      auth: 'staff',
+    });
+  },
+
+  /** POST /api/payments/statement (supervisors): the list of payments received, as CSV. */
+  uploadPaymentStatement(csv: string): Promise<PaymentStatementResult> {
+    return request('/api/payments/statement', { method: 'POST', json: { csv }, auth: 'staff', timeout: 60000 });
+  },
+
+  correctMeter(customerId: string, readingM3: number, reason: string): Promise<MeterCorrection> {
     return request(`/customers/${encodeURIComponent(customerId)}/meter-correction`, {
       method: 'POST',
       json: { reading_m3: readingM3, reason },

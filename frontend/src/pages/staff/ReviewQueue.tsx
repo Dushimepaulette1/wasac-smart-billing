@@ -41,6 +41,7 @@ interface Pending {
 }
 
 /** Why a reading is rejected: kept in Activity. 'other' asks the officer to type it. */
+const GUIDE = [1, 2, 3, 4, 5] as const;
 const REJECT_REASONS = ['photo', 'digits', 'meter', 'other'] as const;
 type RejectReason = (typeof REJECT_REASONS)[number];
 
@@ -286,6 +287,12 @@ function ReviewQueue() {
                   <p className="text-small text-secondary">
                     {t(selected.flag.anomaly_type === 'NO_BASELINE' ? 'staff.review.acceptNoteStart' : 'staff.review.acceptNote')}
                   </p>
+                  <details className="text-small">
+                    <summary>{t('staff.review.guide')}</summary>
+                    <ul>
+                      {GUIDE.map((n) => <li key={n}>{t(`staff.review.guide${n}`)}</li>)}
+                    </ul>
+                  </details>
                 </>
               )}
             </section>

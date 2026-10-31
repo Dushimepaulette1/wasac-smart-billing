@@ -378,11 +378,37 @@ export interface Payment {
 }
 
 /** GET /api/payments/to-check: a MoMo Pay payment waiting for an officer. */
+/** schemas.MeterCorrectionOut: a change to a meter's starting reading. */
+export interface MeterCorrection {
+  id: number;
+  status: 'applied' | 'awaiting_approval' | 'declined' | 'stale';
+  customer_id: string;
+  customer_name?: string | null;
+  meter_id: string;
+  current_m3: number;
+  reading_m3: number;
+  reason: string;
+  requested_by: string;
+  requested_at: IsoDateTime;
+  decided_by?: string | null;
+  decided_at?: IsoDateTime | null;
+  decision_reason?: string | null;
+}
+
+export interface PaymentStatementResult {
+  added: number;
+  updated: number;
+  /** "<line>:<problem>". */
+  errors: string[];
+}
+
 export interface PaymentToCheck {
   /** momo_pay_check: waits for an officer; paid_twice: a second success on a paid bill, already credit;
    *  needs_reconciliation: MTN has not settled it, a supervisor checks MTN's records. */
   kind: 'momo_pay_check' | 'paid_twice' | 'needs_reconciliation';
   reason?: string | null;
+  /** Against the uploaded payments list; absent with no list. */
+  statement?: 'matched' | 'not_found' | 'amount_differs' | null;
   id: number;
   bill_id: number;
   customer_id: string;
@@ -450,6 +476,8 @@ export interface HistoryPoint {
 
 /** schemas.ReviewItem: a held reading with what a decision needs. */
 export interface ReviewItem {
+  /** The maker's number on the meter, to compare with the photo. */
+  meter_serial?: string | null;
   flag: AnomalyFlag;
   reading_m3: number | null;
   /** The use this reading stands for, from the backend (across the wrap for a rollover). */

@@ -38,6 +38,7 @@ from app.models.payment import FAILED, MOMO_PAY, PENDING, SUCCESSFUL, Payment
 from app.services import momo
 from app.services.balance import bill_balance, settle
 from app.services.billing import whole_francs
+from app.services.payment_statement import MATCHED, statement_status
 from app.services.payment_providers import API_PROVIDERS, choose_provider
 from app.services.sms import send_sms
 
@@ -270,6 +271,9 @@ def confirm(db: Session, payment: Payment) -> Payment:
     if payment.provider != MOMO_PAY or payment.status != PENDING or not payment.transaction_id:
         db.rollback()
         raise PaymentError(409, "Only a MoMo Pay payment with a transaction ID can be confirmed.")
+    if statement_status(db, payment.transaction_id, payment.amount) not in (None, MATCHED):
+        db.rollback()
+        raise PaymentError(409, "This payment does not match the list of payments received.")
     _mark_paid(db, payment, _lock_bill(db, payment.bill_id), payment.transaction_id)
     db.commit()
     return payment

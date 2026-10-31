@@ -235,6 +235,7 @@ function Payment() {
               <dd className="code">{attempt.reference ?? bill.bill_id}</dd>
             </div>
           </dl>
+          <p className="text-small text-secondary">{t('pay.bankNote')}</p>
         </section>
 
         <form className={`panel ${styles.panel}`} onSubmit={sendId} noValidate>
