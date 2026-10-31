@@ -2,7 +2,7 @@
 
 | Strategy | Why it was chosen | How | Result |
 |---|---|---|---|
-| Unit and integration | Billing, payments and rules must be right every time | pytest (in-memory database, fake models), Vitest and React Testing Library, on every push in GitHub Actions | 482 backend passed, 4 skipped; 225 frontend passed. Coverage: backend 94%, frontend 83% of lines (CI run 41208533393) |
+| Unit and integration | Billing, payments and rules must be right every time | pytest (in-memory database, fake models), Vitest and React Testing Library, on every push in GitHub Actions | 569 backend passed, 5 skipped (the 14 PostgreSQL race tests run only in CI); 232 frontend passed. Coverage: backend 94%, frontend 83% of lines (CI run 41227686801) |
 | Concurrency | Two taps or two officers must not charge or bill twice, and SQLite cannot show this | `backend/tests/pg/test_concurrency.py` on PostgreSQL 16 in CI, with a control test showing the race is real without the guards | Passed in CI |
 | End-to-end functional | Only a real browser proves the layers work together | `tools/e2e/live_e2e.mjs`: household and officer, reading to bill to payment, plus a rejected reading | Local 25/25 steps, 0 problems |
 | Model evaluation | Accuracy must be measured on meters the model never saw | Locked test set split by meter, used once | 55.7% reading accuracy (95% CI 42 to 69%), 70.9% right or within one digit |
