@@ -34,7 +34,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Bill, Customer
-from app.models.payment import FAILED, PENDING, SUCCESSFUL, Payment
+from app.models.payment import FAILED, MOMO_PAY, PENDING, SUCCESSFUL, Payment
 from app.services import momo
 from app.services.balance import bill_balance, settle
 from app.services.billing import whole_francs
@@ -49,7 +49,6 @@ OLD_LOCAL_FAILURE = "no answer from MTN Mobile Money"
 RECHECK_WINDOW = timedelta(hours=24)
 NO_RECORD = "MTN has no record yet: a staff check is needed"
 CLOSED_BY_STAFF = "closed by staff: "
-MOMO_PAY = "momo_pay"
 SIMULATED = "simulated"
 
 
@@ -97,13 +96,15 @@ def _open_attempt(db: Session, bill_id: int) -> Optional[Payment]:
 
 
 def _mark_paid(db: Session, payment: Payment, bill: Bill, transaction_id: Optional[str]) -> None:
-    """The payment succeeded. The bill is paid once (one SMS receipt); a second success on a paid
-    bill is still recorded as successful, and staff see it as paid twice (payments_paid_twice)."""
+    """The payment succeeded. Every payment of money owed gets an SMS receipt, including the
+    difference after a correction raised a paid bill. A success when nothing was owed is still
+    recorded, gets no receipt, and staff see it as paid twice (payments_paid_twice)."""
+    owed = not bill_balance(db, bill).settled
     payment.status = SUCCESSFUL
     payment.transaction_id = transaction_id
     payment.updated_at = datetime.utcnow()
-    if bill.payment_status != "paid":
-        bill.payment_status = "paid"
+    bill.payment_status = "paid"
+    if owed:
         customer = db.query(Customer).filter(Customer.customer_id == bill.customer_id).first()
         if customer and customer.phone:
             send_sms(customer.phone, f"WASAC: payment of RWF {payment.amount:,.0f} received for bill {bill.bill_id}. "
@@ -296,11 +297,13 @@ def decline(db: Session, payment: Payment, reason: str) -> Payment:
 
 
 PAID_TWICE_DAYS = 90
+ROUNDING = 1.0  # payments are whole francs, so a bill can end a few cents overpaid: that is not paying twice
 
 
 def payments_paid_twice(db: Session) -> list:
-    """(payment, bill, customer) for every successful payment after the first on the same bill, in
-    the last PAID_TWICE_DAYS days: the household paid more than once and is owed the difference."""
+    """(payment, bill, customer) for every successful payment after the first on a bill that ended
+    up overpaid, in the last PAID_TWICE_DAYS days: the extra is now credit. A second payment that a
+    correction called for (the bill went up) is not listed."""
     since = datetime.utcnow() - timedelta(days=PAID_TWICE_DAYS)
     rows = (
         db.query(Payment, Bill, Customer)
@@ -316,7 +319,9 @@ def payments_paid_twice(db: Session) -> list:
             continue
         first = (db.query(Payment.id).filter(Payment.bill_id == bill.bill_id, Payment.status == SUCCESSFUL)
                  .order_by(Payment.updated_at, Payment.id).first())
-        if first and first.id != payment.id and payment.id not in seen:
+        owed = bill_balance(db, bill)
+        overpaid = owed.paid + owed.credit_used - owed.charges >= ROUNDING
+        if overpaid and first and first.id != payment.id and payment.id not in seen:
             seen.add(payment.id)
             extra.append((payment, bill, customer))
     return extra

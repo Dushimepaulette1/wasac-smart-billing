@@ -5,28 +5,31 @@ Each step, Africa's Talking sends everything typed so far joined by "*" ("", "1"
 
     1  send a meter reading (8 digits, then confirm)     same rules as the app
     2  my latest bill
-    3  pay my latest unpaid bill (MTN MoMo PIN prompt)
+    3  pay my latest unpaid bill (MTN MoMo PIN prompt, or the MoMo Pay code to dial)
+    4  give the transaction ID of a MoMo Pay payment (the app's step 2, for phones without the app)
     9  English / Kinyarwanda (Kinyarwanda first)
 
 Readings sent here have no photo: they are checked by the same rules as every reading
 (app/anomaly/service.py) and the phone's SIM is the household's identity.
 Kinyarwanda texts are drafts to be reviewed with the app's strings.
 """
+import re
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from app.anomaly.service import ReadingRefused, notify_household, submit_reading
-from app.models import Bill, Customer, Meter
+from app.models import Bill, Customer, Meter, Payment
 from app.services.balance import balances, bill_balance
-from app.services.payments import MOMO_PAY, PaymentError, start_payment, ussd_code
+from app.services.payments import MOMO_PAY, PaymentError, start_payment, submit_reference, ussd_code
+from app.models.payment import PENDING as PAYMENT_PENDING
 from app.services.reading_window import PENDING, reading_block
 from app.utils.meter_value import parse_meter_value
 from app.utils.phone import normalize_phone
 
 TEXT = {
     "rw": {
-        "root": "WASAC: fagitire y'amazi\n1. Ohereza igipimo\n2. Fagitire yanjye\n3. Ishyura fagitire\n9. English",
+        "root": "WASAC: fagitire y'amazi\n1. Ohereza igipimo\n2. Fagitire yanjye\n3. Ishyura fagitire\n4. Ohereza nimero y'igikorwa\n9. English",
         "unknown_phone": "Iyi nimero ntihuye na konti ya WASAC. Hamagara WASAC kuri 1580.",
         "ask_reading": "Andika imibare 8 iri kuri mubazi (5 z'umukara, 3 z'umutuku). Urugero: 00565846",
         "bad_reading": "Andika imibare 8 gusa, urugero 00565846. Ongera ugerageze.",
@@ -46,12 +49,17 @@ TEXT = {
         "pay_prompt": "Emeza kwishyura kuri telefoni yawe ukoresheje umubare w'ibanga wa MoMo.",
         "pay_done": "Fagitire yishyuwe. Murakoze.",
         "pay_failed": "Kwishyura ntibyakunze. Nta mafaranga yakuweho. Ongera ugerageze.",
-        "pay_code": "Ishyura RWF {amount} ukoresheje MoMo Pay: kanda {code}. Nyuma, ohereza nimero y'igikorwa (transaction ID) muri porogaramu Mubazi.",
-        "pay_code_missing": "Ishyura ukoresheje MoMo Pay ya WASAC, hanyuma wohereze nimero y'igikorwa muri porogaramu Mubazi.",
+        "pay_code": "Ishyura RWF {amount} ukoresheje MoMo Pay: kanda {code}. Nyuma, hitamo 4 kuri menu wohereze nimero y'igikorwa (transaction ID).",
+        "pay_code_missing": "Ishyura ukoresheje MoMo Pay ya WASAC, hanyuma uhitemo 4 kuri menu wohereze nimero y'igikorwa.",
+        "no_attempt": "Nta bwishyu butegereje nimero y'igikorwa.",
+        "ask_tx": "Andika nimero y'igikorwa (transaction ID) iri muri SMS ya MTN.",
+        "bad_tx": "Andika nimero y'igikorwa uko iri muri SMS ya MTN (inyuguti n'imibare).",
+        "tx_used": "Iyi nimero y'igikorwa yamaze gukoreshwa. Reba SMS ya MTN.",
+        "tx_sent": "Murakoze. WASAC iragenzura ubwishyu bwanyu. Fagitire izagaragara ko yishyuwe nyuma yo kwemezwa.",
         "bad_choice": "Ihitamo ritaribyo. Ongera ugerageze.",
     },
     "en": {
-        "root": "WASAC water billing\n1. Send a meter reading\n2. My bill\n3. Pay my bill\n9. Kinyarwanda",
+        "root": "WASAC water billing\n1. Send a meter reading\n2. My bill\n3. Pay my bill\n4. Send transaction ID\n9. Kinyarwanda",
         "unknown_phone": "This number is not linked to a WASAC account. Call WASAC on 1580.",
         "ask_reading": "Type the 8 numbers on your meter (5 on black, 3 on red). Example: 00565846",
         "bad_reading": "Type 8 numbers only, for example 00565846. Please try again.",
@@ -71,11 +79,19 @@ TEXT = {
         "pay_prompt": "Approve the payment on your phone with your MoMo PIN.",
         "pay_done": "Bill paid. Thank you.",
         "pay_failed": "The payment did not go through. Nothing was taken. Please try again.",
-        "pay_code": "Pay RWF {amount} by MoMo Pay: dial {code}. Then enter the transaction ID in the Mubazi app.",
-        "pay_code_missing": "Pay with WASAC's MoMo Pay code, then enter the transaction ID in the Mubazi app.",
+        "pay_code": "Pay RWF {amount} by MoMo Pay: dial {code}. Then choose 4 in the menu to send the transaction ID.",
+        "pay_code_missing": "Pay with WASAC's MoMo Pay code, then choose 4 in the menu to send the transaction ID.",
+        "no_attempt": "You have no payment waiting for a transaction ID.",
+        "ask_tx": "Type the transaction ID from MTN's SMS.",
+        "bad_tx": "Type the transaction ID as it is in MTN's SMS (letters and numbers).",
+        "tx_used": "This transaction ID was already used. Check MTN's SMS.",
+        "tx_sent": "Thank you. WASAC is checking your payment. Your bill shows as paid once it is confirmed.",
         "bad_choice": "That choice is not on the menu. Please try again.",
     },
 }
+
+
+TRANSACTION_ID = re.compile(r"^[A-Za-z0-9.\-]{4,40}$")  # as schemas.PaymentReference
 
 
 def _con(text: str) -> str:
@@ -100,6 +116,16 @@ def _latest_bill(db: Session, customer: Customer, unpaid_only: bool = False) -> 
         owed = balances(db, customer.customer_id)
         bills = [b for b in bills if not owed[b.bill_id].settled]
     return bills[0] if bills else None
+
+
+def _waiting_for_id(db: Session, customer: Customer) -> Optional[Payment]:
+    """The household's newest MoMo Pay attempt that has no transaction ID yet."""
+    return (
+        db.query(Payment).join(Bill, Bill.bill_id == Payment.bill_id)
+        .filter(Bill.customer_id == customer.customer_id, Payment.provider == MOMO_PAY,
+                Payment.status == PAYMENT_PENDING, Payment.transaction_id.is_(None))
+        .order_by(Payment.id.desc()).first()
+    )
 
 
 def handle(db: Session, phone_number: str, text: str) -> str:
@@ -175,5 +201,19 @@ def handle(db: Session, phone_number: str, text: str) -> str:
         if payment.status == "failed":
             return _end(t["pay_failed"])
         return _end(t["pay_prompt"])
+
+    if choice == "4":
+        attempt = _waiting_for_id(db, customer)
+        if attempt is None:
+            return _end(t["no_attempt"])
+        if not rest:
+            return _con(t["ask_tx"])
+        if not TRANSACTION_ID.match(rest[0]):
+            return _end(t["bad_tx"])
+        try:
+            submit_reference(db, attempt, rest[0])
+        except PaymentError:
+            return _end(t["tx_used"])
+        return _end(t["tx_sent"])
 
     return _end(t["bad_choice"])
