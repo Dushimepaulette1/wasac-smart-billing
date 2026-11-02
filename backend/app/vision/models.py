@@ -8,7 +8,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Protocol
 
 import numpy as np
 
@@ -26,6 +26,20 @@ class ModelStatus:
 
     def label(self) -> str:
         return self.state if not self.detail else f"{self.state}: {self.detail}"
+
+
+class DigitReader(Protocol):
+    """What the pipeline needs from a reader: wasac_models.MeterReader and onnx_models.OnnxReader."""
+
+    def read(self, image) -> dict: ...
+
+
+class ReadabilityScorer(Protocol):
+    """What the pipeline needs from a quality gate: QualityGate and onnx_models.OnnxQualityGate."""
+
+    threshold: float
+
+    def score(self, pil_image) -> float: ...
 
 
 class QualityGate:
@@ -60,8 +74,8 @@ class QualityGate:
 class ModelRegistry:
     def __init__(self):
         self.yolo = None
-        self.reader = None
-        self.quality_gate: Optional[QualityGate] = None
+        self.reader: Optional[DigitReader] = None
+        self.quality_gate: Optional[ReadabilityScorer] = None
         self.model_config: dict = {}
         self.guidance: Optional[GuidanceConfig] = None
         self.status: Dict[str, ModelStatus] = {

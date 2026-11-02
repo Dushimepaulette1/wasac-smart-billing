@@ -1,13 +1,13 @@
 # Testing summary
 
-| Strategy | Why it was chosen | How | Result |
-|---|---|---|---|
-| Unit and integration | Billing, payments and rules must be right every time | pytest (in-memory database, fake models), Vitest and React Testing Library, on every push in GitHub Actions | 569 backend passed, 5 skipped (the 14 PostgreSQL race tests run only in CI); 233 frontend passed. Coverage: backend 94%, frontend 83% of lines (CI run 41227686801) |
-| Concurrency | Two taps or two officers must not charge or bill twice, and SQLite cannot show this | `backend/tests/pg/test_concurrency.py` on PostgreSQL 16 in CI, with a control test showing the race is real without the guards | Passed in CI |
-| End-to-end functional | Only a real browser proves the layers work together | `tools/e2e/live_e2e.mjs`: household and officer, reading to bill to payment, plus a rejected reading | Live site 25/25 steps, 0 problems, on the merged code (households 027 and 028, 31 Oct 2026) |
-| Model evaluation | Accuracy must be measured on meters the model never saw | Locked test set split by meter, used once | 55.7% reading accuracy (95% CI 42 to 69%), 70.9% right or within one digit |
-| Compatibility | Households use many phones and browsers | `tools/e2e/compat_check.mjs` on Chromium, Firefox and WebKit at four sizes, in CI; a manual test on a real phone | 36 of 36 passed (see below) |
-| Performance and stress | Slow phones, slow data and free servers | Simulated 3G and slow CPU, `tools/load/local_load.py`, deployed timings | No errors at 50 concurrent users locally (see below); 1.3 to 3.7 s to read a photo on the free server |
+| Strategy | Why it was chosen | How | Result | What it changed |
+|---|---|---|---|---|
+| Unit and integration | Billing, payments and rules must be right every time | pytest (in-memory database, fake models), Vitest and React Testing Library, on every push in GitHub Actions | 569 backend passed, 5 skipped (the 14 PostgreSQL race tests run only in CI); 233 frontend passed. Coverage: backend 94%, frontend 83% of lines (CI run 41227686801) | Three payment bugs and two reading bugs fixed; see the last section |
+| Concurrency | Two taps or two officers must not charge or bill twice, and SQLite cannot show this | `backend/tests/pg/test_concurrency.py` on PostgreSQL 16 in CI, with a control test showing the race is real without the guards | Passed in CI | Row locks, partial unique indexes and idempotency keys on readings, reviews and payments |
+| End-to-end functional | Only a real browser proves the layers work together | `tools/e2e/live_e2e.mjs`: household and officer, reading to bill to payment, plus a rejected reading | Live site 25/25 steps, 0 problems, on the merged code (households 027 and 028, 31 Oct 2026) | Kept in `tools/e2e` as a repeatable check; it grew from 18 to 25 steps as features were added |
+| Model evaluation | Accuracy must be measured on meters the model never saw | Locked test set split by meter, used once | 55.7% reading accuracy (95% CI 42 to 69%), 70.9% right or within one digit | Every reading is confirmed by the household; the quality gate advises and never blocks |
+| Compatibility | Households use many phones and browsers | `tools/e2e/compat_check.mjs` on Chromium, Firefox and WebKit at four sizes, in CI; a manual test on a real phone | 36 of 36 passed (see below) | Added to CI, so every pull request is checked on all three engines |
+| Performance and stress | Slow phones, slow data and free servers | Simulated 3G and slow CPU, `tools/load/local_load.py`, deployed timings | No errors at 50 concurrent users locally (see below); 1.3 to 3.7 s to read a photo on the free server | Models moved from PyTorch to ONNX Runtime, because PyTorch did not fit the 512 MB server |
 
 ## Different inputs and how the system responds
 
@@ -26,6 +26,21 @@
 | CSV with bad rows, repeated meters, missing columns | Preview lists each row; nothing saved | `tests/services/test_households.py` |
 | MTN timeout, 5xx or 404 | Attempt stays open, never a second prompt | `tests/services/test_payments.py` |
 | Bill correction by the person who asked for it | Refused: needs a second person | `tests/services/test_bill_corrections.py` |
+
+## Software and hardware covered
+
+| Environment | Tested | How |
+|---|---|---|
+| Browser engines | Chromium 141, Firefox 142, WebKit 26 | Real engines, automated in CI |
+| Operating system | Ubuntu (CI runners); the author's phone | Windows, macOS and Android were not measured |
+| Screen sizes | 360x640, 390x844, 768x1024, 1366x768 | Simulated in the browser |
+| Low-end device | 4x slower CPU on fast and slow 3G | Simulated, not a real low-cost phone |
+| No slowdown | No limits on network or CPU, on a CI runner | Automated, as the comparison for the row above. No high-end phone was measured |
+| Server | 512 MB free instance, peak memory 274 MB | Render free plan |
+
+Frames per second is not reported. The app is ordinary web pages with no game or graphics loop, so first paint, download
+size and server memory are the measures that matter. The closest thing to a frame rate is the live camera tip, which takes
+about 0.7 s per frame on the deployed server.
 
 ## Compatibility
 

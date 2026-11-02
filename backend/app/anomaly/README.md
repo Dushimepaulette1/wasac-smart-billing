@@ -185,7 +185,7 @@ billing". Both responses include an `anomaly` object with `pending_review`.
 `ANOMALY_SUSTAINED_RATIO` (1.5), `ANOMALY_SUSTAINED_PERIODS` (3),
 `ANOMALY_MISREAD_LOG10_TOLERANCE` (0.15), `ANOMALY_MIN_PERIOD_DAYS` (7), `ANOMALY_EDIT_HOLD_M3` (1),
 `ANOMALY_MODEL_PATH`
-(default `backend/anomaly/artifacts/isolation_forest.joblib`, gitignored).
+(default `backend/app/anomaly/artifacts/isolation_forest.joblib`, gitignored).
 
 ## Train
 

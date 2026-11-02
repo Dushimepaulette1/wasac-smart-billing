@@ -74,7 +74,7 @@ the brightness, glare and blur checks only, and returns the codes and the window
 coordinates.
 
 The thresholds were calibrated on labelled WASAC photos; see
-[docs/calibration/guidance_calibration.md](docs/calibration/guidance_calibration.md). To re-run the
+[docs/calibration/guidance_calibration.md](calibration/guidance_calibration.md). To re-run the
 calibration, use `scripts/calibrate_guidance.py measure`, then `... report` (see the script's help).
 Calibration photos live in `calibration/`, which is gitignored and must never be committed. Measure
 speed and memory with `python scripts/benchmark_vision.py [--photos <folder>]`.

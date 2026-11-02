@@ -15,6 +15,19 @@
 | Bill correction | Recalculates this bill and the next with their own tariffs, without changing originals | `backend/app/services/bill_corrections.py` |
 | Measure anomaly detection with no real histories | Seeded simulation with known injected faults, then precision, recall and F1 with customer-level bootstrap intervals | `backend/simulation/`, `backend/scripts/run_simulation.py` |
 
+## Cost of the main algorithms
+
+`T` is the reader's 32 time steps, `C` its 11 classes, `t` the tariff tiers and `n` a meter's readings. These run once per
+request, and `n` grows by about one a month, so none of them can become slow in practice.
+
+| Algorithm | Cost | Why this one |
+|---|---|---|
+| CTC greedy decoding (`decode_with_confidence`) | O(T x C) | One pass. Each kept digit keeps its probability, which drives the `CHECK_NUMBERS` tip |
+| Tier walk (`calculate_bill`) | O(t) | Takes each tier's share of the use in turn and rounds to 3 decimals, so float noise cannot change a bill |
+| Reset-aware history (`since_last_reset`) | O(n) | One pass that remembers the last drop, so a replaced meter does not look like negative use |
+| Median and MAD features (`features.py`) | O(n log n) | Robust to the unusual periods being looked for, unlike the mean and standard deviation |
+| One open payment per bill (`uq_payments_one_pending`) | Indexed lookup | The database enforces it, so it holds across several API workers |
+
 ## Offline simulation of anomaly detection
 
 **All results here are synthetic. They are not evidence of real WASAC performance.** The simulation

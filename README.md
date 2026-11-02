@@ -39,6 +39,27 @@ people stay in control of the final number.
 correctly (95% confidence interval: 42 to 69%). That is not enough to trust alone, so a person always
 checks the numbers.
 
+## How the parts fit together
+
+```mermaid
+flowchart LR
+    H[Household phone] --> W[React app on Vercel]
+    S[WASAC staff] --> W
+    B[Basic phone] --> U[USSD, Africa's Talking]
+    W --> A[FastAPI on Render]
+    U --> A
+    A --> V[Photo reading: YOLOv8, MobileNetV2, ResNet18 + BiGRU]
+    A --> R[Reading checks, bills, corrections]
+    A --> P[Payment providers]
+    A --> D[(PostgreSQL on Neon)]
+    P --> M[MTN MoMo]
+    A --> T[SMS, Africa's Talking]
+```
+
+The app sends a photo to the API, which runs the three models and returns the digits. The household
+confirms them, the API checks the reading against that meter's history, then saves a bill or holds the
+reading for an officer. Models run on ONNX Runtime, so the API fits on a 512 MB server.
+
 ## Who uses it
 
 | Person | What they can do |
@@ -101,10 +122,14 @@ your own admin account (steps below), or watch the walkthrough video.
 | Tool | Version |
 |---|---|
 | Python | 3.10 |
-| Node.js | 22 |
+| Node.js | 22.10 or newer in the 22 series |
 | Git | Any recent version |
 | Database | SQLite for a quick try (nothing to install), PostgreSQL 16 for the full setup |
 | Hardware | A normal laptop. The live server runs on 512 MB of memory |
+| Phone (to use the app) | A modern browser. The build targets Chrome 80 and Safari 14 or newer |
+
+The main frameworks are FastAPI 0.111, SQLAlchemy 2.0, ONNX Runtime 1.19, React 18, TypeScript and
+Vite. Exact versions are in `backend/requirements*.txt` and `frontend/package.json`.
 
 ### 1. Get the code
 
@@ -121,7 +146,7 @@ Open a terminal in the project folder:
 cd backend
 python -m venv .venv
 source .venv/bin/activate        # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env             # On Windows: copy .env.example .env
 ```
 
@@ -171,7 +196,13 @@ cd frontend && npm test          # frontend tests
 ```
 wasac-smart-billing/
 ├── backend/         The server (Python and FastAPI)
-│   ├── app/         API routes, billing, payments, checks and photo reading
+│   ├── app/         The application
+│   │   ├── api/         API routes and access checks
+│   │   ├── services/    Billing, payments, corrections, SMS, USSD
+│   │   ├── anomaly/     Checks on each reading
+│   │   ├── vision/      Photo reading
+│   │   ├── models/      Database tables
+│   │   └── schemas/     API request and response shapes
 │   ├── ml/          Code that runs the AI models
 │   ├── simulation/  Offline test of anomaly detection, using made-up data
 │   ├── scripts/     Helpers, such as adding demo households
@@ -181,7 +212,8 @@ wasac-smart-billing/
 │   └── tests/       Frontend tests
 ├── notebooks/       The notebook that trained the AI models
 ├── docs/            Report, testing evidence and technical notes
-└── tools/           End-to-end browser test and load test
+├── tools/           End-to-end browser test and load test
+└── .github/         Automatic tests on every change
 ```
 
 ## How it was tested
@@ -196,6 +228,17 @@ wasac-smart-billing/
 | Anomaly detection on simulated data | The forest scored F1 0.89 and the rules 0.50. This is synthetic data, not evidence of real performance |
 
 The full results are in [docs/testing](docs/testing/README.md).
+
+## How the code is built
+
+| Practice | Where to see it |
+|---|---|
+| Abstraction, inheritance, polymorphism | [`PaymentProvider`](backend/app/services/payment_providers.py) is an abstract class with three versions, so the payment flow never checks which one it has |
+| Interfaces | [`DigitReader` and `ReadabilityScorer`](backend/app/vision/models.py) let the photo pipeline use PyTorch or ONNX models |
+| Encapsulation | [`BillBalance`](backend/app/services/balance.py) is the one definition of what a household owes |
+| Separation of concerns | Routes handle HTTP, services hold the rules, and models and schemas hold the data. Checks split into [read-only evaluation](backend/app/anomaly/evaluation.py) and [storing](backend/app/anomaly/service.py) |
+| Reuse | A typed [API client](frontend/src/api/client.ts), shared [components](frontend/src/components) and [design tokens](frontend/src/styles/tokens.css) |
+| Algorithms | CTC decoding, tiered billing, history that survives a meter change, and safe handling of two requests at once. See [docs/ALGORITHMS.md](docs/ALGORITHMS.md) |
 
 ## Installing it on a phone
 
