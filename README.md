@@ -10,7 +10,7 @@ working prototype and **is not an official WASAC service**. All the households i
 |---|---|
 | **Try the app** | https://wasac-smart-billing-qt9t.vercel.app |
 | **Staff area** | https://wasac-smart-billing-qt9t.vercel.app/staff |
-| **Walkthrough video** | [FILL IN: video link] |
+| **Walkthrough video** | https://youtu.be/5i7eupcCpGQ |
 | **Technical report (PDF)** | [docs/report/Mubazi_Technical_Report.pdf](docs/report/Mubazi_Technical_Report.pdf) |
 | **GitHub repository** | https://github.com/Dushimepaulette1/wasac-smart-billing |
 
