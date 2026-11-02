@@ -1,9 +1,9 @@
-// Compatibility and page speed on a local build. Writes docs/testing/compatibility.md.
+// Compatibility and page speed on a local build. Writes tools/e2e/out/compatibility.md.
 //   node compat_check.mjs http://localhost:3000
 // Each browser engine at phone and desktop sizes: the page loads, shows its heading, has no sideways
 // scroll and no page errors. Chromium also runs with simulated slow 3G and a 4x slower CPU.
 import { chromium, firefox, webkit } from 'playwright-core';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const APP = process.argv[2] || 'http://localhost:3000';
 if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(APP)) {
@@ -73,11 +73,11 @@ for (const [label, net] of Object.entries(NETWORKS)) {
 }
 await browser.close();
 
-writeFileSync(new URL('../../docs/testing/compatibility.md', import.meta.url), `# Compatibility and page speed
+mkdirSync(new URL('./out/', import.meta.url), { recursive: true });
+writeFileSync(new URL('./out/compatibility.md', import.meta.url), `# Compatibility and page speed
 
 Made by \`tools/e2e/compat_check.mjs\` on ${new Date().toISOString().slice(0, 10)} against a local build. Browser engines
 and device sizes are real engines at simulated sizes, and the slow networks and CPU are simulated, not real phones.
-Real-phone results are in \`real_phone_results.md\`.
 
 ## Browsers and screen sizes
 
