@@ -214,18 +214,10 @@ async def confirm_reading(
             anomaly=anomaly,
         )
 
-    bill_data = billing.calculate_bill(sub.consumption_m3)
+    rates = billing.bill_tariff(sub.bill)
+    bill_data = billing.calculate_bill(sub.consumption_m3, rates["version"])
     breakdown = TariffBreakdown(
-        tier1_units=bill_data["tier1_units"],
-        tier1_amount=bill_data["tier1_amount"],
-        tier2_units=bill_data["tier2_units"],
-        tier2_amount=bill_data["tier2_amount"],
-        tier3_units=bill_data["tier3_units"],
-        tier3_amount=bill_data["tier3_amount"],
-        tier4_units=bill_data["tier4_units"],
-        tier4_amount=bill_data["tier4_amount"],
-        service_charge=bill_data["service_charge"],
-        total=bill_data["total"],
+        **bill_data, **{f"tier{n}_rate": rate for n, (_, rate) in enumerate(rates["tiers"], start=1)},
     )
 
     return ConfirmReadingResponse(
@@ -244,16 +236,21 @@ async def confirm_reading(
 @router.post("/calculate-bill")
 async def calculate_bill(body: BillCalculateRequest):
     try:
-        rates = [rate for _, rate in billing.tariff(body.tariff_version)["tiers"]]
+        version = billing.tariff(body.tariff_version)
     except ValueError:
         raise HTTPException(status_code=422, detail="Unknown tariff version")
-    data = billing.calculate_bill(body.consumption_m3, body.tariff_version)
+    rates = [rate for _, rate in version["tiers"]]
+    with_vat = version.get("tiers_vat_inclusive") or rates
+    data = billing.calculate_bill(body.consumption_m3, version["version"])
     return {
         "consumption_m3": body.consumption_m3,
+        "tariff_version": version["version"],
         "breakdown": {
-            f"tier{n}": {"units": data[f"tier{n}_units"], "rate_rwf": rates[n - 1], "amount": data[f"tier{n}_amount"]}
+            f"tier{n}": {"units": data[f"tier{n}_units"], "rate_rwf": rates[n - 1],
+                         "rate_with_vat_rwf": with_vat[n - 1], "amount": data[f"tier{n}_amount"]}
             for n in range(1, 5)
         },
+        "vat_amount": data["vat_amount"],
         "service_charge": data["service_charge"],
         "total_amount_due": data["total"],
         "currency": "RWF",

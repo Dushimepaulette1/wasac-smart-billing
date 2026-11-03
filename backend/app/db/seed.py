@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from app.db.session import SessionLocal
 from app.models import Bill, Customer, Meter, Reading
-from app.services.billing import calculate_bill
+from app.services.billing import bill_columns, calculate_bill, tariff
 
 
 def seed_data():
@@ -104,13 +104,15 @@ def seed_data():
                 db.add(reading)
                 db.flush()
 
-                bill_breakdown = calculate_bill(consumption)
+                version = tariff()["version"]
+                bill_breakdown = calculate_bill(consumption, version)
                 bill = Bill(
                     customer_id=c["customer_id"],
                     reading_id=reading.reading_id,
                     consumption_m3=round(consumption, 1),
-                    **{k: v for k, v in bill_breakdown.items() if k != "total"},
+                    **bill_columns(bill_breakdown),
                     amount_due=bill_breakdown["total"],
+                    tariff_version=version,
                     payment_status="paid",
                     created_at=reading_date,
                 )

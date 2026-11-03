@@ -18,6 +18,7 @@ import Messages from '../pages/Messages/Messages';
 import NotFound from '../pages/NotFound/NotFound';
 import CounterPreview from '../pages/_dev/CounterPreview';
 import SignIn from '../pages/SignIn/SignIn';
+import YourData from '../pages/YourData/YourData';
 import { RequireHousehold } from '../household/session';
 import ReadingGate from '../household/ReadingGate';
 
@@ -26,6 +27,7 @@ function HouseholdRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/your-data" element={<YourData />} />
       <Route path="/home" element={<RequireHousehold><CustomerHome /></RequireHousehold>} />
       <Route path="/submit/camera" element={<RequireHousehold><ReadingGate><CameraCapture /></ReadingGate></RequireHousehold>} />
       <Route path="/submit/confirm" element={<RequireHousehold><ReadingGate><ConfirmReading /></ReadingGate></RequireHousehold>} />

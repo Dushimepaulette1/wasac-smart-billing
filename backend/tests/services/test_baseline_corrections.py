@@ -15,6 +15,13 @@ CUSTOMER = "CUST-BL"
 TOTAL = billing.calculate_bill
 
 
+@pytest.fixture(autouse=True)
+def original_tariff(monkeypatch):
+    """The worked examples here are in the original tariff's francs. Corrections always use the bill's
+    own version, so this only fixes which version new bills in these tests are made with."""
+    monkeypatch.setattr(billing, "TARIFFS", billing.TARIFFS[:1])
+
+
 def bearer(token):
     return {"Authorization": f"Bearer {token}"}
 

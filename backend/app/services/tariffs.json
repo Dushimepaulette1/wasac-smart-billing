@@ -6,5 +6,14 @@
     "note": "From the project brief; confirm against the current RURA/WASAC tariff. Never edit a version once bills use it: add a new one.",
     "tiers": [[5, 350], [10, 530], [15, 791], [null, 1000]],
     "service_charge": 1000
+  },
+  {
+    "version": "v2-wasac-residential",
+    "effective_from": "2026-11-03",
+    "provisional": true,
+    "note": "WASAC's published residential water tariff (blocks 0-5, 6-20, 21-50, above 50 m3), rates without VAT and with VAT as published. The effective date and the service charge are not confirmed. Never edit a version once bills use it: add a new one.",
+    "tiers": [[5, 340], [15, 720], [30, 845], [null, 877]],
+    "tiers_vat_inclusive": [402, 852, 999.635, 1037.491],
+    "service_charge": 1000
   }
 ]

@@ -92,6 +92,18 @@ describe('ReviewQueue', () => {
     expect(await screen.findByText('431.460 m³')).toBeInTheDocument();
   });
 
+  it('when the reading is below the last one, should say accepting bills only the service charge', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(7, 'Lower House', { anomaly_type: 'MISREAD_SUSPECTED' }), previous_reading_m3: 747.179 }]);
+    renderQueue();
+    expect(await screen.findByText(/bills only the service charge/)).toBeInTheDocument();
+  });
+
+  it('when the reading is above the last one, should say accepting creates the bill', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(8, 'Higher House', { anomaly_type: 'SPIKE' }), previous_reading_m3: 431.46 }]);
+    renderQueue();
+    expect(await screen.findByText(/Accepting creates the bill/)).toBeInTheDocument();
+  });
+
   it('when the household lowered the photo reading, should show both readings with the changed wheels', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([{
       ...item(4, 'Edited House', { anomaly_type: 'EDITED_DOWN' }),

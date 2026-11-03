@@ -76,4 +76,14 @@ describe('CustomerHome', () => {
     renderHome();
     expect(await screen.findByText('Please read your meter again')).toBeInTheDocument();
   });
+
+  it('when a new reading is waiting after a rejected one, should not ask for another', async () => {
+    vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ reading_pending: true }));
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      makeFlag({ id: 10, status: 'resolved', reading_status: 'rejected', resolved_at: recently }),
+    ]);
+    renderHome();
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent("We're checking your reading");
+    expect(screen.queryByText('Please read your meter again')).not.toBeInTheDocument();
+  });
 });

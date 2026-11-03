@@ -24,6 +24,8 @@ export interface BillView {
   bill: BillSummary;
   /** Tiers that apply to this volume, cheapest first. */
   tiers: TariffLine[];
+  /** VAT on the water (the tiers are without VAT); 0 on older bills. */
+  vat: number;
   serviceCharge: number;
   /** Date of the bill before this one, if any. */
   periodStart: string | null;
@@ -53,6 +55,7 @@ export default async function loadBill(customerId: string, billId: number | null
       .map((key): CalculatedTier => tariff.breakdown[key])
       .filter((tier) => tier.units > 0)
       .map((tier) => ({ units: tier.units, rate: tier.rate_rwf, amount: tier.amount })),
+    vat: tariff.vat_amount,
     serviceCharge: tariff.service_charge,
     periodStart: bills[index + 1]?.created_at ?? null,
     reading: isNewest

@@ -6,7 +6,10 @@
  * noticed, what to check, and what happens next.
  *
  * A checked reading says how the check ended: confirmed (the bill is ready)
- * or not confirmed (read the meter again). Opening Messages marks them read.
+ * or not confirmed (read the meter again). Once a newer reading is in, a
+ * rejected one no longer asks for another: the account says whether the new
+ * one is waiting for an officer or was accepted (app/services/reading_window.py;
+ * a rejected reading counts for neither). Opening Messages marks them read.
  */
 
 import { useEffect, useState } from 'react';
@@ -32,8 +35,11 @@ export function rejectionKey(flag: AnomalyFlag): string | null {
   return flag.decision_code && flag.decision_code !== 'other' ? `msg.rejected.${flag.decision_code}` : null;
 }
 
+/** A newer reading than a rejected one: still being checked, or accepted. */
+type NewerReading = 'pending' | 'accepted' | null;
+
 /** How a check by a WASAC officer ended, from the flagged reading's status. */
-function CheckStatus({ flag }: { flag: AnomalyFlag }) {
+function CheckStatus({ flag, newer }: { flag: AnomalyFlag; newer: NewerReading }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   if (flag.status === 'open') {
@@ -41,6 +47,22 @@ function CheckStatus({ flag }: { flag: AnomalyFlag }) {
       <p className={`${styles.status} ${styles.checking}`}>
         <Icon name="clock" size={20} />
         <span>{t(flag.reading_status === 'pending_review' ? 'msg.status.open' : 'msg.status.followUp')}</span>
+      </p>
+    );
+  }
+  if (flag.reading_status === 'rejected' && newer) {
+    return (
+      <p className={styles.status}>
+        <Icon name={newer === 'pending' ? 'clock' : 'check'} size={20} />
+        <span>
+          {newer === 'pending' ? (
+            t('msg.status.rejectedNewPending')
+          ) : (
+            <>
+              {t('msg.status.rejectedNewAccepted')} <Link to="/history">{t('msg.seeBills')}</Link>
+            </>
+          )}
+        </span>
       </p>
     );
   }
@@ -88,7 +110,7 @@ function noticedKey(flag: AnomalyFlag): string {
   return `msg.LOCATION_CHECK.${reason}`;
 }
 
-function Message({ flag, onDelete }: { flag: AnomalyFlag; onDelete: (id: number) => void }) {
+function Message({ flag, newer, onDelete }: { flag: AnomalyFlag; newer: NewerReading; onDelete: (id: number) => void }) {
   const { t, date } = useI18n();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -127,7 +149,7 @@ function Message({ flag, onDelete }: { flag: AnomalyFlag; onDelete: (id: number)
         </>
       )}
 
-      {flag.requires_staff_review && <CheckStatus flag={flag} />}
+      {flag.requires_staff_review && <CheckStatus flag={flag} newer={newer} />}
 
       {canDelete && (
         <div className={styles.footer}>
@@ -146,6 +168,13 @@ function Messages() {
   const meterId = account.meter_id ?? '';
   const { t } = useI18n();
   const flags = useRequest(api.getHouseholdFlags, { immediate: true, args: [meterId] });
+  // If this fails, a rejected reading keeps asking for a new one, as before.
+  const customer = useRequest(api.getCustomer, { immediate: true, args: [account.customer_id] });
+  let newer: NewerReading = null;
+  if (customer.status === 'success') {
+    if (customer.data.reading_pending) newer = 'pending';
+    else if (customer.data.next_reading_from) newer = 'accepted';
+  }
   const [deleted, setDeleted] = useState<number[]>([]);
   const shown = flags.status === 'success' ? shownMessages(flags.data).filter((f) => !deleted.includes(f.id)) : [];
   const onDelete = (id: number) => {
@@ -170,7 +199,7 @@ function Messages() {
         <ul className={styles.list}>
           {shown.map((flag) => (
             <li key={flag.id}>
-              <Message flag={flag} onDelete={onDelete} />
+              <Message flag={flag} newer={newer} onDelete={onDelete} />
             </li>
           ))}
         </ul>

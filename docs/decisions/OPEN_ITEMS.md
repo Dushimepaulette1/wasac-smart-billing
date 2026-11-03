@@ -6,7 +6,10 @@ The code cannot settle these. Nothing here was guessed into the app as if it wer
 
 | Item | Today | Why it matters |
 |---|---|---|
-| Tariff rates and service charge | `v1-provisional` in `backend/app/services/tariffs.json`, from the project brief | Every bill depends on it. When confirmed, add a new version; never edit one that bills use |
+| Tariff rates and service charge | `v2-wasac-residential` in `backend/app/services/tariffs.json`, from WASAC's published residential tariff, used from 3 November 2026. The service charge of 1,000 is kept from the project brief | The effective date and the service charge are not confirmed. When they are, add a new version; never edit one that bills use |
+| VAT on the service charge | None: VAT is added on the water only | The published tariff gives VAT-inclusive water rates but says nothing about a service charge |
+| Customer types | Everyone is billed as residential | WASAC publishes other rates for non-residential customers (877, 895 above 50 m³), public taps (323 flat) and industries (736 flat). These need a customer type on each household |
+| Lower readings | Accepting a reading below the last one resets the meter's start and bills only the service charge | Whether WASAC charges for that period |
 | Tier scaling for long periods | Tiers apply per bill, however long the period | A 60-day gap pushes use into higher tiers. Whether tiers scale with days is a tariff rule |
 | Charge for a period with no known start | A baseline correction bills reading minus start; start equal to the reading bills nothing, not even the service charge | Follows the decision that a first reading creates no bill. WASAC may want the service charge |
 | Rounding of bills | Bills keep 2 decimals; payments are whole francs, half up, so a bill can leave under one franc of credit | WASAC's own rounding rule is unknown |

@@ -45,6 +45,16 @@ const GUIDE = [1, 2, 3, 4, 5] as const;
 const REJECT_REASONS = ['photo', 'digits', 'meter', 'other'] as const;
 type RejectReason = (typeof REJECT_REASONS)[number];
 
+
+/** What accepting this reading will do: record a starting point, bill only the service charge
+ * (a reading below the last one resets the meter's start, app/anomaly/review.py), or bill it. */
+function acceptNoteKey(item: ReviewItem): string {
+  if (item.flag.anomaly_type === 'NO_BASELINE') return 'staff.review.acceptNoteStart';
+  const previous = item.previous_reading_m3 ?? null;
+  const lower = item.flag.anomaly_type !== 'ROLLOVER' && item.reading_m3 !== null && previous !== null
+    && item.reading_m3 < previous;
+  return lower ? 'staff.review.acceptNoteLower' : 'staff.review.acceptNote';
+}
 function ReviewQueue() {
   const { t, rwf } = useI18n();
   const [params, setParams] = useSearchParams();
@@ -285,7 +295,7 @@ function ReviewQueue() {
                     </div>
                   )}
                   <p className="text-small text-secondary">
-                    {t(selected.flag.anomaly_type === 'NO_BASELINE' ? 'staff.review.acceptNoteStart' : 'staff.review.acceptNote')}
+                    {t(acceptNoteKey(selected))}
                   </p>
                   <details className="text-small">
                     <summary>{t('staff.review.guide')}</summary>

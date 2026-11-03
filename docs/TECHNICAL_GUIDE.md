@@ -96,15 +96,27 @@ speed and memory with `python scripts/benchmark_vision.py [--photos <folder>]`.
 
 ## WASAC Tariff Tiers
 
-| Tier | Usage | Rate (RWF/m³) |
-|------|-------|---------------|
-| Tier 1 | 0–5 m³ | 350 |
-| Tier 2 | 6–15 m³ | 530 |
-| Tier 3 | 16–30 m³ | 791 |
-| Tier 4 | >30 m³ | 1,000 |
-| Service charge | Fixed monthly | 1,000 |
+New bills use `v2-wasac-residential`, WASAC's published residential tariff, from 3 November 2026:
 
-The rates are provisional until confirmed with RURA/WASAC. They live in versioned entries in
+| Block | Usage | Without VAT (RWF/m³) | With VAT (RWF/m³) |
+|-------|-------|----------------------|-------------------|
+| 1 | 0–5 m³ | 340 | 402 |
+| 2 | 6–20 m³ | 720 | 852 |
+| 3 | 21–50 m³ | 845 | 999.635 |
+| 4 | Above 50 m³ | 877 | 1,037.491 |
+| Service charge | Each bill | 1,000 | 1,000 (no VAT) |
+
+Each block is charged at its own rate, so 20 m³ is 5 m³ at block 1 and 15 m³ at block 2. The bill
+shows the water at the rates without VAT, then **VAT on water** (the VAT-inclusive price minus that),
+then the service charge. For 20 m³: RWF 12,500 + RWF 2,290 VAT + RWF 1,000 = RWF 15,790. The VAT
+rates are stored as WASAC publishes them, because they are not exactly 18% of the rates without VAT.
+
+All customers are billed as residential. WASAC also publishes rates for non-residential customers,
+public taps and industries; those need a customer type on each household and are listed in
+`docs/decisions/OPEN_ITEMS.md`.
+
+Bills made before 3 November 2026 keep `v1-provisional` (350, 530, 791 and 1,000 RWF per m³ for
+0–5, 6–15, 16–30 and above 30 m³, plus 1,000, no VAT). Tariffs live in versioned entries in
 `backend/app/services/tariffs.json`: a new tariff is a new entry, and every bill keeps the version
 it was made with, so a later correction uses that bill's own rates.
 
@@ -301,7 +313,7 @@ and whether the household changed it (`backend/app/services/photo_evidence.py`).
 | Setting (`backend/.env`) | Default | Meaning |
 |---|---|---|
 | `WASAC_AUTH_SECRET` | random at start-up | Signs sessions and code hashes; set it, or everyone is signed out on restart |
-| `OTP_SHOW_DEMO_CODES` | `1` | Show sign-in codes on screen for DEMO- households (SMS not wired yet) |
+| `OTP_SHOW_DEMO_CODES` | `1` | Show sign-in codes on screen for DEMO- households (their numbers are not real phones) |
 | `LOCATION_MAX_M` | `150` | How far from the meter a photo may be taken |
 | `LOCATION_MAX_ACCURACY_M` | `500` | Rougher phone positions count as "unclear" |
 | `AT_USERNAME`, `AT_API_KEY` | unset (SMS only logged) | Africa's Talking; `sandbox` sends to the simulator only |
@@ -312,6 +324,12 @@ and whether the household changed it (`backend/app/services/photo_evidence.py`).
 | `MOMO_SUBSCRIPTION_KEY`, `MOMO_API_USER`, `MOMO_API_KEY` | unset (simulated payments) | MTN MoMo Collections |
 | `USSD_CALLBACK_TOKEN` | unset (USSD off) | Secret in the Africa's Talking USSD callback URL |
 | `PHOTO_RETENTION_DAYS` | `90` | How long meter photos are kept for reviewers |
+
+**Households added by staff** are real accounts, so their sign-in code only goes by SMS. With no
+SMS set up, asking for a code answers that the SMS could not be sent, and no code is stored. To test
+one, set `AT_USERNAME=sandbox` and `AT_API_KEY` on Render: the code then reaches the Africa's Talking
+simulator and **Sent SMS** in the staff area, which only admins can open, and an admin gives it to
+the tester.
 
 **Demo households** (`scripts/demo/generate_demo_households.py --load-db`, customer numbers start with `DEMO-`, labelled
 "Demo data" in the app): sign in with **0700 000 001** for KGL-20001, 0700 000 002 for

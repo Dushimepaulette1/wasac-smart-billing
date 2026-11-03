@@ -42,6 +42,7 @@ MAX_ATTEMPTS = 5                 # wrong tries per code
 DEMO_PREFIX = "DEMO-"
 WRONG_CODE = "That code is not right, or it has expired. Ask for a new code."
 NOT_REGISTERED = "This number is not linked to a WASAC account. Check the number, or call WASAC on 1580."
+SMS_FAILED = "We could not send the SMS just now. Try again in a few minutes."
 
 # Per IP, on top of the per-phone limit: stops one caller sending SMS to many numbers.
 _request_limiter = RateLimiter(5, 15 * 60)
@@ -96,19 +97,25 @@ async def request_code(body: CodeRequest, request: Request, db: Session = Depend
         # per-IP limit above (5 per 15 minutes). Nothing is stored or sent.
         raise HTTPException(status_code=404, detail=NOT_REGISTERED)
 
+    all_demo = all(c.customer_id.startswith(DEMO_PREFIX) for c in customers)
+    show_code = all_demo and os.getenv("OTP_SHOW_DEMO_CODES", "1") != "0"
+    if not show_code and not sms_configured():
+        # Nothing could reach this household, so say so instead of "code sent". A household added by
+        # staff gets its code once Africa's Talking is set up; in the sandbox an admin reads it under
+        # Sent SMS (app/services/sms.py).
+        logger.warning("Sign-in code requested but SMS is not configured (AT_USERNAME/AT_API_KEY): nothing sent.")
+        raise HTTPException(status_code=503, detail=SMS_FAILED)
+
     code = f"{secrets.randbelow(1_000_000):06d}"
     db.add(HouseholdCode(phone=phone, code_hash=hash_code(phone, code), created_at=now, expires_at=now + CODE_TTL))
     db.commit()
-    all_demo = all(c.customer_id.startswith(DEMO_PREFIX) for c in customers)
-    if all_demo and os.getenv("OTP_SHOW_DEMO_CODES", "1") != "0":
+    if show_code:
         answer.demo_code = code  # demo numbers are not real phones; an SMS is still tried below
     if sms_configured():
         text = f"WASAC: your sign-in code is {code}. It works for 10 minutes. Never share it."
         sent = await run_in_threadpool(send_sms, phone, text, sensitive=True)
         if not sent and answer.demo_code is None:
-            raise HTTPException(status_code=503, detail="We could not send the SMS just now. Try again in a few minutes.")
-    elif answer.demo_code is None:
-        logger.warning("Sign-in code requested but SMS is not configured (AT_USERNAME/AT_API_KEY): nothing sent.")
+            raise HTTPException(status_code=503, detail=SMS_FAILED)
     return answer
 
 

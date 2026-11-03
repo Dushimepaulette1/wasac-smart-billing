@@ -130,7 +130,10 @@ function CustomerHome() {
       nav
       action={action}
     >
-      {decision && <DecisionBanner flag={decision} meterId={meterId} />}
+      {/* A rejected reading stops asking for another once a newer one is waiting or accepted. */}
+      {decision && !(decision.reading_status === 'rejected' && (checking || opensOn)) && (
+        <DecisionBanner flag={decision} meterId={meterId} />
+      )}
 
       {(customer.credit_available ?? 0) >= 1 && (
         <p className="text-small">{t('home.credit', { amount: rwf(customer.credit_available ?? 0) })}</p>

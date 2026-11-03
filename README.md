@@ -93,7 +93,7 @@ accepts or rejects. These limits are starting estimates, not values tested on WA
 |---|---|
 | Web app, database, photo reading, rules, bills, officer review | Working and live |
 | Households and meters | Made up, marked as demo data |
-| Water prices | Provisional, to be confirmed with WASAC and RURA |
+| Water prices | WASAC's published residential tariff, with VAT shown on its own line. Everyone is billed as residential, and the 1,000 RWF service charge is not yet confirmed |
 | SMS messages | Test mode only, so real phones do not receive them. Sign-in codes for demo households appear on screen |
 | Payments | No real money moves. Staff check payments by hand, against a test list if one is uploaded |
 | USSD menu for basic phones | Built and tested, but not on a live phone channel |

@@ -35,13 +35,24 @@ def test_when_a_demo_household_requests_a_code_should_show_it_and_accept_it_once
     assert again.status_code == 400
 
 
-def test_when_a_real_household_requests_a_code_should_never_show_or_log_it(db, anon_client, caplog):
+def test_when_a_real_household_requests_a_code_should_never_show_or_log_it(db, anon_client, caplog, monkeypatch):
+    from app.api.routes import household_auth
+    monkeypatch.setenv("AT_USERNAME", "sandbox")
+    monkeypatch.setenv("AT_API_KEY", "atsk_test")
+    monkeypatch.setattr(household_auth, "send_sms", lambda *a, **k: True)  # no request leaves the test
     add_household(db, "MTR-R", make_history([0.4] * 3))
     with caplog.at_level("INFO"):
         sent = anon_client.post("/household/request-code", json={"phone": PHONE}).json()
     assert sent["demo_code"] is None
     assert db.query(HouseholdCode).count() == 1
     assert "sign-in code is" not in caplog.text  # the SMS text is not logged
+
+
+def test_when_sms_is_not_set_up_should_tell_a_real_household_and_store_no_code(db, anon_client):
+    add_household(db, "MTR-R", make_history([0.4] * 3))
+    r = anon_client.post("/household/request-code", json={"phone": PHONE})
+    assert r.status_code == 503 and "could not send the SMS" in r.json()["detail"]
+    assert db.query(HouseholdCode).count() == 0
 
 
 def test_when_the_number_is_unknown_should_say_so_and_store_no_code(db, anon_client):

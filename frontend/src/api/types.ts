@@ -137,6 +137,8 @@ export interface TariffBreakdown {
   tier4_units: number;
   tier4_rate: number;
   tier4_amount: number;
+  /** VAT on the water; 0 on a tariff version without VAT rates. */
+  vat_amount: number;
   service_charge: number;
   total: number;
 }
@@ -203,19 +205,23 @@ export interface BillCalculateRequest {
 /** One tier as /calculate-bill returns it (nested, unlike TariffBreakdown). */
 export interface CalculatedTier {
   units: number;
+  /** Without VAT; `amount` is units at this rate. */
   rate_rwf: number;
+  rate_with_vat_rwf: number;
   amount: number;
 }
 
 /** app/api/routes/readings.py calculate_bill (dict, no schema) */
 export interface CalculateBillResponse {
   consumption_m3: number;
+  tariff_version: string;
   breakdown: {
     tier1: CalculatedTier;
     tier2: CalculatedTier;
     tier3: CalculatedTier;
     tier4: CalculatedTier;
   };
+  vat_amount: number;
   service_charge: number;
   total_amount_due: number;
   currency: 'RWF';

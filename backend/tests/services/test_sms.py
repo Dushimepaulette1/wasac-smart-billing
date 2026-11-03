@@ -154,6 +154,16 @@ def test_when_a_sandbox_sms_is_sent_should_keep_a_copy_for_admins(sandbox, outbo
     assert listed[0]["message"] == "Your bill is ready"
 
 
+def test_when_a_household_added_by_staff_asks_for_a_code_should_leave_it_for_admins_only(
+    sandbox, outbox, db, anon_client, as_admin, client,
+):
+    add_household(db, "MTR-S", make_history([0.4] * 3))
+    assert anon_client.post("/household/request-code", json={"phone": "0788000111"}).json()["demo_code"] is None
+    listed = as_admin.get("/auth/sms-outbox").json()
+    assert "sign-in code is" in listed[0]["message"]
+    assert client.get("/auth/sms-outbox").status_code == 403  # an officer cannot read codes
+
+
 def test_when_the_live_service_is_used_should_keep_no_copy(sandbox, outbox, db, monkeypatch):
     from app.models import SmsOutbox
 

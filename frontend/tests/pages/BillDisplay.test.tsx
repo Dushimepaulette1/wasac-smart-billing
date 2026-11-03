@@ -9,11 +9,11 @@ import { makeBill } from '../support/fixtures';
 vi.mock('../../src/household/loadBill', () => ({ default: vi.fn() }));
 
 const view = (bill: BillView['bill']): BillView => ({
-  bill, tiers: [], serviceCharge: 1000, periodStart: null, reading: null, history: [bill],
+  bill, tiers: [], vat: 0, serviceCharge: 1000, periodStart: null, reading: null, history: [bill],
 });
 
-function renderBill(bill: BillView['bill']) {
-  vi.mocked(loadBill).mockResolvedValue(view(bill));
+function renderBill(bill: BillView['bill'], vat = 0) {
+  vi.mocked(loadBill).mockResolvedValue({ ...view(bill), vat });
   render(
     <I18nProvider locale="en">
       <TestHousehold>
@@ -43,5 +43,20 @@ describe('BillDisplay', () => {
     renderBill(makeBill({ amount_due: 6460, outstanding: 6460, payment_status: 'unpaid' }));
     expect(await screen.findByRole('button', { name: 'Pay RWF 6,460' })).toBeInTheDocument();
     expect(screen.queryByText('Balance')).not.toBeInTheDocument();
+  });
+
+  it('when a bill is on the WASAC tariff, should show the water without VAT, then VAT, then the service charge', async () => {
+    // 20 m3: RWF 12,500 of water at the rates without VAT, RWF 2,290 VAT, RWF 1,000 service charge.
+    renderBill(makeBill({ amount_due: 15790, outstanding: 15790, payment_status: 'unpaid' }), 2290);
+    expect(await screen.findByText('VAT on water')).toBeInTheDocument();
+    expect(screen.getByText('RWF 12,500')).toBeInTheDocument();
+    expect(screen.getByText('RWF 2,290')).toBeInTheDocument();
+    expect(screen.getByText('RWF 15,790')).toBeInTheDocument();
+  });
+
+  it('when a bill has no VAT, should show no VAT line', async () => {
+    renderBill(makeBill({ amount_due: 6460, outstanding: 6460, payment_status: 'unpaid' }));
+    await screen.findByRole('button', { name: 'Pay RWF 6,460' });
+    expect(screen.queryByText('VAT on water')).not.toBeInTheDocument();
   });
 });

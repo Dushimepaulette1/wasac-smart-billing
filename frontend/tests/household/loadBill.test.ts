@@ -41,6 +41,7 @@ describe('loadBill', () => {
       { units: 5.5, rate: 791, amount: 4350.5 },
     ]);
     expect(data.serviceCharge).toBe(1000);
+    expect(data.vat).toBe(0);
   });
 
   it('when the bill is an older one, should have no meter reading (the API keeps none)', async () => {

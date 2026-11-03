@@ -123,11 +123,13 @@ export function makeCalculatedBill(): CalculateBillResponse {
   return {
     consumption_m3: 20.5,
     breakdown: {
-      tier1: { units: 5, rate_rwf: 350, amount: 1750 },
-      tier2: { units: 10, rate_rwf: 530, amount: 5300 },
-      tier3: { units: 5.5, rate_rwf: 791, amount: 4350.5 },
-      tier4: { units: 0, rate_rwf: 1000, amount: 0 },
+      tier1: { units: 5, rate_rwf: 350, rate_with_vat_rwf: 350, amount: 1750 },
+      tier2: { units: 10, rate_rwf: 530, rate_with_vat_rwf: 530, amount: 5300 },
+      tier3: { units: 5.5, rate_rwf: 791, rate_with_vat_rwf: 791, amount: 4350.5 },
+      tier4: { units: 0, rate_rwf: 1000, rate_with_vat_rwf: 1000, amount: 0 },
     },
+    tariff_version: 'v1-provisional',
+    vat_amount: 0,
     service_charge: 1000,
     total_amount_due: 12400.5,
     currency: 'RWF',

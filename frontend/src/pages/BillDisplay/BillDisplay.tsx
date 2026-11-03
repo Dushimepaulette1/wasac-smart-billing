@@ -73,12 +73,12 @@ function BillDisplay() {
     );
   }
 
-  const { bill, tiers, serviceCharge, periodStart, reading, history } = request.data;
+  const { bill, tiers, vat, serviceCharge, periodStart, reading, history } = request.data;
   const paid = bill.payment_status === 'paid';
   const owed = amountOwed(bill);
   const adjustments = bill.adjustments ?? [];
   const creditUsed = bill.credit_used ?? 0;
-  const water = bill.amount_due - serviceCharge;
+  const water = bill.amount_due - serviceCharge - vat;
 
   return (
     <Screen
@@ -132,6 +132,12 @@ function BillDisplay() {
             <dt>{t('bill.water')}</dt>
             <dd className="num">{rwf(water)}</dd>
           </div>
+          {vat > 0 && (
+            <div className={styles.line}>
+              <dt>{t('bill.vat')}</dt>
+              <dd className="num">{rwf(vat)}</dd>
+            </div>
+          )}
           <div className={styles.line}>
             <dt>{t('bill.service')}</dt>
             <dd className="num">{rwf(serviceCharge)}</dd>
@@ -174,14 +180,15 @@ function BillDisplay() {
         <details className={styles.details}>
           <summary>{t('bill.howTitle')}</summary>
           <ul className={styles.tiers}>
-            {tiers.map((tier) => (
-              <li key={tier.rate} className={styles.line}>
+            {tiers.map((tier, n) => (
+              <li key={n} className={styles.line}>
                 <span>{t('bill.tierLine', { volume: volume(tier.units), rate: rwf(tier.rate) })}</span>
                 <span className="num">{rwf(tier.amount)}</span>
               </li>
             ))}
           </ul>
           <p className="text-small text-secondary">{t('bill.howNote')}</p>
+          {vat > 0 && <p className="text-small text-secondary">{t('bill.vatNote')}</p>}
         </details>
       </section>
 

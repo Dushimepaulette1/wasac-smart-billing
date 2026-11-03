@@ -4,7 +4,9 @@
  * then the 6-digit code sent to it by SMS, then (only if that number has
  * several meters) which meter. No password to remember.
  *
- * Demo households get their code on screen while SMS is not connected.
+ * Demo households also get their code on screen (their numbers are not real
+ * phones). Other households get it by SMS only; if no SMS can be sent the
+ * backend answers 503, and the household is told so instead of waiting.
  */
 
 import { useEffect, useId, useState, type FormEvent } from 'react';
@@ -58,6 +60,9 @@ function SignIn() {
     }
     if (err instanceof ApiError && (err.kind === 'invalid' || err.kind === 'notFound')) return t(wrongKey);
     if (err instanceof ApiError && err.kind === 'tooMany') return t('signin.household.tooMany');
+    if (err instanceof ApiError && err.status === 503 && wrongKey === 'signin.household.badPhone') {
+      return t('signin.household.noSms');
+    }
     return errorMessage(t, err);
   };
 
@@ -165,6 +170,9 @@ function SignIn() {
         <p className={styles.staff}>
           <Link to="/staff/sign-in">{t('landing.staffLink')}</Link>
         </p>
+        <p className="text-small text-secondary">
+          {t('app.notOfficial')} <Link to="/your-data">{t('data.link')}</Link>
+        </p>
       </Screen>
     );
   }
@@ -183,7 +191,7 @@ function SignIn() {
       <form id="code-form" className={`panel ${styles.form}`} onSubmit={verify} noValidate>
         {sent.demo_code && (
           <Notice tone="info" title={t('signin.household.demoTitle')}>
-            {t('signin.household.demoBody')} <strong className={`code ${styles.demoCode}`}>{sent.demo_code}</strong>
+            {t('signin.household.demoCode')} <strong className={`code ${styles.demoCode}`}>{sent.demo_code}</strong>
           </Notice>
         )}
         {error && (

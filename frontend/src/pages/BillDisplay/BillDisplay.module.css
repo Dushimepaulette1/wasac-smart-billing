@@ -72,6 +72,11 @@
   list-style: none;
 }
 
+/* Tier amounts keep "RWF" and the number together, as the lines above do. */
+.tiers li > :last-child {
+  white-space: nowrap;
+}
+
 .usage {
   gap: var(--space-4);
 }

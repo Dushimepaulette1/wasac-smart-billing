@@ -6,19 +6,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TariffBreakdown(BaseModel):
+    """A bill's tiers at the rates without VAT, then VAT and the service charge (app/services/billing.py)."""
     tier1_units: float
-    tier1_rate: int = 350
+    tier1_rate: float
     tier1_amount: float
     tier2_units: float
-    tier2_rate: int = 530
+    tier2_rate: float
     tier2_amount: float
     tier3_units: float
-    tier3_rate: int = 791
+    tier3_rate: float
     tier3_amount: float
     tier4_units: float
-    tier4_rate: int = 1000
+    tier4_rate: float
     tier4_amount: float
-    service_charge: float = 1000.0
+    vat_amount: float = 0.0
+    service_charge: float
     total: float
 
 

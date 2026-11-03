@@ -62,7 +62,7 @@ function AppPreview() {
         </span>
         <span className={styles.statusText}>{t('landing.previewChecked')}</span>
         <span className={styles.tag}>565.846 m³</span>
-        <span className={styles.tag}>{rwf(12400)}</span>
+        <span className={styles.tag}>{rwf(15790)}</span>
       </div>
     </div>
   );
@@ -205,10 +205,12 @@ function Landing() {
           <div className={styles.footerCol}>
             <h4>{t('landing.footerHelp')}</h4>
             <p>{t('landing.footerCall')}</p>
+            <Link to="/your-data">{t('data.link')}</Link>
           </div>
         </div>
         <div className={styles.footerBottom}>
           <span>{t('landing.footerCopy', { year: new Date().getFullYear() })}</span>
+          <p>{t('app.notOfficial')}</p>
         </div>
       </footer>
     </div>

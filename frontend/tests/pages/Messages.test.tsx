@@ -6,11 +6,16 @@ import { TestHousehold } from '../support/household';
 import en from '../../src/i18n/locales/en.json';
 import { api } from '../../src/api/client';
 import type { AnomalyFlag, AnomalyType } from '../../src/api/types';
-import { makeFlag } from '../support/fixtures';
+import { makeCustomer, makeFlag } from '../support/fixtures';
 
 vi.mock('../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/api/client')>();
-  return { ...actual, api: { ...actual.api, getHouseholdFlags: vi.fn(), deleteMessage: vi.fn() } };
+  return { ...actual, api: { ...actual.api, getHouseholdFlags: vi.fn(), deleteMessage: vi.fn(), getCustomer: vi.fn() } };
+});
+
+beforeEach(() => {
+  // No newer reading unless a test says so.
+  vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer());
 });
 
 const flag = (id: number, anomaly_type: AnomalyType, extra: Partial<AnomalyFlag> = {}) =>
@@ -113,6 +118,29 @@ describe('Messages', () => {
     const message = articleFor(await screen.findByRole('heading', { name: 'Much more water than usual' }));
     expect(message).toHaveTextContent('We could not confirm this reading. Please read your meter again.');
     expect(within(message).getByRole('button', { name: 'Read your meter' })).toBeInTheDocument();
+  });
+
+  it('when a new reading was sent after a rejected one, should stop asking to read again', async () => {
+    vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ reading_pending: true }));
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(2, 'SPIKE', { status: 'resolved', reading_status: 'rejected' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'Much more water than usual' }));
+    await waitFor(() => expect(message).toHaveTextContent('Your new reading is being checked.'));
+    expect(within(message).queryByRole('button', { name: 'Read your meter' })).not.toBeInTheDocument();
+  });
+
+  it('when the new reading was accepted, should point to the bills instead', async () => {
+    vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ next_reading_from: '2026-11-28T00:00:00' }));
+    vi.mocked(api.getHouseholdFlags).mockResolvedValue([
+      flag(2, 'SPIKE', { status: 'resolved', reading_status: 'rejected' }),
+    ]);
+    renderMessages();
+    const message = articleFor(await screen.findByRole('heading', { name: 'Much more water than usual' }));
+    await waitFor(() => expect(message).toHaveTextContent('Your new reading was accepted.'));
+    expect(within(message).getByRole('link', { name: 'See your bills' })).toHaveAttribute('href', '/history');
+    expect(within(message).queryByRole('button', { name: 'Read your meter' })).not.toBeInTheDocument();
   });
 
   it('when the outcome is not known, should describe the finished check neutrally', async () => {

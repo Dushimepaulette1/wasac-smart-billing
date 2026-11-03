@@ -63,6 +63,21 @@ describe('Household sign-in', () => {
     expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument();
   });
 
+  it('when no SMS can be sent, should say so instead of asking for a code', async () => {
+    vi.mocked(api.requestCode).mockRejectedValue(new ApiError('server', 503));
+    renderSignIn();
+    fireEvent.change(screen.getByLabelText('Your phone number'), { target: { value: '0788123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send me a code' }));
+    expect(await screen.findByText(/could not send your code by SMS/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument();
+  });
+
+  it('when signing in, should say this is not an official WASAC service and link to the data page', () => {
+    renderSignIn();
+    expect(screen.getByText(/not an official WASAC service/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Your data' })).toHaveAttribute('href', '/your-data');
+  });
+
   it('when the code is wrong, should say so', async () => {
     vi.mocked(api.requestCode).mockResolvedValue({ phone: '+250788123456', expires_in: 600, resend_after: 60, demo_code: null });
     vi.mocked(api.verifyCode).mockRejectedValue(new ApiError('invalid', 400));

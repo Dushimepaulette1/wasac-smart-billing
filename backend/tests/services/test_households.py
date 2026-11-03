@@ -22,7 +22,7 @@ def supervisor(db):
     fastapi_app.dependency_overrides.clear()
 
 
-def test_when_staff_add_a_household_should_create_it_so_the_phone_can_sign_in(db, client, anon_client):
+def test_when_staff_add_a_household_should_create_it_so_the_phone_can_sign_in(db, client, anon_client, monkeypatch):
     r = client.post("/customers", json=NEW)
     assert r.status_code == 201, r.text
     body = r.json()
@@ -34,8 +34,14 @@ def test_when_staff_add_a_household_should_create_it_so_the_phone_can_sign_in(db
     assert body["next_reading_from"] is None
     assert db.query(StaffAction).filter(StaffAction.action == "household_added").one().target == "KGL-30001"
 
+    # Real households get their code by SMS only: with no SMS set up they are told so, not sent to wait.
+    assert anon_client.post("/household/request-code", json={"phone": "0788555123"}).status_code == 503
+    from app.api.routes import household_auth
+    monkeypatch.setenv("AT_USERNAME", "sandbox")
+    monkeypatch.setenv("AT_API_KEY", "atsk_test")
+    monkeypatch.setattr(household_auth, "send_sms", lambda *a, **k: True)
     sent = anon_client.post("/household/request-code", json={"phone": "0788555123"})
-    assert sent.status_code == 200 and sent.json().get("demo_code") is None  # real households: SMS only
+    assert sent.status_code == 200 and sent.json().get("demo_code") is None
 
 
 def test_when_the_meter_is_already_registered_should_refuse_a_second_household(client):
