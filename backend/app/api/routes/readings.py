@@ -15,6 +15,7 @@ from app.models import AnomalyFlag, Bill, Customer, PhotoRead, Reading
 from app.services import billing
 from app.services.audit import record
 from app.services.photo_evidence import claim, save_photo_read
+from app.services.usage import notify_leak
 from app.utils.meter_value import parse_meter_value
 from app.core.ratelimit import MAX_UPLOAD_BYTES
 from app.anomaly.service import ReadingRefused, evaluate_reading, notify_household, review_reason, submit_reading
@@ -202,6 +203,10 @@ async def confirm_reading(
         record(db, access.staff.username, "reading_entered", target=meter.meter_id,
                detail=f"{submitted:.3f} m3, {sub.reading.validation_status}", request=request)
     actions = notify_household(db, sub.anomaly)
+    if sub.bill is not None:
+        leak = notify_leak(db, meter.meter_id, sub.reading.reading_id)
+        if leak:
+            actions.append(leak)
     anomaly = AnomalyResultSchema(**sub.anomaly.to_dict(), actions=actions)
 
     if sub.bill is None:

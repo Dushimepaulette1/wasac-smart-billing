@@ -41,6 +41,9 @@ from app.schemas.billing import (  # noqa: F401
     PaymentStatementOut,
     PaymentStatementUpload,
     PaymentToCheck,
+    SectorHousehold,
+    SectorSummaryOut,
+    UsageSummaryOut,
 )
 from app.schemas.household_auth import (  # noqa: F401
     CodeRequest,

@@ -15,6 +15,8 @@ import type {
   GuidanceCode,
   GuideFrameResponse,
   PhotoSubmitResponse,
+  SectorSummary,
+  UsageSummary,
 } from '../../src/api/types';
 
 /** A /submit-photo result for a clear photo; override guidance and digits per case. */
@@ -133,6 +135,41 @@ export function makeCalculatedBill(): CalculateBillResponse {
     service_charge: 1000,
     total_amount_due: 12400.5,
     currency: 'RWF',
+  };
+}
+
+/** GET /customers/{id}/usage for a household using 20 m3 a month, with no leak. */
+export function makeUsage(overrides: Partial<UsageSummary> = {}): UsageSummary {
+  return {
+    reason: null,
+    usual_daily_m3: 0.667,
+    usual_period_days: 30,
+    last_reading_m3: 484.5,
+    last_reading_date: '2026-10-09T10:26:25',
+    projected_m3: 20,
+    projected_amount: 15790,
+    projected_on: '2026-11-08T10:26:25',
+    tariff_version: 'v2-wasac-residential',
+    used_meter_now: false,
+    used_so_far_m3: null,
+    leak_warning: false,
+    leak_reading_id: null,
+    percent_above_usual: null,
+    leak_so_far: false,
+    ...overrides,
+  };
+}
+
+export function makeSector(overrides: Partial<SectorSummary> = {}): SectorSummary {
+  return {
+    sector: 'Remera',
+    households: 3,
+    held_readings: 0,
+    possible_leaks: 0,
+    usual_monthly_m3: 18,
+    owed: 0,
+    attention: [],
+    ...overrides,
   };
 }
 

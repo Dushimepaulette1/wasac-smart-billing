@@ -1,11 +1,12 @@
 /**
  * @file loadHome.ts
  * @description What the home screen needs to decide the household's next
- * action. Flags are optional: if they fail to load, home still works.
+ * action. Flags and the usage estimate are optional: if they fail to load,
+ * home still works.
  */
 
 import { api } from '../api/client';
-import type { AnomalyFlag, AnomalyType, BillSummary, CustomerInfo } from '../api/types';
+import type { AnomalyFlag, AnomalyType, BillSummary, CustomerInfo, UsageSummary } from '../api/types';
 import { parseUtc } from './status';
 
 const DECISION_DAYS = 14;
@@ -24,13 +25,16 @@ export interface HomeView {
   checking: boolean;
   /** An open high-use (possible leak) flag. */
   highUse: boolean;
+  /** The leak alert and next-bill estimate, or null if it did not load. */
+  usage: UsageSummary | null;
 }
 
 export default async function loadHome(customerId: string, meterId: string): Promise<HomeView> {
-  const [customer, bills, flags] = await Promise.all([
+  const [customer, bills, flags, usage] = await Promise.all([
     api.getCustomer(customerId),
     api.getBills(customerId),
     api.getHouseholdFlags(meterId).catch((): AnomalyFlag[] => []),
+    api.getUsage(customerId).catch((): UsageSummary | null => null),
   ]);
   const open = flags.filter((f) => f.status === 'open');
   const since = Date.now() - DECISION_DAYS * 24 * 3600 * 1000;
@@ -46,5 +50,6 @@ export default async function loadHome(customerId: string, meterId: string): Pro
     decision,
     checking: customer.reading_pending,
     highUse: open.some((f) => HIGH_USE_TYPES.includes(f.anomaly_type)),
+    usage,
   };
 }

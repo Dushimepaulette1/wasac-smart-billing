@@ -40,6 +40,7 @@ const NAV: NavItem[] = [
   { to: '/staff', icon: 'overview', label: 'staff.nav.overview', end: true },
   { to: '/staff/review', icon: 'queue', label: 'staff.nav.review' },
   { to: '/staff/households', icon: 'households', label: 'staff.nav.households' },
+  { to: '/staff/sectors', icon: 'globe', label: 'staff.nav.sectors' },
   { to: '/staff/payments', icon: 'wallet', label: 'staff.nav.payments' },
   { to: '/staff/corrections', icon: 'gauge', label: 'staff.nav.corrections', role: 'supervisor' },
   { to: '/staff/activity', icon: 'activity', label: 'staff.nav.activity' },

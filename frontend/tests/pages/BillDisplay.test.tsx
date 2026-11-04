@@ -9,11 +9,11 @@ import { makeBill } from '../support/fixtures';
 vi.mock('../../src/household/loadBill', () => ({ default: vi.fn() }));
 
 const view = (bill: BillView['bill']): BillView => ({
-  bill, tiers: [], vat: 0, serviceCharge: 1000, periodStart: null, reading: null, history: [bill],
+  bill, tiers: [], vat: 0, serviceCharge: 1000, periodStart: null, reading: null, history: [bill], leakPercent: null,
 });
 
-function renderBill(bill: BillView['bill'], vat = 0) {
-  vi.mocked(loadBill).mockResolvedValue({ ...view(bill), vat });
+function renderBill(bill: BillView['bill'], vat = 0, leakPercent: number | null = null) {
+  vi.mocked(loadBill).mockResolvedValue({ ...view(bill), vat, leakPercent });
   render(
     <I18nProvider locale="en">
       <TestHousehold>
@@ -58,5 +58,16 @@ describe('BillDisplay', () => {
     renderBill(makeBill({ amount_due: 6460, outstanding: 6460, payment_status: 'unpaid' }));
     await screen.findByRole('button', { name: 'Pay RWF 6,460' });
     expect(screen.queryByText('VAT on water')).not.toBeInTheDocument();
+  });
+
+  it('when this bill looks like a leak, should say how far above usual it is', async () => {
+    renderBill(makeBill({ amount_due: 25000, outstanding: 25000, payment_status: 'unpaid' }), 0, 67);
+    expect(await screen.findByText('This is about 67% more than your usual use. Check for leaks.')).toBeInTheDocument();
+  });
+
+  it('when this bill is as usual, should show no leak line', async () => {
+    renderBill(makeBill({ amount_due: 6460, outstanding: 6460, payment_status: 'unpaid' }));
+    await screen.findByRole('button', { name: 'Pay RWF 6,460' });
+    expect(screen.queryByText(/more than your usual use/)).not.toBeInTheDocument();
   });
 });

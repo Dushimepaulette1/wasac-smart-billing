@@ -123,3 +123,28 @@
   gap: var(--space-3) var(--space-5);
   margin-top: var(--space-4);
 }
+
+/* Leak checklist inside the notice. */
+.checks {
+  margin: 0;
+  padding-left: 1.25em;
+  list-style: disc;
+}
+
+/* "Your next bill": an estimate, quieter than the bill due. */
+.nextPanel {
+  gap: var(--space-3);
+}
+
+.nextAmount {
+  font-size: var(--size-lead);
+  line-height: var(--leading-lead);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.nextCheck {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}

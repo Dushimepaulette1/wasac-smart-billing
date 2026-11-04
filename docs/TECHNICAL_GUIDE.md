@@ -222,6 +222,24 @@ become credit, applied automatically; there are no cash refunds in the app.
 first bill takes a baseline correction: the supervisor gives the true starting reading, and if the
 reading itself was wrong too, the next bill is recalculated with it.
 
+### Leak alert, next-bill estimate and sectors
+
+`app/services/usage.py` works from a meter's confirmed readings only, comparing periods of 7 days or more:
+
+- **Leak alert.** The newest billed period's daily use is `ANOMALY_LEAK_RATIO` (1.5) times the household's usual (the
+  median of at least 3 earlier periods) and at least `ANOMALY_LEAK_MIN_EXTRA_M3` (3 m³) above it, and it ended in the
+  last 45 days. The household sees it on Home and on that bill, and gets one SMS when the bill is made. It never holds a
+  reading; holding is the 3x rule's job.
+- **Next-bill estimate.** `GET /customers/{id}/usage`: usual daily use over a usual period (or every day since the last
+  reading, if longer), priced with today's tariff. With `?meter_now=` (a number read today, 3 days or more after the
+  last reading), it is the use so far plus the rest of the period at the higher of the usual rate and the rate so far.
+  Nothing is stored or billed; a number lower than the last reading gets 422.
+- **Sectors.** `GET /api/sectors` (any staff) groups households by sector: held readings, possible leaks (the alert,
+  or an open high-use flag), usual monthly use and money owed from `app/services/balance.py`, the sectors needing
+  attention first. It works household by household, which suits a pilot, not a whole utility.
+
+The thresholds are provisional, like the others (`app/anomaly/README.md`).
+
 What still needs WASAC, MTN or a person to decide: `docs/decisions/OPEN_ITEMS.md`.
 
 ### Tests

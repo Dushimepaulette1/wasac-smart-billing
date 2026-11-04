@@ -35,6 +35,10 @@ people stay in control of the final number.
 7. If it looks unusual, a WASAC officer looks at it first.
 8. The household pays the bill, and staff confirm the payment.
 
+Home also estimates the next bill from the household's usual use, and warns when a bill is well above usual, so a
+leak is found early. Staff see households by sector, with the sectors that have readings to check or possible leaks
+first.
+
 **The AI helps, but people decide.** On photos it had never seen, the AI read 55.7% of meters fully
 correctly (95% confidence interval: 42 to 69%). That is not enough to trust alone, so a person always
 checks the numbers.
@@ -64,8 +68,8 @@ reading for an officer. Models run on ONNX Runtime, so the API fits on a 512 MB 
 
 | Person | What they can do |
 |---|---|
-| **Household** | Send a reading, see bills and history, pay, read messages, use Kinyarwanda or English |
-| **Officer** | Accept or reject unusual readings, add or edit households, check payments |
+| **Household** | Send a reading, see bills and history, estimate the next bill, get leak alerts, pay, read messages, use Kinyarwanda or English |
+| **Officer** | Accept or reject unusual readings, add or edit households, check payments, see households by sector |
 | **Supervisor** | Everything an officer does, plus upload customer lists, make corrections, approve other people's corrections |
 | **Admin** | Everything a supervisor does, plus manage staff accounts and read sent SMS messages |
 

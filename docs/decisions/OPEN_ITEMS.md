@@ -27,6 +27,10 @@ Once WASAC data arrives, measure the share of readings held and how often office
 - **`ANOMALY_EDIT_HOLD_M3` (1).** Depends on how often the reader is right on real photos. On the held-out
   set it read 55.7% of 79 photos exactly (95% CI 42–69%).
 - **`ANOMALY_MIN_PERIOD_DAYS` (7), `ANOMALY_STUCK_DAYS` (30), `ANOMALY_MIN_HISTORY_PERIODS` (3).** Chosen by reasoning only.
+- **Leak alert, `ANOMALY_LEAK_RATIO` (1.5x) and `ANOMALY_LEAK_MIN_EXTRA_M3` (3).** Only tells the household; it never
+  holds a reading. Chosen by reasoning only: measure how often households who get it find a real leak.
+- **Next-bill estimate.** Usual daily use times a usual period, on today's tariff. It is shown as an estimate, not a
+  bill, and a number typed for it is never stored. How close it comes to the real bill is unmeasured.
 - **Isolation Forest.** Not deployed, and only ever trained on synthetic households. Its results must not be
   reported as real-world performance.
 

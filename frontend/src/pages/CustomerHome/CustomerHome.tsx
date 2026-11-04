@@ -23,6 +23,7 @@ import type { AnomalyFlag } from '../../api/types';
 import styles from './CustomerHome.module.css';
 import { amountOwed } from '../../utils/bill';
 import { rejectionKey } from '../Messages/Messages';
+import NextBill from './NextBill';
 
 const SEEN_KEY = 'mubazi.decisionSeen';
 
@@ -94,7 +95,10 @@ function CustomerHome() {
     );
   }
 
-  const { customer, newestBill, highUse, decision } = home.data;
+  const { customer, newestBill, highUse, decision, usage } = home.data;
+  // An open high-use flag (the reading is being checked) or a billed period well above usual.
+  const leak = highUse || Boolean(usage?.leak_warning);
+  const percent = usage?.leak_warning ? usage.percent_above_usual : null;
   const checking = home.data.checking || customer.reading_pending;
   // This period's reading is in: the next one opens on this date.
   const opensOn = customer.next_reading_from;
@@ -156,7 +160,7 @@ function CustomerHome() {
         </section>
       )}
 
-      {((checking && due) || highUse) && (
+      {((checking && due) || leak) && (
         <div className={styles.notices}>
           {checking && due && (
             <Notice tone="held" title={t('home.checkingTitle')}>
@@ -164,20 +168,33 @@ function CustomerHome() {
             </Notice>
           )}
 
-          {highUse && (
+          {leak && (
             <Notice
               tone="error"
+              title={percent ? t('home.leak.titlePercent', { percent }) : t('home.leak.title')}
               actions={
-                <Button variant="text" onClick={() => navigate('/messages')}>
-                  {t('home.readMessage')}
-                </Button>
+                highUse ? (
+                  <Button variant="text" onClick={() => navigate('/messages')}>
+                    {t('home.readMessage')}
+                  </Button>
+                ) : undefined
               }
             >
-              {t('home.highUse')}
+              <p>{t('msg.leak.checkTitle')}</p>
+              <ul className={styles.checks}>
+                <li>{t('msg.leak.check1')}</li>
+                <li>{t('msg.leak.check2')}</li>
+                <li>{t('msg.leak.check3')}</li>
+              </ul>
+              <p>{t('home.leak.watch')}</p>
+              <p>{t('home.leak.call')}</p>
             </Notice>
           )}
         </div>
       )}
+
+      {/* An estimate is not useful while a reading is being checked: that reading decides the bill. */}
+      {usage && !checking && <NextBill customerId={customerId} usage={usage} />}
 
       {/* One strip: three facts side by side on wide screens, stacked on phones. */}
       <section className={`panel ${styles.meterPanel}`} aria-labelledby="meter-title">

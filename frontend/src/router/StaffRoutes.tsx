@@ -16,6 +16,7 @@ import MyAccount from '../pages/staff/MyAccount';
 import SmsOutbox from '../pages/staff/SmsOutbox';
 import Payments from '../pages/staff/Payments';
 import Corrections from '../pages/staff/Corrections';
+import Sectors from '../pages/staff/Sectors';
 import { RequireStaff } from '../staff/auth';
 
 function StaffRoutes() {
@@ -25,6 +26,7 @@ function StaffRoutes() {
       <Route index element={<RequireStaff><Overview /></RequireStaff>} />
       <Route path="review" element={<RequireStaff><ReviewQueue /></RequireStaff>} />
       <Route path="households" element={<RequireStaff><Households /></RequireStaff>} />
+      <Route path="sectors" element={<RequireStaff><Sectors /></RequireStaff>} />
       <Route path="activity" element={<RequireStaff><Activity /></RequireStaff>} />
       <Route path="payments" element={<RequireStaff><Payments /></RequireStaff>} />
       <Route path="corrections" element={<RequireStaff role="supervisor"><Corrections /></RequireStaff>} />

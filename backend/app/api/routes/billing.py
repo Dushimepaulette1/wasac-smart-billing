@@ -1,5 +1,8 @@
 """Households and their bills. Paying them is in app/api/routes/payments.py."""
-from fastapi import APIRouter, Depends, HTTPException, Request
+from dataclasses import asdict
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.anomaly.statuses import NOT_CONFIRMED
@@ -15,6 +18,7 @@ from app.schemas import (
     HouseholdImportRow,
     HouseholdIn,
     MeterCorrectionRequest,
+    UsageSummaryOut,
 )
 from app.services.audit import record
 from app.services.balance import available_credit, balances, current_consumption
@@ -30,6 +34,7 @@ from app.services.households import (
 )
 from app.services.meter_correction import CORRECTION
 from app.services.reading_window import PENDING, TOO_SOON, reading_block
+from app.services.usage import UsageError, usage_summary
 
 router = APIRouter()
 
@@ -160,6 +165,26 @@ async def update_customer(
                request=request, commit=False)
     db.commit()
     return _customer_info(db, customer)
+
+
+@router.get("/customers/{customer_id}/usage", response_model=UsageSummaryOut)
+async def customer_usage(
+    customer_id: str,
+    meter_now: Optional[float] = Query(default=None, ge=0, le=99_999.999, allow_inf_nan=False),
+    db: Session = Depends(get_db),
+    access: Access = Depends(household_access),
+):
+    """The leak alert and the next-bill estimate (app/services/usage.py). meter_now, a number the
+    household read today, sharpens the estimate; it is not stored and not billed."""
+    access.require_customer(customer_id)
+    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+    meter = db.get(Meter, customer.meter_id) if customer and customer.meter_id else None
+    if not meter:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    try:
+        return UsageSummaryOut(**asdict(usage_summary(db, meter, meter_now=meter_now)))
+    except UsageError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.get("/customers/{customer_id}/bills")

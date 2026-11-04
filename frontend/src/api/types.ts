@@ -228,6 +228,51 @@ export interface CalculateBillResponse {
 }
 
 /** schemas.CustomerInfo */
+/** GET /customers/{id}/usage: the leak alert and next-bill estimate. Nothing is stored. */
+export interface UsageSummary {
+  /** "not_enough_history": no numbers yet. */
+  reason: string | null;
+  usual_daily_m3: number | null;
+  usual_period_days: number | null;
+  last_reading_m3: number | null;
+  last_reading_date: string | null;
+  projected_m3: number | null;
+  /** An estimate with today's tariff, not a bill. */
+  projected_amount: number | null;
+  projected_on: string | null;
+  tariff_version: string | null;
+  /** The estimate used the number typed today. */
+  used_meter_now: boolean;
+  used_so_far_m3: number | null;
+  /** The newest bill's period looks like a leak. */
+  leak_warning: boolean;
+  leak_reading_id: number | null;
+  percent_above_usual: number | null;
+  /** The use since the last reading looks like a leak. */
+  leak_so_far: boolean;
+}
+
+/** GET /api/sectors: one sector on the staff sector view. */
+export interface SectorHousehold {
+  customer_id: string;
+  name: string;
+  meter_id: string;
+  held: boolean;
+  possible_leak: boolean;
+  owed: number;
+}
+
+export interface SectorSummary {
+  /** "" when households have no sector. */
+  sector: string;
+  households: number;
+  held_readings: number;
+  possible_leaks: number;
+  usual_monthly_m3: number | null;
+  owed: number;
+  attention: SectorHousehold[];
+}
+
 export interface CustomerInfo {
   customer_id: string;
   name: string;

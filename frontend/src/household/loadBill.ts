@@ -1,13 +1,14 @@
 /**
  * @file loadBill.ts
- * @description Everything the bill screen shows, from three API calls.
+ * @description Everything the bill screen shows, from four API calls.
  *
  * The bills list has no reading values or tariff lines, so:
  * - the tariff lines come from POST /calculate-bill for the bill's volume;
  * - the meter reading is known only for the newest bill (the meter's
  *   last accepted reading); the reading before it is that minus the volume;
  * - the period runs from the previous bill's date to this bill's date.
- * There is no due date in the API, so none is shown.
+ * There is no due date in the API, so none is shown. The leak line comes from
+ * GET /customers/{id}/usage, which is optional: the bill shows without it.
  */
 
 import { api, ApiError } from '../api/client';
@@ -33,11 +34,17 @@ export interface BillView {
   reading: { cells: Cells; previous: number } | null;
   /** Up to six bills, oldest first, ending with this one. */
   history: BillSummary[];
+  /** This bill's period looks like a leak: how far above usual, in percent. */
+  leakPercent: number | null;
 }
 
 /** @param billId - null for the newest bill */
 export default async function loadBill(customerId: string, billId: number | null): Promise<BillView> {
-  const [bills, customer] = await Promise.all([api.getBills(customerId), api.getCustomer(customerId)]);
+  const [bills, customer, usage] = await Promise.all([
+    api.getBills(customerId),
+    api.getCustomer(customerId),
+    api.getUsage(customerId).catch(() => null),
+  ]);
   if (!bills.length) throw new ApiError('notFound', 404, 'No bills');
 
   const index = billId == null ? 0 : bills.findIndex((b) => b.bill_id === billId);
@@ -66,5 +73,7 @@ export default async function loadBill(customerId: string, billId: number | null
       : null,
     // Oldest first, ending with this bill, for the usage bars.
     history: bills.slice(index, index + 6).reverse(),
+    leakPercent:
+      usage?.leak_warning && usage.leak_reading_id === bill.reading_id ? (usage.percent_above_usual ?? null) : null,
   };
 }

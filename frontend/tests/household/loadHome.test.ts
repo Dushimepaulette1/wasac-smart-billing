@@ -1,13 +1,13 @@
 import loadHome from '../../src/household/loadHome';
 import { api } from '../../src/api/client';
 import type { AnomalyType, FlagStatus } from '../../src/api/types';
-import { makeBill, makeCustomer, makeFlag } from '../support/fixtures';
+import { makeBill, makeCustomer, makeFlag, makeUsage } from '../support/fixtures';
 
 vi.mock('../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/api/client')>();
   return {
     ...actual,
-    api: { ...actual.api, getCustomer: vi.fn(), getBills: vi.fn(), getHouseholdFlags: vi.fn() },
+    api: { ...actual.api, getCustomer: vi.fn(), getBills: vi.fn(), getHouseholdFlags: vi.fn(), getUsage: vi.fn() },
   };
 });
 
@@ -21,6 +21,7 @@ beforeEach(() => {
     makeBill({ bill_id: 22, payment_status: 'paid' }),
   ]);
   vi.mocked(api.getHouseholdFlags).mockResolvedValue([]);
+  vi.mocked(api.getUsage).mockResolvedValue(makeUsage());
 });
 
 describe('loadHome', () => {
@@ -59,5 +60,12 @@ describe('loadHome', () => {
     const home = await loadHome('CUST001', 'MTR001');
     expect(home.customer.name).toBe('Uwimana Jean Pierre');
     expect(home.checking).toBe(false);
+  });
+
+  it('when the usage estimate does not load, should still load home without it', async () => {
+    vi.mocked(api.getUsage).mockRejectedValue(new Error('offline'));
+    const home = await loadHome('CUST001', 'MTR001');
+    expect(home.usage).toBeNull();
+    expect(home.customer.customer_id).toBe(makeCustomer().customer_id);
   });
 });

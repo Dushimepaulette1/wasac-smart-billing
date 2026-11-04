@@ -24,6 +24,7 @@ from app.services.balance import balances, bill_balance
 from app.services.payments import MOMO_PAY, PaymentError, start_payment, submit_reference, ussd_code
 from app.models.payment import PENDING as PAYMENT_PENDING
 from app.services.reading_window import PENDING, reading_block
+from app.services.usage import notify_leak
 from app.utils.meter_value import parse_meter_value
 from app.utils.phone import normalize_phone
 
@@ -169,6 +170,7 @@ def handle(db: Session, phone_number: str, text: str) -> str:
         notify_household(db, sub.anomaly)
         if sub.bill is None:
             return _end(t["held"])
+        notify_leak(db, meter.meter_id, sub.reading.reading_id)
         return _end(t["billed"].format(reading=f"{reading:.3f}", amount=f"{sub.bill.amount_due:,.0f}"))
 
     if choice == "2":

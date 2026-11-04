@@ -31,6 +31,11 @@ class AnomalyConfig:
     min_period_days: float = 7.0
     # A household value this much (m3) or more below a reliable AI read is held (app/anomaly/edits.py).
     edit_hold_m3: float = 1.0
+    # A billed period's daily use this many times the household's usual, and at least
+    # leak_min_extra_m3 above it, gets a "check for a leak" alert (app/services/usage.py). Unlike
+    # spike_ratio, it never holds a reading: it only tells the household.
+    leak_ratio: float = 1.5
+    leak_min_extra_m3: float = 3.0
     model_path: Path = field(default=_DEFAULT_MODEL_PATH)
 
     @classmethod
@@ -53,5 +58,7 @@ class AnomalyConfig:
             ),
             min_period_days=_env("ANOMALY_MIN_PERIOD_DAYS", d.min_period_days, float),
             edit_hold_m3=_env("ANOMALY_EDIT_HOLD_M3", d.edit_hold_m3, float),
+            leak_ratio=_env("ANOMALY_LEAK_RATIO", d.leak_ratio, float),
+            leak_min_extra_m3=_env("ANOMALY_LEAK_MIN_EXTRA_M3", d.leak_min_extra_m3, float),
             model_path=_env("ANOMALY_MODEL_PATH", d.model_path, Path),
         )

@@ -1,7 +1,7 @@
 """All API routes in one router. app/main.py adds it to the app.
 
     routes/readings.py        /submit-photo, /guide-frame, /confirm-reading, /calculate-bill
-    routes/billing.py         /customers, /customers/{id}/bills
+    routes/billing.py         /customers, /customers/{id}/bills, /customers/{id}/usage
     routes/payments.py        /bills/{id}/pay, /payments/{id}, /api/payments/... (staff checks)
     routes/meter_corrections.py /customers/{id}/meter-correction, /meter-corrections
     routes/bill_corrections.py  /customers/{id}/readings/{id}/correction, /bill-corrections
@@ -9,13 +9,14 @@
     routes/household_auth.py  /household/... (SMS sign-in)
     routes/push.py            /household/push/... (phone alerts)
     routes/staff_auth.py      /auth/... (staff sign-in, activity, accounts)
+    routes/sectors.py         /api/sectors (staff sector view)
     routes/ussd.py            /ussd (Africa's Talking USSD callback)
     routes/health.py          /health
 """
 from fastapi import APIRouter
 
 from app.api.routes import (
-    anomaly, bill_corrections, billing, health, household_auth, meter_corrections, payments, push, readings, staff_auth, ussd,
+    anomaly, bill_corrections, billing, health, household_auth, meter_corrections, payments, push, readings, sectors, staff_auth, ussd,
 )
 
 api_router = APIRouter()
@@ -26,6 +27,7 @@ api_router.include_router(bill_corrections.router, tags=["Billing"])
 api_router.include_router(meter_corrections.router, tags=["Billing"])
 api_router.include_router(ussd.router, tags=["USSD"])
 api_router.include_router(anomaly.router, tags=["Anomaly Detection"])
+api_router.include_router(sectors.router, tags=["Anomaly Detection"])
 api_router.include_router(staff_auth.router, tags=["Staff sign-in"])
 api_router.include_router(household_auth.router, tags=["Household sign-in"])
 api_router.include_router(push.router, tags=["Phone alerts"])

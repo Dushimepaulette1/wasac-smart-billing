@@ -1,13 +1,13 @@
 import loadBill from '../../src/household/loadBill';
 import { api } from '../../src/api/client';
 import { cellsToDigits } from '../../src/utils/reading';
-import { makeBill, makeCalculatedBill, makeCustomer } from '../support/fixtures';
+import { makeBill, makeCalculatedBill, makeCustomer, makeUsage } from '../support/fixtures';
 
 vi.mock('../../src/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/api/client')>();
   return {
     ...actual,
-    api: { ...actual.api, getBills: vi.fn(), getCustomer: vi.fn(), calculateBill: vi.fn() },
+    api: { ...actual.api, getBills: vi.fn(), getCustomer: vi.fn(), calculateBill: vi.fn(), getUsage: vi.fn() },
   };
 });
 
@@ -21,6 +21,7 @@ beforeEach(() => {
   vi.mocked(api.getBills).mockResolvedValue(BILLS);
   vi.mocked(api.getCustomer).mockResolvedValue(makeCustomer({ last_reading: 484.5 }));
   vi.mocked(api.calculateBill).mockResolvedValue(makeCalculatedBill());
+  vi.mocked(api.getUsage).mockResolvedValue(makeUsage());
 });
 
 describe('loadBill', () => {
@@ -62,5 +63,18 @@ describe('loadBill', () => {
   it('when the household has no bills, should report not found', async () => {
     vi.mocked(api.getBills).mockResolvedValue([]);
     await expect(loadBill('CUST001', null)).rejects.toMatchObject({ kind: 'notFound' });
+  });
+
+  it('when the newest period looks like a leak, should give the percent on that bill only', async () => {
+    const bills = [makeBill({ bill_id: 19, reading_id: 40 }), makeBill({ bill_id: 6, reading_id: 39 })];
+    vi.mocked(api.getBills).mockResolvedValue(bills);
+    vi.mocked(api.getUsage).mockResolvedValue(makeUsage({ leak_warning: true, leak_reading_id: 40, percent_above_usual: 67 }));
+    expect((await loadBill('CUST001', 19)).leakPercent).toBe(67);
+    expect((await loadBill('CUST001', 6)).leakPercent).toBeNull();
+  });
+
+  it('when the usage does not load, should still show the bill', async () => {
+    vi.mocked(api.getUsage).mockRejectedValue(new Error('offline'));
+    expect((await loadBill('CUST001', null)).leakPercent).toBeNull();
   });
 });

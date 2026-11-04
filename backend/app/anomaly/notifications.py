@@ -93,6 +93,12 @@ def starting_point_message(reading_m3: float) -> str:
             "Your first bill will come with your next reading.")
 
 
+def leak_message(percent_above_usual: int) -> str:
+    """Sent once with a bill whose period looks like a leak (app/services/usage.py)."""
+    return (f"WASAC: Your water use this period was about {percent_above_usual}% above your usual. "
+            "Please check taps, toilets and pipes for leaks. Call 1580 if you need help.")
+
+
 def action_for(anomaly_type: AnomalyType) -> Action:
     return ACTIONS.get(anomaly_type, NO_ACTION)
 

@@ -87,6 +87,8 @@ often officers accept them are the numbers to look at.
 | `ANOMALY_STUCK_DAYS` | 30 | A month with no movement |
 | `ANOMALY_EDIT_HOLD_M3` | 1 | A household lowering a reliable AI read by 1 m³ or more (app/anomaly/edits.py) |
 | `ANOMALY_MISREAD_LOG10_TOLERANCE` | 0.15 | Ratios between ~7× and ~14× (or ~70× and ~140×) look like a shifted digit |
+| `ANOMALY_LEAK_RATIO` | 1.5 | Leak alert only (`app/services/usage.py`): a billed period at 1.5× the usual daily use tells the household to check for leaks. It never holds a reading |
+| `ANOMALY_LEAK_MIN_EXTRA_M3` | 3 | Leak alert only: the period must also be at least 3 m³ above usual, so a small household's busy month is not called a leak |
 
 ## Model
 
@@ -184,6 +186,7 @@ billing". Both responses include an `anomaly` object with `pending_review`.
 `ANOMALY_RANDOM_STATE` (42), `ANOMALY_N_ESTIMATORS` (200), `ANOMALY_SPIKE_RATIO` (3),
 `ANOMALY_SUSTAINED_RATIO` (1.5), `ANOMALY_SUSTAINED_PERIODS` (3),
 `ANOMALY_MISREAD_LOG10_TOLERANCE` (0.15), `ANOMALY_MIN_PERIOD_DAYS` (7), `ANOMALY_EDIT_HOLD_M3` (1),
+`ANOMALY_LEAK_RATIO` (1.5), `ANOMALY_LEAK_MIN_EXTRA_M3` (3),
 `ANOMALY_MODEL_PATH`
 (default `backend/app/anomaly/artifacts/isolation_forest.joblib`, gitignored).
 

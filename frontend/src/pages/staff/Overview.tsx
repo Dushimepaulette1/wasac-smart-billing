@@ -30,7 +30,7 @@ function Overview() {
     );
   }
 
-  const { queue, openFlags, households, unpaidAmount, unpaidCount } = data.data;
+  const { queue, openFlags, households, unpaidAmount, unpaidCount, sectorsNeedingAttention } = data.data;
 
   return (
     <StaffLayout title={t('staff.nav.overview')} lede={lede} reviewCount={queue.length}>
@@ -70,6 +70,12 @@ function Overview() {
           <span className={styles.statNote}>{t('staff.stat.unpaidNote', { count: unpaidCount })}</span>
         </div>
       </section>
+
+      {sectorsNeedingAttention != null && sectorsNeedingAttention > 0 && (
+        <p>
+          <Link to="/staff/sectors">{t('staff.overview.sectorsAttention', { count: sectorsNeedingAttention })}</Link>
+        </p>
+      )}
 
       <div className={styles.grid}>
         <section className="panel" aria-labelledby="waiting-title">

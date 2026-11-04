@@ -15,6 +15,7 @@ from app.models import Bill, Customer, Meter, Reading, ReadingEvidence
 from app.services.balance import settle
 from app.services.billing import build_bill
 from app.services.push import send_to_phone
+from app.services.usage import notify_leak
 
 ACCEPT = "accept"
 REJECT = "reject"
@@ -167,4 +168,8 @@ def resolve_flag(db: Session, flag: AnomalyFlag, outcome: Optional[str], reason_
             title, body, url = decision_alert(outcome, resolution.bill.amount_due if resolution.bill else None)
             if send_to_phone(db, phone, title, body, url):
                 resolution.actions.append("push_household_sent")
+        if resolution.bill is not None:
+            leak = notify_leak(db, flag.household_id, reading.reading_id)
+            if leak:
+                resolution.actions.append(leak)
     return resolution

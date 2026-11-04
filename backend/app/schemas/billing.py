@@ -232,3 +232,42 @@ class BillCorrectionOut(BaseModel):
     needs_approval: bool = False
     net_delta: float = 0.0
     adjustments: List[AdjustmentOut] = []
+
+
+class UsageSummaryOut(BaseModel):
+    """A household's leak alert and next-bill estimate (app/services/usage.py). Nothing is stored."""
+    reason: Optional[str] = None                 # "not_enough_history": no numbers yet
+    usual_daily_m3: Optional[float] = None
+    usual_period_days: Optional[float] = None
+    last_reading_m3: Optional[float] = None
+    last_reading_date: Optional[datetime] = None
+    projected_m3: Optional[float] = None
+    projected_amount: Optional[float] = None     # an estimate with today's tariff, not a bill
+    projected_on: Optional[datetime] = None
+    tariff_version: Optional[str] = None
+    used_meter_now: bool = False                 # the estimate used the number typed today
+    used_so_far_m3: Optional[float] = None
+    leak_warning: bool = False                   # the newest bill's period looks like a leak
+    leak_reading_id: Optional[int] = None
+    percent_above_usual: Optional[int] = None
+    leak_so_far: bool = False                    # the use since the last reading looks like a leak
+
+
+class SectorHousehold(BaseModel):
+    customer_id: str
+    name: str
+    meter_id: str
+    held: bool = False
+    possible_leak: bool = False
+    owed: float = 0.0
+
+
+class SectorSummaryOut(BaseModel):
+    """One sector on the staff sector view (app/services/sectors.py)."""
+    sector: str                                  # "" when a household has none
+    households: int
+    held_readings: int
+    possible_leaks: int
+    usual_monthly_m3: Optional[float] = None     # median of the households' usual use over 30 days
+    owed: float
+    attention: List[SectorHousehold]

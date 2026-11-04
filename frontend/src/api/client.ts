@@ -32,12 +32,14 @@ import type {
   PhotoSubmitResponse,
   ResolveFlagResponse,
   ReviewItem,
+  SectorSummary,
   SmsOutboxEntry,
   StaffAccount,
   StaffAction,
   StaffRole,
   StaffUser,
   TemporaryPassword,
+  UsageSummary,
 } from './types';
 
 /** A live tip that arrives late is useless; give up quickly and keep the shutter usable. */
@@ -273,6 +275,12 @@ export const api = {
     return request(`/customers/${encodeURIComponent(customerId)}`);
   },
 
+  /** GET /customers/{id}/usage: leak alert and next-bill estimate; meterNow (m³, read today) is not stored. */
+  getUsage(customerId: string, meterNow?: number): Promise<UsageSummary> {
+    const query = meterNow === undefined ? '' : `?meter_now=${encodeURIComponent(meterNow.toFixed(3))}`;
+    return request(`/customers/${encodeURIComponent(customerId)}/usage${query}`);
+  },
+
   /** GET /customers/{id}/bills: newest first, at most 12. */
   getBills(customerId: string): Promise<BillSummary[]> {
     return request(`/customers/${encodeURIComponent(customerId)}/bills`);
@@ -459,6 +467,11 @@ export const api = {
   /** POST /customers/import: preview a CSV of households, or save it (supervisors and admins). */
   importHouseholds(csv: string, apply: boolean): Promise<HouseholdImportResult> {
     return request('/customers/import', { method: 'POST', json: { csv, apply }, auth: 'staff', timeout: 60000 });
+  },
+
+  /** GET /api/sectors: households by sector, the ones needing attention first. */
+  listSectors(): Promise<SectorSummary[]> {
+    return request('/api/sectors', { auth: 'staff' });
   },
 
   /** GET /api/anomaly/flags: every household's flags. */

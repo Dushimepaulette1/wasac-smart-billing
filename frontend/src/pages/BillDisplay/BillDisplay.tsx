@@ -73,7 +73,7 @@ function BillDisplay() {
     );
   }
 
-  const { bill, tiers, vat, serviceCharge, periodStart, reading, history } = request.data;
+  const { bill, tiers, vat, serviceCharge, periodStart, reading, history, leakPercent } = request.data;
   const paid = bill.payment_status === 'paid';
   const owed = amountOwed(bill);
   const adjustments = bill.adjustments ?? [];
@@ -89,6 +89,7 @@ function BillDisplay() {
           {usedVolume(bill) !== bill.consumption_m3 && (
             <p className="text-small">{t('bill.usedOriginal', { volume: volume(bill.consumption_m3) })}</p>
           )}
+          {leakPercent != null && <p className="text-small">{t('bill.leakLine', { percent: leakPercent })}</p>}
           <p className="text-small">
             {periodStart
               ? t('bill.period', { from: date(periodStart), to: date(bill.created_at) })
