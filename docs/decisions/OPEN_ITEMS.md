@@ -46,8 +46,26 @@ Once WASAC data arrives, measure the share of readings held and how often office
 
 ## Needs a person
 
-- **Kinyarwanda.** All new strings are unreviewed drafts: `docs/i18n/kinyarwanda_review_reliability.csv`.
+- **Kinyarwanda.** 56 placeholders are collected in `docs/i18n/kinyarwanda_review_final_review.csv`.
+  A human reviewer must fill the correction column. Other translations also need human review.
 - **Double-payment refunds.** A second success becomes credit automatically and is listed for staff, who
   mark it reviewed. Whether a household gets its money back another way is WASAC's decision.
 - **Second-person check on payment reconciliation.** One supervisor can reconcile, with evidence in the
   audit log. A second approver could be added if WASAC's controls require it.
+
+## Needs the supervisor and research approvals
+
+- **Scope changes.** See `docs/SCOPE_ALIGNMENT.md` for the supplied September proposal's FR1–FR12,
+  NFR1–NFR7 and five phases. The implementation choices are documented, not retrospectively approved.
+- **Pilot duration.** The proposal promises three months but schedules the final evaluation for
+  12–28 November. Confirm a feasible revised plan; no pilot or SUS result has been collected.
+- **Privacy design.** The proposal promises anonymous records, no retained GPS and ALU Drive-only
+  storage. The app stores contact information and GPS review evidence on Neon/Render. Current
+  households are synthetic. Resolve consent, purpose, hosting, access and retention before real data.
+- **Officer field-entry mode.** Staff review and manage many accounts, but there is no dedicated
+  field-round camera screen corresponding to FR11. Agree whether this remains a deliverable.
+- **Institutional data and model validation.** Obtain authorized local data and verified outcomes
+  before retraining or claiming improvements in accuracy, workload, usability or physical leak detection.
+- **Service readiness.** Configure external monitoring and a scheduler, verify a backup of the actual
+  deployment, and obtain an independent security review. A local synthetic restore drill is not a
+  recovery test of Neon or a compliance certification.

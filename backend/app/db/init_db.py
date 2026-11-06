@@ -1,8 +1,4 @@
-"""Create the database tables at start-up (and the local sample data unless SEED_SAMPLE_DATA=0).
-
-create_all() only creates tables that do not exist yet; it never changes an existing table, so a
-new column on an old table is added by LATE_COLUMNS below (most newer features got new tables).
-"""
+"""Apply versioned migrations at startup; keep legacy repair helpers for older scripts and tests."""
 import logging
 
 from sqlalchemy import inspect, text
@@ -11,6 +7,7 @@ import app.models  # noqa: F401  registers every table on Base before create_all
 from app.core.config import seed_sample_data
 from app.db import seed
 from app.db.session import Base, engine
+from app.db.migrations import upgrade_schema
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +43,9 @@ def add_late_columns(bind=None) -> None:
                 continue
             with bind.begin() as conn:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}"))
-        except Exception as e:  # the app still runs; the feature that needs the column fails loudly
+        except Exception as e:
             logger.error("Could not add column %s.%s: %s", table, column, type(e).__name__)
+            raise RuntimeError("Database column update failed; startup must stop.") from None
 
 
 def add_late_indexes(bind=None) -> None:
@@ -56,14 +54,13 @@ def add_late_indexes(bind=None) -> None:
         try:
             with bind.begin() as conn:
                 conn.execute(text(statement))
-        except Exception as e:  # e.g. existing duplicates: the app still runs; fix the data, restart
+        except Exception as e:
             logger.error("Could not add index (%s): %s", statement.split(" ON ")[0], type(e).__name__)
+            raise RuntimeError("Database index update failed; check existing duplicates before retrying.") from None
 
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
-    add_late_columns(engine)
-    add_late_indexes(engine)
+    upgrade_schema(engine)
     # The three sample customers are for local development. Deployments set SEED_SAMPLE_DATA=0
     # and load clearly marked DEMO- households with scripts/demo/generate_demo_households.py.
     if seed_sample_data():

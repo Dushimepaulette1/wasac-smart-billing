@@ -11,6 +11,7 @@ if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(APP)) {
   process.exit(2);
 }
 const ENGINES = { chromium, firefox, webkit };
+const chromiumOptions = process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {};
 const SIZES = [['small phone', 360, 640], ['phone', 390, 844], ['tablet', 768, 1024], ['laptop', 1366, 768]];
 const PAGES = ['/', '/sign-in', '/staff/sign-in'];
 const NETWORKS = {
@@ -22,7 +23,7 @@ const NETWORKS = {
 const rows = [];
 for (const [name, engine] of Object.entries(ENGINES)) {
   let browser;
-  try { browser = await engine.launch(); } catch (e) {
+  try { browser = await engine.launch(name === 'chromium' ? chromiumOptions : {}); } catch (e) {
     rows.push(`| ${name} | all | all | not run: ${String(e).split('\n')[0].slice(0, 70)} |`);
     continue;
   }
@@ -48,7 +49,7 @@ for (const [name, engine] of Object.entries(ENGINES)) {
 }
 
 const speed = [];
-const browser = await chromium.launch();
+const browser = await chromium.launch(chromiumOptions);
 for (const [label, net] of Object.entries(NETWORKS)) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
@@ -92,3 +93,5 @@ ${rows.join('\n')}
 ${speed.join('\n')}
 `);
 console.log(rows.join('\n') + '\n' + speed.join('\n'));
+// Missing engines are missing evidence, not a successful compatibility run.
+if (rows.length !== 36 || rows.some((row) => !row.includes('| pass |'))) process.exitCode = 1;

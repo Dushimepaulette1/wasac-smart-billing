@@ -23,13 +23,13 @@ const item = (id: number, name: string, flag: Parameters<typeof makeFlag>[0]): R
   history: [],
 });
 
-function renderQueue() {
+function renderQueue(path = '/staff/review') {
   const user = { username: 'officer1', full_name: 'Officer One', role: 'officer' };
   window.sessionStorage.setItem('wasac.staff', JSON.stringify({ token: 't', expiresAt: Date.now() / 1000 + 3600, user }));
   return render(
     <I18nProvider locale="en">
       <AuthProvider>
-        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <ReviewQueue />
         </MemoryRouter>
       </AuthProvider>
@@ -43,6 +43,22 @@ afterEach(() => {
 });
 
 describe('ReviewQueue', () => {
+  it('when a sector link is stale, should not silently select another households reading', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([
+      item(1, 'Other House', { household_id: 'MTR-OTHER', anomaly_type: 'SPIKE', reading_status: 'pending_review' }),
+    ]);
+    renderQueue('/staff/review?meter=MTR-ALREADY-REVIEWED');
+    expect(await screen.findByRole('button', { name: /Other House/ })).not.toHaveAttribute('aria-current', 'true');
+    expect(screen.queryByRole('button', { name: 'Accept reading' })).not.toBeInTheDocument();
+  });
+  it('when opened from a sector, should select that meter even when it is not first', async () => {
+    vi.mocked(api.reviewQueue).mockResolvedValue([
+      item(1, 'First House', { household_id: 'MTR-FIRST', anomaly_type: 'SPIKE' }),
+      item(2, 'Target House', { household_id: 'MTR-TARGET', anomaly_type: 'SPIKE' }),
+    ]);
+    renderQueue('/staff/review?meter=MTR-TARGET');
+    expect(await screen.findByRole('button', { name: /Target House/ })).toHaveAttribute('aria-current', 'true');
+  });
   it('should show the serial number on file and how to decide', async () => {
     vi.mocked(api.reviewQueue).mockResolvedValue([{ ...item(1, 'Serial House', { anomaly_type: 'SPIKE' }), meter_serial: 'ITR24123456' }]);
     vi.mocked(api.readingPhoto).mockRejectedValue(new Error('none'));

@@ -57,7 +57,9 @@ function SectorCard({ sector }: { sector: SectorSummary }) {
           <ul className={styles.households}>
             {sector.attention.map((h) => (
               <li key={h.customer_id} className={styles.household}>
-                <Link to={h.held ? '/staff/review' : '/staff/households'}>{h.name}</Link>
+                <Link to={h.held
+                  ? `/staff/review?meter=${encodeURIComponent(h.meter_id)}`
+                  : `/staff/households?q=${encodeURIComponent(h.meter_id)}`}>{h.name}</Link>
                 <span className="code text-small">{h.meter_id}</span>
                 <span className={styles.tags}>
                   {h.held && <span className={staff.flagged}>{t('staff.sectors.heldTag')}</span>}

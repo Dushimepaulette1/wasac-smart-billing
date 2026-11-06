@@ -1,0 +1,43 @@
+15:07:10 OK   01 landing loads
+15:07:10 OK   02 sign in with code
+15:07:13 OK   03-04 read the meter
+15:07:13      confirm page says: Back Step 2 of 3 Check the numbers Confirm reading Check the numbers on your meter and type them here. 0 0 5 4 2 7 5 6 m³ litres 542.756 m³ 542.756 cubic metres
+15:07:13      check says: Please check this reading We could not confirm this photo was taken at your meter (for example, your phone did not share its location, or the photo came from yo
+15:07:13      went to /submit/held
+15:07:13 OK   05 check first, then send
+15:07:13      first message: We're checking where the photo was taken The photo you sent on 06/11/2026 was chosen from your gallery, not taken with the camera, so an off
+15:07:13 OK   06 messages explain the check
+15:07:13 OK   07 a second reading is refused while checking
+15:07:15 OK   08 staff sign in
+15:07:15      decision pane mentions location: true | map link: 1
+15:07:15      no models here: no photo is kept, not checked
+15:07:23 OK   09 review queue: see the photo, accept our reading
+15:07:23      newest decision: 06/11/2026 15:07 reviewadmin Accepted a reading flag 1 · KGL-20031 · Photo place to check · bill 1, RWF 15,790
+15:07:23 OK   10 activity shows the decision
+15:07:23      row: DEMO Household 031 (test) Gikondo KGL-20031 Serial ITR24000031 542.756 m³ 06/11/2026 11.9 m³ RWF 15,790 Up to date Edit
+15:07:23 OK   11 households page shows the unpaid bill
+15:07:23      preview: 1 new 0 to update 0 unchanged 0 with mistakes
+15:07:24 OK   11b households upload: preview only, saves nothing
+15:07:24      sms rows: 0
+15:07:24 OK   12 sent SMS page lists messages
+15:07:24 OK   13 staff accounts page
+15:07:24 OK   14 home shows the bill
+15:07:24      code to dial: none (MOMO_PAY_CODE not set)
+15:07:24 OK   15 pay the bill
+15:07:25 OK   15b staff confirm the payment
+15:07:25      receipt: Paid See your bills Back to home This bill is already paid.
+15:07:25 OK   15c household sees it paid
+15:07:25      bills page: Your bills November 2026 RWF 15,790 20.0 m³ Paid
+15:07:25 OK   16 bills list shows it paid
+15:07:25 OK   17 messages show the confirmation
+15:07:25 OK   17b delete a message
+15:07:25 OK   18 a new reading waits for the next period
+15:07:28      confirm page says: Back Step 2 of 3 Check the numbers Confirm reading Check the numbers on your meter and type them here. 0 0 5 4 2 7 5 6 m³ litres 542.756 m³ 542.756 cubic metres
+15:07:28      check says: Please check this reading Your reading is lower than your previous accepted reading, 819.801 m³. Meters only count up, so please check the digits. If the readin
+15:07:28      went to /submit/held
+15:07:28 OK   19 second household sends a reading
+15:07:36 OK   20 officer rejects it, with a reason
+15:07:40 OK   21 household sees why
+15:07:40 OK   22 activity keeps the reason
+
+==== PROBLEMS (0) ====

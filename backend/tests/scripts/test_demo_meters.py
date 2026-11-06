@@ -44,3 +44,19 @@ def test_when_reading_training_data_should_leave_out_demo_households_whatever_th
     demo.rename_meters({"DEMO-MTR-009": []})
 
     assert set(_data.load_histories_db()) == {"MTR-REAL"}
+
+
+def test_recent_histories_should_end_26_to_30_days_ago_with_the_same_use():
+    from datetime import datetime, timedelta
+
+    from app.anomaly.demo_data import generate_demo_histories
+    from scripts.demo import generate_demo_households as demo
+
+    now = datetime(2026, 11, 4, 9)
+    old = generate_demo_histories(5, 6)
+    moved = demo.end_recently(old, now)
+    for hid, points in moved.items():
+        assert timedelta(days=26) <= now - points[-1].date <= timedelta(days=30)
+        assert [p.reading_m3 for p in points] == [p.reading_m3 for p in old[hid]]
+        gaps = [b.date - a.date for a, b in zip(points, points[1:])]
+        assert gaps == [b.date - a.date for a, b in zip(old[hid], old[hid][1:])]

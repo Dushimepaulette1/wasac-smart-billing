@@ -1,0 +1,25 @@
+
+> wasac-platform@1.0.0 test
+> vitest --run --coverage --coverage.reporter=text-summary
+
+
+ RUN  v5.0.3 /Users/paulette.dushime/ALU/wasac-smart-billing/frontend
+      Coverage enabled with v8
+
+
+ Test Files  37 passed (37)
+      Tests  262 passed (262)
+   Start at  17:07:31
+   Duration  24.56s (tests 45%, environment 36%, import 10%, setup 4%, transform 2%, worker 2%)
+
+    Isolate  37 workers spawned · ~252ms startup each (spawn + environment, per file)
+             at least ~9.07s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 80.61% ( 1913/2373 )
+Branches     : 77.08% ( 1601/2077 )
+Functions    : 75.15% ( 484/644 )
+Lines        : 83.36% ( 1729/2074 )
+================================================================================

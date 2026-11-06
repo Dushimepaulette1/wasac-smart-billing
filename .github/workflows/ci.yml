@@ -15,6 +15,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install -r docs/report/requirements.txt
+      - run: python backend/scripts/render_report.py
+      - name: Report stays within five pages
+        run: python -c "from pypdf import PdfReader; assert len(PdfReader('docs/report/Mubazi_Technical_Report.pdf').pages) <= 5"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: technical-report
+          path: docs/report/Mubazi_Technical_Report.pdf
   backend:
     runs-on: ubuntu-latest
     timeout-minutes: 20

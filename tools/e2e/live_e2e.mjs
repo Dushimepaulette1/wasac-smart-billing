@@ -15,7 +15,6 @@
 // and every problem (failed requests, page errors, console errors); screenshots go to ./out/.
 import { chromium } from 'playwright-core';
 import { mkdirSync } from 'node:fs';
-import { homedir } from 'node:os';
 
 const [APP, PHOTO, STAFF_PW, PHONE, CHROME] = process.argv.slice(2);
 const TX = 'E2E' + Date.now(); // a made-up MoMo transaction ID; staff confirm it below
@@ -37,7 +36,7 @@ mkdirSync(OUT, { recursive: true });
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const problems = [];
 const browser = await chromium.launch({
-  executablePath: CHROME || `${homedir()}/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell`,
+  executablePath: CHROME || undefined,
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
 });
 
@@ -76,8 +75,8 @@ async function signIn(page, phone) {
   await page.getByLabel('Your phone number').fill(phone);
   await page.getByRole('button', { name: 'Send me a code' }).click();
   await page.getByText('Demo account', { exact: true }).waitFor({ timeout: 30000 });
-  const code = ((await page.locator('main').innerText()).match(/Your code is\s*(\d{6})/) || [])[1];
-  if (!code) throw new Error('no demo code on screen');
+  const code = (await page.locator('main strong.code').innerText()).trim();
+  if (!/^\d{6}$/.test(code)) throw new Error('no demo code on screen');
   await page.getByLabel('6-digit code').fill(code);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/home/, { timeout: 30000 });
@@ -101,9 +100,14 @@ async function readMeter(page) {
 }
 
 async function step(name, page, fn) {
+  let passed = true;
   try { await fn(); log('OK  ', name); }
-  catch (e) { problems.push(`STEP FAILED: ${name}: ${String(e).split('\n')[0]}`); log('FAIL', name, String(e).split('\n')[0]); }
+  catch (e) { passed = false; problems.push(`STEP FAILED: ${name}: ${String(e).split('\n')[0]}`); log('FAIL', name, String(e).split('\n')[0]); }
   await page.screenshot({ path: `${OUT}/${name.replace(/\W+/g, '_')}.png` }).catch(() => {});
+  if (!passed && /^(01|02|08) /.test(name)) {
+    await browser.close();
+    throw new Error(`Cannot continue after ${name}`);
+  }
 }
 
 // ---- Household ---------------------------------------------------------------

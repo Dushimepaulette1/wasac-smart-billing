@@ -76,10 +76,23 @@ function ReviewQueue() {
     if (queue.status === 'success') setItems(queue.data);
   }, [queue.status, queue.data]);
 
+  useEffect(() => {
+    if (queue.status === 'success') {
+      const meter = params.get('meter');
+      if (meter && !params.get('flag')) {
+        const target = queue.data.find((item) => item.flag.household_id === meter);
+        if (target) setSelectedId(target.flag.id);
+      }
+    }
+  }, [queue.status, queue.data, params]);
+
   useEffect(() => setRejecting(false), [selectedId]);
 
   const visible = items.filter((i) => i.flag.id !== pending?.item.flag.id);
-  const selected = visible.find((i) => i.flag.id === selectedId) ?? visible[0] ?? null;
+  const selected = visible.find((i) => i.flag.id === selectedId)
+    ?? (params.get('meter') && !params.get('flag')
+      ? visible.find((i) => i.flag.household_id === params.get('meter')) ?? null
+      : visible[0] ?? null);
 
   const select = useCallback(
     (id: number, scroll = false) => {

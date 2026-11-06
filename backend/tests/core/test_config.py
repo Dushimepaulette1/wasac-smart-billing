@@ -14,7 +14,7 @@ def test_when_seed_sample_data_is_0_should_not_create_samples(monkeypatch):
     from app.db import init_db, seed, session
 
     calls = []
-    monkeypatch.setattr(session.Base.metadata, "create_all", lambda bind: None)
+    monkeypatch.setattr(init_db, "upgrade_schema", lambda bind: None)
     monkeypatch.setattr(seed, "seed_data", lambda: calls.append(1))
     monkeypatch.setenv("SEED_SAMPLE_DATA", "0")
     init_db.init_db()

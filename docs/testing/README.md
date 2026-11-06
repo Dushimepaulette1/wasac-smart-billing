@@ -1,5 +1,39 @@
 # Testing summary
 
+## Latest local validation — 6 November 2026
+
+The current working tree passed **617 backend tests (5 skipped)** and **262 frontend tests**:
+**879 passed in total**, including **16 PostgreSQL concurrency/migration checks**. Backend line
+coverage is **94.10%** and frontend **83.36%**. TypeScript checking and the production build passed.
+The negative-control payment race was made deterministic after a local run exposed its timing assumption.
+The model-downloader secrecy test now explicitly selects .pt format, so the production image's ONNX default does not change its test scenario.
+
+Environment: macOS, Python **3.9.6**, Node **22.23.4**, PostgreSQL **16** in a local Docker container.
+The downloaded Mac Python 3.10 executable was killed when started. A subsequent build of the actual
+production image and full suite on **Linux Python 3.10.22** passed **617 tests, 5 skipped**, with
+94% line coverage. The supported Python 3.10 GitHub CI workflow must also pass on the submitted commit. Tests used isolated
+SQLite/PostgreSQL databases and fake providers, never Neon or real money/SMS.
+
+A PostgreSQL 16 dump/restore drill preserved all table counts, 40 synthetic customers, 960 readings,
+revision 0002, a RWF 1,000 bill and a RWF 500 successful payment. A local endpoint load test again
+reported zero errors at concurrency 1, 10 and 50. Neither is a real customer or production recovery test.
+
+Dated outputs are in [evidence/2026-11-06](evidence/2026-11-06/).
+Fresh **36/36** browser checks passed in the official Linux Playwright 1.56.1 container (Chromium
+141.0.7390.37, Firefox 142.0.1, WebKit 26.0). The **25-step local journey passed with zero reported
+problems**, including acceptance, simulated payment confirmation and rejection. The app was served
+from its production frontend build against a local SQLite API with synthetic data. Private model
+weights were absent: the journey verifies manual-entry fallback, not recognition accuracy or real
+provider delivery. An outdated demo-code text selector was repaired during this run. A final regression test confirms
+that a stale sector link cannot silently select a different household's reading.
+
+Mac browser launch attempts failed; Linux Docker supplied the successful run. Slow network/CPU and
+screen sizes are simulations, not real phones. Fresh landing-page first contentful paint was 60 ms
+unthrottled, 1,068 ms on simulated fast 3G and 3,388 ms on slow 3G. The older live journey and Ubuntu
+results below remain historical evidence. No current live accounts were modified.
+
+## Historical evidence
+
 | Strategy | Why it was chosen | How | Result | What it changed |
 |---|---|---|---|---|
 | Unit and integration | Billing, payments and rules must be right every time | pytest (in-memory database, fake models), Vitest and React Testing Library, on every push in GitHub Actions | 569 backend passed, 5 skipped (the 14 PostgreSQL race tests run only in CI); 233 frontend passed. Coverage: backend 94%, frontend 83% of lines (CI run 41227686801) | Three payment bugs and two reading bugs fixed; see the last section |

@@ -126,9 +126,9 @@ non-commercial academic use only (Yandex dataset, CC BY-NC-ND 4.0). Do not add t
 
 ## Making changes
 
-**New database column or index.** There are no migrations: `alembic` is installed but unused, and
-`create_all` never alters existing tables. Add the column to the model and to `LATE_COLUMNS` in
-`backend/app/db/init_db.py`, or the index to `LATE_INDEXES`. Both must work on Postgres and SQLite.
+**New database column or index.** Add a reviewed Alembic revision under `backend/migrations/versions/`
+and update the model. Startup applies revisions and stops on migration failure. Test new and existing
+databases on PostgreSQL and SQLite. `LATE_COLUMNS` and `LATE_INDEXES` remain only as legacy helpers.
 
 **New backend path.** Add it to `API_PATHS` in `frontend/vite.config.ts` and in
 `frontend/public/sw.js` (unless it sits under an existing prefix), and add its route file to the
@@ -181,8 +181,8 @@ Frontend design:
   Sans, light by default, dark as "night"). See `tokens.css` and the last section of
   `docs/design/DESIGN_PLAN.md`.
 - The polling and single-worker settings in `vite.config.ts` were added for WSL.
-- README test totals and the report PDF are hand-written figures from CI run 41227686801. If tests
-  are added, update `README.md` and `docs/testing/README.md` from a real run, not by estimate.
+- README and report test totals come from the dated run linked in `docs/testing/README.md`. If tests
+  are added, update the figures from a real run, not by estimate; keep local and CI evidence separate.
 
 ## Deployment and status
 
@@ -191,10 +191,10 @@ on Neon Postgres. Free Render sleeps after 15 minutes, so the first request take
 Deployed models are ONNX, downloaded at container start. Secrets are never in the repo.
 
 Live: https://wasac-smart-billing-qt9t.vercel.app. Treat pushing to main as deploying to
-the live site. Demo households are 0700 000 021 to 026 live, and `0700 000 0NN` for KGL-200NN locally; the
+the live site. Demo households are 0700 000 021 to 026 and 031 to 039 live (039 has two meters), and `0700 000 0NN` for KGL-200NN locally; the
 sign-in code appears on screen.
 
 Simulated today: SMS (sandbox), payments (no real money), USSD (no live channel), demo households.
-Still open before submission: the walkthrough video link in `README.md` is `[FILL IN: video link]`.
+The walkthrough video is linked in `README.md`; access and technical content still need author review.
 See `docs/decisions/OPEN_ITEMS.md`. Working notes were deliberately removed from the repo, so do
 not add video scripts, checklists or review notes back.

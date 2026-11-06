@@ -3,6 +3,10 @@
 This is the detailed companion to the [README](../README.md): how each part works, its settings, and
 how it is deployed. For the simulation of anomaly detection, see [ALGORITHMS.md](ALGORITHMS.md).
 
+Schema revisions, backup/restore, photo cleanup and monitoring are described in
+[OPERATIONS.md](OPERATIONS.md). The [proposal mapping](SCOPE_ALIGNMENT.md) records differences
+between the September plan and the implementation, including privacy and missing pilot evidence.
+
 ### Setting a starting reading
 
 A supervisor sets a meter's starting reading on the Corrections page after a meter is replaced, or
@@ -325,11 +329,15 @@ and the database allows only one bill per reading.
 **Review queue.** A held reading is accepted (billed) or rejected (the household reads again). A
 reading that was billed but needs a look (meter seems stuck, high use for months) is **closed**
 once followed up. Officers see the meter photo the reading came from, what the photo reader read,
-and whether the household changed it (`backend/app/services/photo_evidence.py`). Photos are kept
-`PHOTO_RETENTION_DAYS`, then deleted; a photo never confirmed is deleted after a day.
+and whether the household changed it (`backend/app/services/photo_evidence.py`). Photos expire after
+`PHOTO_RETENTION_DAYS`; unconfirmed photo records expire after a day. Cleanup runs at startup,
+hourly while awake and on upload; an external daily job is needed when hosting sleeps. Deletion
+occurs on the next cleanup, not at a guaranteed exact deadline. See `scripts/purge_photos.py`.
 
 | Setting (`backend/.env`) | Default | Meaning |
 |---|---|---|
+| `DATABASE_URL` | local SQLite outside production | Required explicitly in production or on Render |
+| `APP_ENV` | unset | `production` refuses a missing database setting |
 | `WASAC_AUTH_SECRET` | random at start-up | Signs sessions and code hashes; set it, or everyone is signed out on restart |
 | `OTP_SHOW_DEMO_CODES` | `1` | Show sign-in codes on screen for DEMO- households (their numbers are not real phones) |
 | `LOCATION_MAX_M` | `150` | How far from the meter a photo may be taken |
@@ -342,6 +350,7 @@ and whether the household changed it (`backend/app/services/photo_evidence.py`).
 | `MOMO_SUBSCRIPTION_KEY`, `MOMO_API_USER`, `MOMO_API_KEY` | unset (simulated payments) | MTN MoMo Collections |
 | `USSD_CALLBACK_TOKEN` | unset (USSD off) | Secret in the Africa's Talking USSD callback URL |
 | `PHOTO_RETENTION_DAYS` | `90` | How long meter photos are kept for reviewers |
+| `PHOTO_CLEANUP_INTERVAL_SECONDS` | `3600` | Cleanup frequency while awake; minimum 60 seconds |
 
 **Households added by staff** are real accounts, so their sign-in code only goes by SMS. With no
 SMS set up, asking for a code answers that the SMS could not be sent, and no code is stored. To test

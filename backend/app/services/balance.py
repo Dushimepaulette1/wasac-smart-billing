@@ -63,7 +63,15 @@ class BillBalance:
 
 def balances(db: Session, customer_id: str) -> Dict[int, BillBalance]:
     """Every bill of this household, oldest first."""
-    bills = db.query(Bill).filter(Bill.customer_id == customer_id).order_by(Bill.created_at, Bill.bill_id).all()
+    return balances_for_customers(db, [customer_id]).get(customer_id, {})
+
+
+def balances_for_customers(db: Session, customer_ids: Iterable[str]) -> Dict[str, Dict[int, BillBalance]]:
+    """The same balance definition in bulk, so staff overviews need no query per account."""
+    customer_ids = list(customer_ids)
+    if not customer_ids:
+        return {}
+    bills = db.query(Bill).filter(Bill.customer_id.in_(customer_ids)).order_by(Bill.created_at, Bill.bill_id).all()
     ids = [b.bill_id for b in bills]
     if not ids:
         return {}
@@ -79,20 +87,20 @@ def balances(db: Session, customer_id: str) -> Dict[int, BillBalance]:
         .group_by(Payment.bill_id).all()
     )
     used, out = defaultdict(float), defaultdict(float)
-    for credit in db.query(AccountCredit).filter(AccountCredit.customer_id == customer_id).all():
+    for credit in db.query(AccountCredit).filter(AccountCredit.customer_id.in_(customer_ids)).all():
         if credit.kind == USED and credit.bill_id:
             used[credit.bill_id] -= credit.amount
         elif credit.kind == OVERPAYMENT and credit.source_bill_id:
             out[credit.source_bill_id] += credit.amount
-    return {
-        b.bill_id: BillBalance(
+    result: Dict[str, Dict[int, BillBalance]] = {}
+    for b in bills:
+        result.setdefault(b.customer_id, {})[b.bill_id] = BillBalance(
             bill_id=b.bill_id, amount_due=b.amount_due or 0.0, adjustments=adjusted.get(b.bill_id) or 0.0,
             # Bills marked paid before payments were recorded have no payment row.
             paid=paid.get(b.bill_id, b.amount_due if b.payment_status == "paid" else 0.0) or 0.0,
             credit_used=used[b.bill_id], credited_out=out[b.bill_id],
         )
-        for b in bills
-    }
+    return result
 
 
 def current_consumption(db: Session, reading_ids: Iterable[int]) -> Dict[int, float]:

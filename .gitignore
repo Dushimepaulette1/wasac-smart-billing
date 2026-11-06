@@ -61,6 +61,11 @@ logs/
 # Database
 *.sqlite3
 *.db
+*.dump
+backups/
+# Local coverage artifacts; published summaries live under docs/testing/.
+.coverage
+coverage/
 
 # Calibration photos and labels (WASAC household photos: never commit)
 /calibration/

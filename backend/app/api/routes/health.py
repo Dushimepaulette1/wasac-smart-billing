@@ -6,6 +6,7 @@
     GET /health/ready  readiness, for an uptime monitor: 503 unless the database answers
 """
 import resource
+import sys
 from datetime import datetime
 
 from fastapi import APIRouter
@@ -46,7 +47,8 @@ def health_check():
             if load_model_if_available(AnomalyConfig.from_env())
             else "rules_only_model_not_trained"
         ),
-        memory_peak_mb=round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024),  # Linux: KB
+        memory_peak_mb=round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                             / (1024 * 1024 if sys.platform == "darwin" else 1024)),
         timestamp=datetime.utcnow(),
     )
 

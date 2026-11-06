@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from app.anomaly.config import AnomalyConfig
 from app.anomaly.features import Period, ReadingPoint, build_periods
 from app.anomaly.notifications import leak_message, sms_household
-from app.anomaly.scoring import load_history
+from app.anomaly.scoring import load_history, since_last_reset
 from app.anomaly.statuses import NOT_CONFIRMED
 from app.models import Customer, Meter, Reading
 from app.services.billing import calculate_bill, tariff
@@ -80,7 +80,7 @@ def _newest_reading_id(db: Session, meter_id: str) -> Optional[int]:
 
 
 def _leak(db: Session, meter: Meter, periods: List[Period], points: List[ReadingPoint], now: datetime,
-          config: AnomalyConfig, summary: UsageSummary) -> None:
+          config: AnomalyConfig, summary: UsageSummary, newest_reading_id: Optional[int] = None) -> None:
     """Fill in the leak alert for the newest period, if it has one."""
     if not periods or now - points[-1].date > timedelta(days=LEAK_ALERT_DAYS):
         return
@@ -92,16 +92,19 @@ def _leak(db: Session, meter: Meter, periods: List[Period], points: List[Reading
     if not _is_leak(latest.daily_consumption, latest.days, usual, config):
         return
     summary.leak_warning = True
-    summary.leak_reading_id = _newest_reading_id(db, meter.meter_id)
+    summary.leak_reading_id = newest_reading_id if newest_reading_id is not None else _newest_reading_id(db, meter.meter_id)
     summary.percent_above_usual = round((latest.daily_consumption / usual - 1) * 100)
 
 
 def usage_summary(db: Session, meter: Meter, now: Optional[datetime] = None,
-                  meter_now: Optional[float] = None, config: Optional[AnomalyConfig] = None) -> UsageSummary:
+                  meter_now: Optional[float] = None, config: Optional[AnomalyConfig] = None,
+                  history: Optional[List[ReadingPoint]] = None,
+                  newest_reading_id: Optional[int] = None) -> UsageSummary:
     """The leak alert and the estimate for this meter. meter_now: a number read today, in m3."""
     now = now or datetime.utcnow()
     config = config or AnomalyConfig.from_env()
-    points = load_history(db, meter.meter_id, before=now + timedelta(seconds=1))
+    points = (load_history(db, meter.meter_id, before=now + timedelta(seconds=1))
+              if history is None else since_last_reset(history))
     periods = build_periods(points)
     suitable = _suitable(periods, config)
     if not suitable:
@@ -120,7 +123,7 @@ def usage_summary(db: Session, meter: Meter, now: Optional[datetime] = None,
         last_reading_date=last.date,
         projected_on=last.date + timedelta(days=span),
     )
-    _leak(db, meter, periods, points, now, config, summary)
+    _leak(db, meter, periods, points, now, config, summary, newest_reading_id)
 
     projected = usual * span
     if meter_now is not None:

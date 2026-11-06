@@ -108,7 +108,8 @@ accepts or rejects. These limits are starting estimates, not values tested on WA
 ### As a household
 
 1. Open the [app](https://wasac-smart-billing-qt9t.vercel.app).
-2. Sign in with a demo number from **0700 000 021** to **0700 000 026**.
+2. Sign in with a demo number from **0700 000 021** to **0700 000 026**, or **0700 000 031** to **0700 000 039**
+   (039 has two meters, to show choosing between them).
 3. Copy the code shown on screen.
 4. Follow the steps to send a reading.
 
@@ -224,14 +225,19 @@ wasac-smart-billing/
 
 | Test | Result |
 |---|---|
-| Automated backend tests | 569 passed, 5 skipped, 94% of lines covered |
-| Automated frontend tests | 233 passed, 83% of lines covered |
-| Full journey on the live site, in a real browser | 25 of 25 steps passed |
-| Page checks in Chromium, Firefox and WebKit at four screen sizes | 36 of 36 passed |
+| Automated backend tests | 617 passed, 5 skipped, 94% of lines covered (local, 6 Nov 2026) |
+| Automated frontend tests | 262 passed, 83.36% of lines covered (local, 6 Nov 2026) |
+| Full local journey in a real browser | 25 of 25 steps passed, manual-entry fallback (6 Nov 2026) |
+| Page checks in Chromium, Firefox and WebKit at four screen sizes | 36 of 36 passed in Linux Docker (6 Nov 2026) |
 | Load test on a local copy | No errors with 50 users at once |
 | Anomaly detection on simulated data | The forest scored F1 0.89 and the rules 0.50. This is synthetic data, not evidence of real performance |
 
 The full results are in [docs/testing](docs/testing/README.md).
+
+The latest local total is **879 passing tests**, including 16 PostgreSQL checks. Backend validation
+passed both on Python 3.9.6 on this Mac and Python 3.10.22 in the actual Linux production image.
+The browser journey used synthetic accounts and manual digit entry without private model weights.
+GitHub Actions must also pass for the submitted commit. See the dated evidence and limitations in the testing page.
 
 ## How the code is built
 
@@ -254,6 +260,9 @@ Mubazi is a web app you can install, so there is no APK file. Open the link on y
 - [Technical guide](docs/TECHNICAL_GUIDE.md): how each part works, settings and deployment
 - [Algorithms](docs/ALGORITHMS.md): the main problems solved, and the simulation results
 - [Open items](docs/decisions/OPEN_ITEMS.md): what still needs WASAC, MTN or another decision
+- [Proposal alignment](docs/SCOPE_ALIGNMENT.md): each milestone, FR and NFR, including unresolved deviations
+- [Pilot protocol](docs/evaluation/PILOT_PROTOCOL.md): proposed evaluation, not completed user research
+- [Operations](docs/OPERATIONS.md): migrations, retention, monitoring and backup/restore
 
 ## Licence and limits
 

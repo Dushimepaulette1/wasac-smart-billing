@@ -13,6 +13,10 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: APP_ENV
+        value: "production"
+      - key: PHOTO_CLEANUP_INTERVAL_SECONDS
+        value: "3600"
       - key: DATABASE_URL           # Neon connection string (pooled, sslmode=require)
         sync: false
       - key: MODEL_URLS             # best.onnx=<link>,meter_reader.onnx=<link>,quality_gate.onnx=<link>

@@ -6,12 +6,18 @@
     python scripts/demo/generate_demo_households.py --set-phone KGL-20001 0788123456
                                                     # sign in to that DEMO household with your own phone
     python scripts/demo/generate_demo_households.py --rename-meters   # DEMO-MTR-001 -> KGL-20001 in the DB
+    python scripts/demo/generate_demo_households.py --households 40 --recent --load-db
+                                                    # add 031-040, last read 26-30 days ago
 
 Household 001 has meter KGL-20001 and signs in with 0700 000 001, household 002 has KGL-20002 and
 0700 000 002, and so on; the last two meters share one number, to show choosing between meters.
 The 07000000xx numbers are not real Rwandan mobiles, and demo sign-in codes are shown on screen
 instead of sent. Household 002 has a location on file (Kacyiru, Kigali), so its readings show the
 location check.
+
+--recent moves each history so its newest reading is 26 to 30 days old: the reading window is open
+(MIN_DAYS_BETWEEN_READINGS is 25) and the next-bill estimate covers a normal month. --load-db skips
+households already in the database, so adding more never touches the ones in use.
 
 Everything produced here is synthetic. Each household's customer number starts with "DEMO-" (the
 marker the app and the training scripts use); its meter has an ordinary-looking number so the app
@@ -20,12 +26,15 @@ reads naturally in a demo. Do not report results computed on it.
 import argparse
 import csv
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _data import DEMO_BANNER  # noqa: E402
 
 from app.anomaly.demo_data import generate_demo_histories  # noqa: E402
+from app.anomaly.features import ReadingPoint  # noqa: E402
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "output" / "DEMO_households.csv"
 DEMO_GPS = {"DEMO-MTR-002": (-1.9441, 30.0619)}
@@ -147,6 +156,17 @@ def rename_meters(histories, dry_run: bool = False) -> int:
     return renamed
 
 
+def end_recently(histories, now: Optional[datetime] = None):
+    """The same histories, each moved so its newest reading is 26 to 30 days before now."""
+    now = now or datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+    moved = {}
+    for hid, points in histories.items():
+        newest = now - timedelta(days=26 + int(hid[-3:]) % 5)
+        delta = newest - points[-1].date
+        moved[hid] = [ReadingPoint(date=p.date + delta, reading_m3=p.reading_m3) for p in points]
+    return moved
+
+
 def write_csv(histories, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="") as f:
@@ -158,11 +178,12 @@ def write_csv(histories, path: Path) -> None:
 
 
 def load_into_db(histories) -> int:
-    from app.db.session import Base, SessionLocal, engine
+    from app.db.session import SessionLocal, engine
+    from app.db.migrations import upgrade_schema
     from app.models import Customer, Meter, Reading
     import app.models  # noqa: F401  registers anomaly_flags
 
-    Base.metadata.create_all(bind=engine)
+    upgrade_schema(engine)
     db = SessionLocal()
     added = 0
     try:
@@ -188,6 +209,8 @@ def load_into_db(histories) -> int:
                                submission_time=p.date))
                 prev = p.reading_m3
             added += 1
+            print(f"  added {meter_id}: signs in with 0{demo_phone(hid, len(histories))[4:]}, "
+                  f"last reading {points[-1].reading_m3:.3f} m3 on {points[-1].date:%d/%m/%Y}")
         db.commit()
     finally:
         db.close()
@@ -208,6 +231,8 @@ def main() -> None:
     parser.add_argument("--rename-meters", action="store_true",
                         help="Give DEMO households in DATABASE_URL their KGL- meter numbers")
     parser.add_argument("--dry-run", action="store_true", help="With --rename-meters: show, change nothing")
+    parser.add_argument("--recent", action="store_true",
+                        help="Newest reading 26-30 days ago, so a new reading can be sent now")
     args = parser.parse_args()
 
     if args.set_phone:
@@ -215,6 +240,8 @@ def main() -> None:
         return
     print(DEMO_BANNER)
     histories = generate_demo_histories(args.households, args.readings, args.seed)
+    if args.recent:
+        histories = end_recently(histories)
     if args.rename_meters:
         n = rename_meters(histories, dry_run=args.dry_run)
         print(f"{'Would rename' if args.dry_run else 'Renamed'} {n} DEMO meters.")

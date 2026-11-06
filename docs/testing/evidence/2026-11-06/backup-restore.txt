@@ -1,0 +1,1 @@
+PostgreSQL 16 backup/restore passed: all table counts match; 40 customers, 960 readings, revision 0002, and the RWF 1,000 bill / RWF 500 successful payment survived unchanged. Synthetic local data only.

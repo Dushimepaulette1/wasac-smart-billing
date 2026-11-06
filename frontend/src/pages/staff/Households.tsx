@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import StaffLayout from '../../components/StaffLayout/StaffLayout';
 import RequestState from '../../components/RequestState/RequestState';
 import Button from '../../components/Button/Button';
@@ -26,7 +27,14 @@ function Households() {
   const { t } = useI18n();
   const data = useRequest(loadOverview, { immediate: true, args: [] });
   const { user } = useAuth();
-  const [query, setQuery] = useState('');
+  const [params, setParams] = useSearchParams();
+  const query = params.get('q') ?? '';
+  const setQuery = (value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set('q', value);
+    else next.delete('q');
+    setParams(next, { replace: true });
+  };
   const [open, setOpen] = useState<Open>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const searchId = useId();

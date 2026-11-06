@@ -193,10 +193,12 @@ def test_when_a_second_bill_is_added_for_a_reading_should_be_refused_by_the_data
 def test_when_an_older_database_lacks_the_bill_index_should_add_it():
     from sqlalchemy import create_engine, inspect, text
     from app.db.init_db import add_late_indexes
+    from app.db.session import Base
 
     engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
     with engine.begin() as conn:
-        conn.execute(text("CREATE TABLE bills (bill_id INTEGER PRIMARY KEY, reading_id INTEGER)"))
+        conn.execute(text("DROP INDEX uq_bills_reading_id"))
     add_late_indexes(engine)
     add_late_indexes(engine)  # every start-up: no error the second time
     assert any(i["name"] == "uq_bills_reading_id" and i["unique"] for i in inspect(engine).get_indexes("bills"))

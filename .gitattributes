@@ -1,0 +1,4 @@
+# Generated assets are reviewed as artifacts, not line-oriented source.
+*.pdf binary
+*.png binary
+*.woff2 binary

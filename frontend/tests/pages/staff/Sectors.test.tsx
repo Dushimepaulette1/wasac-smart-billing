@@ -58,7 +58,7 @@ describe('Sectors', () => {
     ]);
     renderPage();
     fireEvent.click(await screen.findByText('Show households needing attention (1)'));
-    expect(screen.getByRole('link', { name: 'Uwase Home' })).toHaveAttribute('href', '/staff/review');
+    expect(screen.getByRole('link', { name: 'Uwase Home' })).toHaveAttribute('href', '/staff/review?meter=KGL-20001');
     expect(screen.getByText('Reading to check')).toBeInTheDocument();
   });
 

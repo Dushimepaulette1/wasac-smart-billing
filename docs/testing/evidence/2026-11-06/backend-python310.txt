@@ -1,0 +1,120 @@
+Python 3.10.22
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 34%]
+........................................................................ [ 46%]
+........................................................................ [ 57%]
+........................................................................ [ 69%]
+........................................................................ [ 81%]
+..............s......................................................... [ 92%]
+..........................................ssss                           [100%]
+=============================== warnings summary ===============================
+../../../usr/local/lib/python3.10/site-packages/pydantic/_internal/_config.py:284
+  /usr/local/lib/python3.10/site-packages/pydantic/_internal/_config.py:284: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.7/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+tests/anomaly/test_household_edits.py::test_the_briefs_scenario_should_be_held_as_lower_than_the_previous_reading_with_both_values
+  /usr/local/lib/python3.10/site-packages/starlette/testclient.py:41: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    [], typing.ContextManager[anyio.abc.BlockingPortal]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.10.22-final-0 ----------
+Name                                        Stmts   Miss  Cover
+---------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/anomaly/__init__.py                         0      0   100%
+app/anomaly/config.py                          30      0   100%
+app/anomaly/demo_data.py                       22      0   100%
+app/anomaly/edits.py                           34      0   100%
+app/anomaly/evaluation.py                      82      0   100%
+app/anomaly/features.py                        87      0   100%
+app/anomaly/location.py                        46      2    96%
+app/anomaly/model.py                           62      3    95%
+app/anomaly/notifications.py                   41      1    98%
+app/anomaly/readings.py                        29      0   100%
+app/anomaly/review.py                         109      0   100%
+app/anomaly/rules.py                           54      1    98%
+app/anomaly/scoring.py                         88      1    99%
+app/anomaly/service.py                         68      1    99%
+app/anomaly/statuses.py                         7      0   100%
+app/api/__init__.py                            15      0   100%
+app/api/deps.py                                75      1    99%
+app/api/routes/__init__.py                      0      0   100%
+app/api/routes/anomaly.py                     110      2    98%
+app/api/routes/bill_corrections.py             60      8    87%
+app/api/routes/billing.py                     107      8    93%
+app/api/routes/health.py                       27      0   100%
+app/api/routes/household_auth.py              100      5    95%
+app/api/routes/meter_corrections.py            42      5    88%
+app/api/routes/payments.py                    117     10    91%
+app/api/routes/push.py                         30      0   100%
+app/api/routes/readings.py                    130      6    95%
+app/api/routes/sectors.py                      12      0   100%
+app/api/routes/staff_auth.py                  146      6    96%
+app/api/routes/ussd.py                         15      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/config.py                              9      0   100%
+app/core/ratelimit.py                          64      4    94%
+app/core/security.py                           66      3    95%
+app/db/__init__.py                              1      0   100%
+app/db/init_db.py                              34      6    82%
+app/db/migrations.py                            9      0   100%
+app/db/seed.py                                 34     29    15%
+app/db/session.py                              25      5    80%
+app/main.py                                    27     10    63%
+app/models/__init__.py                         13      0   100%
+app/models/anomaly_flag.py                     23      0   100%
+app/models/bill.py                             26      0   100%
+app/models/bill_correction.py                  45      0   100%
+app/models/household.py                        30      0   100%
+app/models/household_code.py                   12      0   100%
+app/models/meter_correction.py                 22      0   100%
+app/models/payment.py                          28      0   100%
+app/models/photo_read.py                       18      0   100%
+app/models/push_subscription.py                12      0   100%
+app/models/reading.py                          32      0   100%
+app/models/sms_outbox.py                       10      0   100%
+app/models/staff.py                            26      0   100%
+app/schemas/__init__.py                         6      0   100%
+app/schemas/anomaly.py                         72      0   100%
+app/schemas/billing.py                        198      0   100%
+app/schemas/household_auth.py                  23      0   100%
+app/schemas/reading.py                         66      0   100%
+app/schemas/staff_auth.py                      50      0   100%
+app/schemas/system.py                          13      0   100%
+app/services/__init__.py                        0      0   100%
+app/services/audit.py                          11      0   100%
+app/services/balance.py                        91      2    98%
+app/services/bill_corrections.py              164      9    95%
+app/services/billing.py                        43      0   100%
+app/services/households.py                    198     21    89%
+app/services/maintenance.py                    22      2    91%
+app/services/meter_correction.py               25      2    92%
+app/services/meter_correction_requests.py      68      4    94%
+app/services/momo.py                           81      4    95%
+app/services/payment_providers.py              38      1    97%
+app/services/payment_statement.py              64      0   100%
+app/services/payments.py                      240     25    90%
+app/services/photo_evidence.py                 36      2    94%
+app/services/push.py                           45      2    96%
+app/services/reading_window.py                 36      2    94%
+app/services/sectors.py                        46      0   100%
+app/services/sms.py                            67      7    90%
+app/services/usage.py                          97      3    97%
+app/services/ussd_menu.py                     113     14    88%
+app/utils/__init__.py                           0      0   100%
+app/utils/meter_value.py                        9      0   100%
+app/utils/phone.py                             13      0   100%
+app/vision/__init__.py                          5      0   100%
+app/vision/config.py                           43      0   100%
+app/vision/guidance.py                         67      0   100%
+app/vision/image_io.py                         40      2    95%
+app/vision/models.py                          104     22    79%
+app/vision/onnx_models.py                     122     32    74%
+app/vision/pipeline.py                        104      0   100%
+---------------------------------------------------------------
+TOTAL                                        4731    273    94%
+
+617 passed, 5 skipped, 2 warnings in 25.72s

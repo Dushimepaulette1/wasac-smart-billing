@@ -7,7 +7,8 @@
     review queue      photo_for_reading: the image, for staff only
 
 Kept PHOTO_RETENTION_DAYS (default 90) and then deleted; a photo never confirmed is deleted after
-a day. Purged whenever a new photo comes in, so no scheduled job is needed.
+a day. Purged on new uploads and periodically while the API is awake. An external scheduler
+can run scripts/purge_photos.py when hosting sleeps; see docs/TECHNICAL_GUIDE.md.
 """
 import os
 import secrets

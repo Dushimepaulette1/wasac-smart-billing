@@ -1,0 +1,3 @@
+# Optional PDF authoring only; never installed in the serving image.
+reportlab==4.4.5
+pypdf==6.21.4

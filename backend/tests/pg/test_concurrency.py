@@ -30,6 +30,28 @@ pytestmark = pytest.mark.postgres
 URL = os.getenv("TEST_POSTGRES_URL", "")
 
 
+def test_versioned_migrations_create_and_adopt_postgres_without_losing_rows(pg):
+    from sqlalchemy import inspect, text
+    from alembic.runtime.migration import MigrationContext
+    from app.db.migrations import upgrade_schema
+
+    engine = pg.kw["bind"]
+    with engine.begin() as conn:
+        conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+        conn.exec_driver_sql("CREATE SCHEMA public")
+    upgrade_schema(engine)
+    with engine.begin() as conn:
+        conn.execute(text("INSERT INTO customers (customer_id, name, phone) VALUES ('C', 'Demo', '0700000001')"))
+        conn.execute(text("DROP TABLE alembic_version"))
+        conn.execute(text("ALTER TABLE bills DROP COLUMN tariff_version"))
+    upgrade_schema(engine)
+    upgrade_schema(engine)
+    with engine.connect() as conn:
+        assert conn.execute(text("SELECT name FROM customers WHERE customer_id = 'C'")).scalar() == "Demo"
+        assert MigrationContext.configure(conn).get_current_revision() == "0002"
+    assert "tariff_version" in {c["name"] for c in inspect(engine).get_columns("bills")}
+
+
 def _safe(url: str) -> bool:
     parts = urlparse(url)
     return (parts.scheme.startswith("postgresql") and parts.hostname in ("localhost", "127.0.0.1")
@@ -165,11 +187,21 @@ def test_when_ten_pay_requests_arrive_at_once_should_open_one_attempt_and_prompt
         assert db.query(Payment).filter(Payment.bill_id == bill_id).count() == 1
 
 
-def test_without_the_lock_and_the_index_ten_pay_requests_would_prompt_more_than_once(pg, mtn, slow_lookup, monkeypatch):
+def test_without_the_lock_and_the_index_ten_pay_requests_would_prompt_more_than_once(pg, mtn, monkeypatch):
     """Shows the race test above can fail: with every guard removed, requests open several attempts.
     (settle's lock on the customer row also serialises them, so it is removed too.)"""
     no_bill_lock(monkeypatch)
     monkeypatch.setattr(payments, "settle", lambda *a, **k: None)
+    lookup = payments._open_attempt
+    checked = threading.Barrier(10)
+
+    def together(db, bill_id):
+        found = lookup(db, bill_id)
+        # Coordinate the vulnerable point rather than relying on scheduler timing or sleeps.
+        checked.wait(timeout=20)
+        return found
+
+    monkeypatch.setattr(payments, "_open_attempt", together)
     with pg.kw["bind"].begin() as conn:
         conn.exec_driver_sql("DROP INDEX uq_payments_one_pending")
     bill_id = make_bill(pg)
@@ -178,7 +210,8 @@ def test_without_the_lock_and_the_index_ten_pay_requests_would_prompt_more_than_
         with pg() as db:
             return payments.start_payment(db, db.get(Bill, bill_id), "+250788000111").id
 
-    race(10, pay)
+    outcomes = race(10, pay)
+    assert all(isinstance(result, int) for result in outcomes), outcomes
     assert mtn.posts > 1
 
 

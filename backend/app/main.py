@@ -4,7 +4,8 @@
     guards     upload_guard (size and rate limits, app/core/ratelimit.py), then CORS (app/core/config.py)
     routes     app/api/ (one file per area in app/api/routes/)
 """
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,7 @@ from app.api import api_router
 from app.core.config import cors_origin_regex, cors_origins
 from app.core.ratelimit import upload_guard
 from app.db.init_db import init_db
+from app.services.maintenance import clean_photos_periodically
 from app.vision.models import registry as model_registry
 
 
@@ -20,7 +22,13 @@ from app.vision.models import registry as model_registry
 async def lifespan(app: FastAPI):
     init_db()
     model_registry.load()
-    yield
+    cleanup = asyncio.create_task(clean_photos_periodically())
+    try:
+        yield
+    finally:
+        cleanup.cancel()
+        with suppress(asyncio.CancelledError):
+            await cleanup
 
 
 app = FastAPI(
@@ -28,7 +36,8 @@ app = FastAPI(
     description=(
         "AI-assisted water meter reading and billing for Kigali, Rwanda. "
         "Pipeline: YOLOv8 number-window crop → MobileNetV2 quality gate → "
-        "ResNet18+BiGRU (CTC) digit reader → Isolation Forest anomaly detection."
+        "ResNet18+BiGRU (CTC) digit reader → rule-based reading checks and human review. "
+        "Isolation Forest is an offline experiment, not the deployed detector."
     ),
     version="1.0.0",
     lifespan=lifespan,

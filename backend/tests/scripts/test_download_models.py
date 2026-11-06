@@ -84,7 +84,7 @@ def test_when_a_download_fails_should_never_print_the_link(tmp_path, monkeypatch
         raise OSError(f"could not open {url}")  # a library error that echoes the URL
 
     monkeypatch.setattr(dl, "download", boom)
-    monkeypatch.setattr(sys, "argv", ["download_models.py", "--dest", str(tmp_path), "--urls",
+    monkeypatch.setattr(sys, "argv", ["download_models.py", "--format", "pt", "--dest", str(tmp_path), "--urls",
                                       f"best.pt={SECRET_LINK},meter_reader.pt=not a url,quality_gate.pt="])
     with pytest.raises(SystemExit) as exit_info:
         dl.main()
