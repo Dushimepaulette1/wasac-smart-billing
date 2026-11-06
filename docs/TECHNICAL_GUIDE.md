@@ -54,9 +54,11 @@ If a file is missing, the API still starts: `/health` reports it, and `/submit-p
 - `meter_reader.pt` and `quality_gate.pt` are for **non-commercial academic use only**, because they
   were trained partly on the Yandex meter dataset (CC BY-NC-ND 4.0).
 
-**Held-out test results** (from `model_config.json`): 55.7% of readings exactly right on 79 photos
+**Held-out test results** (from `model_config.json`): 55.7% normalized-reading accuracy on 79 photos
 of 34 meters (95% CI 42–69%), and 70.9% within one digit. That is why every reading is shown to the
 household to confirm, and why suspicious readings go to WASAC staff (see `backend/app/anomaly/README.md`).
+The notebook removes leading zeros for this reading metric. It is not strict eight-character exact
+match or individual-digit accuracy; the strict metric is calculated separately by the notebook.
 
 ### Photo guidance
 

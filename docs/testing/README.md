@@ -32,6 +32,14 @@ screen sizes are simulations, not real phones. Fresh landing-page first contentf
 unthrottled, 1,068 ms on simulated fast 3G and 3,388 ms on slow 3G. The older live journey and Ubuntu
 results below remain historical evidence. No current live accounts were modified.
 
+## Metric interpretation and submitted CI
+
+The notebook's 55.7% reading measure strips leading zeros before comparison. Strict eight-character
+exact match and individual-digit accuracy are different metrics; the report labels this explicitly.
+Public GitHub CI for commit `6109b4f` succeeded in
+[run 42252023480](https://github.com/Dushimepaulette1/wasac-smart-billing/actions/runs/42252023480).
+Report and submission-packaging corrections after that commit require their own final CI run.
+
 ## Historical evidence
 
 | Strategy | Why it was chosen | How | Result | What it changed |

@@ -64,6 +64,12 @@ management plan and obtain the relevant approval before real recruitment or impo
 
 ## What can be concluded
 
+The proposal requested strict exact-match and digit-level OCR metrics. The deployed configuration
+records normalized-reading accuracy (leading zeros ignored) and a within-one-digit measure. These
+must not be relabelled strict eight-character exact match or individual-digit accuracy. The notebook
+calculates the metrics separately, but the checked-in notebook has no stored per-candidate validation
+score table. The report states the selection procedure and recorded result without inventing scores.
+
 The artifact demonstrates a connected, traceable workflow and tested technical controls. It does
 not establish improved reading accuracy versus independent manual readings, reduced staff workload,
 SUS scores, adoption, real leak identification, delivered SMS timing or live payment settlement.

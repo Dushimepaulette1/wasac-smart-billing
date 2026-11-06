@@ -33,14 +33,14 @@ people stay in control of the final number.
 5. Mubazi checks that the reading makes sense.
 6. If it looks normal, the bill appears straight away.
 7. If it looks unusual, a WASAC officer looks at it first.
-8. The household pays the bill, and staff confirm the payment.
+8. The household tries the simulated payment flow, and staff confirm the test transaction.
 
-Home also estimates the next bill from the household's usual use, and warns when a bill is well above usual, so a
-leak is found early. Staff see households by sector, with the sectors that have readings to check or possible leaks
+Home also estimates the next bill from the household's usual use, and warns when a bill is well above usual, so the household can investigate a possible leak. Staff see households by sector, with the sectors that have readings to check or possible leaks
 first.
 
-**The AI helps, but people decide.** On photos it had never seen, the AI read 55.7% of meters fully
-correctly (95% confidence interval: 42 to 69%). That is not enough to trust alone, so a person always
+**The AI helps, but people decide.** On photos it had never seen, the AI achieved 55.7% normalized-reading
+accuracy, ignoring leading zeros (95% confidence interval: 42 to 69%). This is different from strict
+eight-character exact-match accuracy. That is not enough to trust alone, so a person always
 checks the numbers.
 
 ## How the parts fit together
@@ -83,7 +83,7 @@ A reading waits for an officer if any of these is true:
 
 - It is lower than the last reading.
 - It is about 3 times the household's usual use or more, or more than 5 m³ a day.
-- It is the meter's first reading, so there is nothing to compare it with.
+- The meter has no known starting reading, so consumption cannot yet be calculated.
 - The household lowered a reliable AI reading by 1 m³ or more.
 - The meter passed 99,999 and started again.
 - The photo was uploaded, or was not taken near the meter's saved location.
@@ -133,8 +133,12 @@ your own admin account (steps below), or watch the walkthrough video.
 | Hardware | A normal laptop. The live server runs on 512 MB of memory |
 | Phone (to use the app) | A modern browser. The build targets Chrome 80 and Safari 14 or newer |
 
-The main frameworks are FastAPI 0.111, SQLAlchemy 2.0, ONNX Runtime 1.19, React 18, TypeScript and
-Vite. Exact versions are in `backend/requirements*.txt` and `frontend/package.json`.
+The tested application uses FastAPI 0.111.0, SQLAlchemy 2.0.30, ONNX Runtime 1.19.2,
+React 18.3.1, TypeScript 7.0.2 and Vite 8.3.4. Exact dependencies are in
+`backend/requirements*.txt`, `frontend/package.json` and `frontend/package-lock.json`.
+Validated environments include macOS 27.2, Python 3.10.22 in Linux Docker, PostgreSQL 16 and
+Chromium 141 / Firefox 142 / WebKit 26 in Linux Docker. CPU inference and manual entry need no
+GPU or Android SDK. A native APK is not part of this web/PWA project.
 
 ### 1. Get the code
 
@@ -145,11 +149,12 @@ cd wasac-smart-billing
 
 ### 2. Start the backend
 
-Open a terminal in the project folder:
+Open a terminal in the project folder. Use Python 3.10 to create the environment (on Windows,
+`py -3.10 -m venv .venv`):
 
 ```bash
 cd backend
-python -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate        # On Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 cp .env.example .env             # On Windows: copy .env.example .env
@@ -192,8 +197,9 @@ Without them, the app still works: it asks the household to type the numbers.
 ### Run the tests
 
 ```bash
-cd backend && pytest             # backend tests
-cd frontend && npm test          # frontend tests
+# From the repository root, with the backend environment active:
+(cd backend && python -m pytest)
+(cd frontend && npm test -- --run)
 ```
 
 ## What is in this project
@@ -237,7 +243,7 @@ The full results are in [docs/testing](docs/testing/README.md).
 The latest local total is **879 passing tests**, including 16 PostgreSQL checks. Backend validation
 passed both on Python 3.9.6 on this Mac and Python 3.10.22 in the actual Linux production image.
 The browser journey used synthetic accounts and manual digit entry without private model weights.
-GitHub Actions must also pass for the submitted commit. See the dated evidence and limitations in the testing page.
+GitHub Actions passed for commit `6109b4f` ([run 42252023480](https://github.com/Dushimepaulette1/wasac-smart-billing/actions/runs/42252023480)); check the final submitted commit as well. See the dated evidence and limitations in the testing page.
 
 ## How the code is built
 
@@ -249,6 +255,13 @@ GitHub Actions must also pass for the submitted commit. See the dated evidence a
 | Separation of concerns | Routes handle HTTP, services hold the rules, and models and schemas hold the data. Checks split into [read-only evaluation](backend/app/anomaly/evaluation.py) and [storing](backend/app/anomaly/service.py) |
 | Reuse | A typed [API client](frontend/src/api/client.ts), shared [components](frontend/src/components) and [design tokens](frontend/src/styles/tokens.css) |
 | Algorithms | CTC decoding, tiered billing, history that survives a meter change, and safe handling of two requests at once. See [docs/ALGORITHMS.md](docs/ALGORITHMS.md) |
+
+## Submission files
+
+The linked PDF is the final-product technical report and is kept within five pages. The walkthrough
+is linked above for Attempt 1. Attempt 2 requires a ZIP of this same source revision, the actual
+video file and the PDF. This is a web/PWA application, so a native executable or APK does not apply;
+the ZIP can include the production web build. See [submission packaging](docs/SUBMISSION.md).
 
 ## Installing it on a phone
 

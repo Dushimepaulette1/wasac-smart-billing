@@ -5,8 +5,9 @@ the household confirms them, rules check the reading, and it is billed or held f
 It is a capstone prototype by Dushime Paulette (African Leadership University), not an official WASAC
 service. All households are made up.
 
-The principle behind every feature: **the AI helps, people decide.** The reader gets 55.7% of meters
-fully right on unseen photos (95% CI 42 to 69%), so a person always confirms the digits.
+The principle behind every feature: **the AI helps, people decide.** Normalized-reading accuracy is
+55.7% on unseen photos (95% CI 42 to 69%), ignoring leading zeros. This is not strict eight-character
+exact-match accuracy. A person always confirms the digits.
 
 ## Commands
 

@@ -53,6 +53,9 @@ def markup(node):
         return f"<{tag}>{text}</{tag}>"
     if node.tag == "br":
         return "<br/>"
+    if node.tag == "a" and node.attrs.get("href", "").startswith("https://"):
+        href = escape(node.attrs["href"], quote=True)
+        return f'<link href="{href}" color="#1c3f66">{text}</link>'
     return text
 
 
@@ -110,6 +113,7 @@ def render(node):
     if node.tag == "div" and node.attrs.get("class") == "fig":
         images = []
         widths = []
+        image_count = sum(isinstance(c, Element) and c.tag == "img" for c in node.children)
         for item in node.children:
             if not isinstance(item, Element) or item.tag != "img":
                 continue
@@ -117,8 +121,9 @@ def render(node):
             image = Image(str(SOURCE.parent/item.attrs["src"]))
             image.drawHeight *= width/image.drawWidth
             image.drawWidth = width
-            if image.drawHeight > 135:
-                scale = 135/image.drawHeight
+            max_height = 230 if image_count == 1 else 175
+            if image.drawHeight > max_height:
+                scale = max_height/image.drawHeight
                 image.drawWidth *= scale
                 image.drawHeight *= scale
             images.append(image)
