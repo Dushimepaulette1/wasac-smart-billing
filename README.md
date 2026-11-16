@@ -268,9 +268,26 @@ the ZIP can include the production web build. See [submission packaging](docs/SU
 Mubazi is a web app you can install, so there is no APK file. Open the link on your phone and choose
 **Install** or **Add to Home Screen**.
 
+## ML learning curves and results
+
+The [saved 2 November experiment](docs/ml/evidence/2026-11-02/README.md) includes the
+[executed notebook](notebooks/evidence/meter_reading_executed_2026-11-02.ipynb), learning curves,
+model-comparison tables and training logs:
+
+- [Yandex pretraining curves](docs/ml/evidence/2026-11-02/plots/learning_curves_resnet_yandex.png)
+- [Kigali fine-tuning curves](docs/ml/evidence/2026-11-02/plots/learning_curves_resnet_kigali.png)
+- [Validation curves for the four recognition models](docs/ml/evidence/2026-11-02/plots/learning_curves_kigali_experiments.png)
+
+These curves and tables belong to the rerun that scored **54.43% normalized-reading accuracy**.
+The deployed model configuration records **55.7% from a separate run**. The evidence page explains
+the inferred meter groups, label-repair limitations and missing original exports. Keep the
+[maintained notebook source](notebooks/wasac_meter_reading_pipeline.ipynb) alongside this historical
+execution; its later instrumentation does not have saved results from this run.
+
 ## Learn more
 
 - [Technical guide](docs/TECHNICAL_GUIDE.md): how each part works, settings and deployment
+- [ML experiment evidence](docs/ml/evidence/2026-11-02/README.md): saved learning curves, validation tables and rerun results, distinguished from the deployed model
 - [Algorithms](docs/ALGORITHMS.md): the main problems solved, and the simulation results
 - [Open items](docs/decisions/OPEN_ITEMS.md): what still needs WASAC, MTN or another decision
 - [Proposal alignment](docs/SCOPE_ALIGNMENT.md): each milestone, FR and NFR, including unresolved deviations

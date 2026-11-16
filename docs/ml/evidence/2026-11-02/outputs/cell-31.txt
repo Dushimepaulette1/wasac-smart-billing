@@ -1,0 +1,2 @@
+Photos: 536 | distinct meters: 226
+Photos per meter: median 1, max 14, meters with one photo: 133

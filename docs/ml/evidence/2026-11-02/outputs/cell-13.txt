@@ -1,0 +1,19 @@
+Creating new Ultralytics Settings v0.0.8 file ✅ 
+View Ultralytics Settings with 'yolo settings' or at '/root/.config/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/usage/settings
+  100/652 photos processed
+  200/652 photos processed
+  300/652 photos processed
+  400/652 photos processed
+  500/652 photos processed
+  600/652 photos processed
+
+Cropping finished in 347s
+method
+window    586
+digits     55
+full       10
+none        1
+
+Labelled crops found:   536 / 536
+Unreadable crops found: 98 / 98

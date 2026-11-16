@@ -1,0 +1,21 @@
+======================================================================
+DATA COLLECTED
+======================================================================
+Kigali raw photos:          652
+Kigali readable labels:     536  (dropped 0 empty labels)
+Kigali unreadable crops:    98
+Crops in both lists:        0  (should be 0)
+Yandex photos:              1244  columns: ['photo_name', 'value', 'location']
+
+Verification status:
+verification_status
+VERIFIED_CORRECTED    312
+VERIFIED_CORRECT      205
+VERIFIED_PARTIAL       19
+
+                 crop_filename       original_filename     label verification_status                    notes label_raw
+0  water_meter_000001_crop.jpg  water_meter_000001.jpg   3550368    VERIFIED_CORRECT       confirmed by human   3550368
+1  water_meter_000002_crop.jpg  water_meter_000002.jpg    191411    VERIFIED_CORRECT       confirmed by human    191411
+2  water_meter_000003_crop.jpg  water_meter_000003.jpg     86454    VERIFIED_CORRECT       confirmed by human     86454
+3  water_meter_000004_crop.jpg  water_meter_000004.jpg    845922    VERIFIED_CORRECT       confirmed by human    845922
+4  water_meter_000005_crop.jpg  water_meter_000005.jpg  00531258  VERIFIED_CORRECTED  human corrected reading  00531258

@@ -1,0 +1,35 @@
+v1 training items: 378 | v2 training items per epoch: 824
+Downloading: "https://download.pytorch.org/models/mobilenet_v2-b0353104.pth" to /root/.cache/torch/hub/checkpoints/mobilenet_v2-b0353104.pth
+
+100%|██████████| 13.6M/13.6M [00:00<00:00, 107MB/s] 
+
+mobilenetv2_quality_gate_v1 | ep 01 | loss 0.703 | val AUC 0.729  *
+mobilenetv2_quality_gate_v1 | ep 02 | loss 0.707 | val AUC 0.708
+mobilenetv2_quality_gate_v1 | ep 03 | loss 0.661 | val AUC 0.712
+mobilenetv2_quality_gate_v1 | ep 04 | loss 0.611 | val AUC 0.745  *
+mobilenetv2_quality_gate_v1 | ep 05 | loss 0.468 | val AUC 0.744
+mobilenetv2_quality_gate_v1 | ep 06 | loss 0.374 | val AUC 0.715
+mobilenetv2_quality_gate_v1 | ep 07 | loss 0.297 | val AUC 0.746  *
+mobilenetv2_quality_gate_v1 | ep 08 | loss 0.252 | val AUC 0.723
+mobilenetv2_quality_gate_v1 | ep 09 | loss 0.179 | val AUC 0.699
+mobilenetv2_quality_gate_v1 | ep 10 | loss 0.153 | val AUC 0.714
+mobilenetv2_quality_gate_v1 | ep 11 | loss 0.122 | val AUC 0.715
+mobilenetv2_quality_gate_v1 | ep 12 | loss 0.102 | val AUC 0.702
+mobilenetv2_quality_gate_v1 | ep 13 | loss 0.085 | val AUC 0.706
+mobilenetv2_quality_gate_v1 | ep 14 | loss 0.057 | val AUC 0.705
+mobilenetv2_quality_gate_v1 | ep 15 | loss 0.055 | val AUC 0.696
+mobilenetv2_quality_gate_v1 | early stop at epoch 15
+mobilenetv2_quality_gate_v2 | ep 01 | loss 0.664 | val AUC 0.662  *
+mobilenetv2_quality_gate_v2 | ep 02 | loss 0.582 | val AUC 0.669  *
+mobilenetv2_quality_gate_v2 | ep 03 | loss 0.543 | val AUC 0.651
+mobilenetv2_quality_gate_v2 | ep 04 | loss 0.470 | val AUC 0.623
+mobilenetv2_quality_gate_v2 | ep 05 | loss 0.347 | val AUC 0.677  *
+mobilenetv2_quality_gate_v2 | ep 06 | loss 0.233 | val AUC 0.640
+mobilenetv2_quality_gate_v2 | ep 07 | loss 0.178 | val AUC 0.578
+mobilenetv2_quality_gate_v2 | ep 08 | loss 0.179 | val AUC 0.605
+mobilenetv2_quality_gate_v2 | ep 09 | loss 0.122 | val AUC 0.613
+mobilenetv2_quality_gate_v2 | ep 10 | loss 0.103 | val AUC 0.630
+mobilenetv2_quality_gate_v2 | ep 11 | loss 0.082 | val AUC 0.638
+mobilenetv2_quality_gate_v2 | ep 12 | loss 0.070 | val AUC 0.597
+mobilenetv2_quality_gate_v2 | ep 13 | loss 0.059 | val AUC 0.549
+mobilenetv2_quality_gate_v2 | early stop at epoch 13

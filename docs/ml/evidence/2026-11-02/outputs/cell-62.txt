@@ -1,0 +1,26 @@
+type
+dropped or extra digit    19
+correct                   18
+two or more digits        15
+last digit only            6
+one other digit            5
+
+Most common digit confusions (true -> predicted): [(('0', '8'), 6), (('7', '9'), 3), (('6', '8'), 3), (('0', '9'), 2), (('3', '8'), 2), (('6', '5'), 2), (('9', '8'), 2), (('6', '4'), 2)]
+
+Examples of mistakes:
+     pred    label                   type
+ 00431428 00431468        one other digit
+  0079689  0079680        last digit only
+ 00060859 00060360     two or more digits
+ 00431468 00431460        last digit only
+  0043146 00431460 dropped or extra digit
+ 00431468 00431469        last digit only
+ 00431468 00431469        last digit only
+  0048531 00146561 dropped or extra digit
+ 00019108  0001910 dropped or extra digit
+ 00060658 00060360     two or more digits
+003341251 00334126 dropped or extra digit
+003341251 00334126 dropped or extra digit
+   003711   000371 dropped or extra digit
+    00391   000371        one other digit
+   003718   000371 dropped or extra digit

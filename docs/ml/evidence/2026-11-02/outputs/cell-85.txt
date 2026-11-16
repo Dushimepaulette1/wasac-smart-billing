@@ -1,0 +1,2 @@
+Saved /kaggle/working/mubazi_notebook_evidence.zip (4.0 MB)
+Learning curves: ['learning_curves_kigali_experiments.png', 'learning_curves_resnet_kigali.png', 'learning_curves_resnet_yandex.png']

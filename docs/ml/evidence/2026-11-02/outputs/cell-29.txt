@@ -1,0 +1,3 @@
+Saved plot: /kaggle/working/plots/eda_samples.png
+
+<Figure size 1600x700 with 16 Axes>

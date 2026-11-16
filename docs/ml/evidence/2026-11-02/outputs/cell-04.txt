@@ -1,0 +1,13 @@
+======================================================================
+INPUT CHECK
+======================================================================
+  OK       YOLOv8 model     /kaggle/input/models/paulettedushime/best-model/tensorflow2/default/1/best.pt
+  OK       Kigali photos    /kaggle/input/datasets/paulettedushime/images-for-water-meters/images
+  OK       Kigali labels    /kaggle/input/datasets/paulettedushime/rwanda-water-meters-verified/rwanda_crnn_training_labels.csv
+  OK       Unreadable list  /kaggle/input/datasets/paulettedushime/rwanda-water-meters-verified/rwanda_unreadable_labels.csv
+  OK       Yandex images    /kaggle/input/datasets/tapakah68/yandextoloka-water-meters-dataset/WaterMeters/images
+  OK       Yandex CSV       /kaggle/input/datasets/tapakah68/yandextoloka-water-meters-dataset/WaterMeters/data.csv
+
+Device: cuda (Tesla T4)
+PyTorch 2.10.0+cu128 | torchvision 0.25.0+cu128
+FAST_RUN = False  (must be False for reported results)

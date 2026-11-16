@@ -1,0 +1,8 @@
+Hand-typed labels with leading zeros: 279
+Method A (model chooses): 68.5% reproduce my zeros exactly
+Method B (always 8):      62.7% reproduce my zeros exactly
+Using: Method A
+
+Checks passed: only leading zeros were added, and my typed labels are unchanged.
+Labels changed: 254 / 536
+Label length after: {3: 2, 4: 3, 5: 56, 6: 56, 7: 75, 8: 336, 9: 8}

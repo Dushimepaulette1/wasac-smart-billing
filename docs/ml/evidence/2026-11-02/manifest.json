@@ -1,0 +1,91 @@
+{
+  "received_date": "2026-11-15",
+  "run_metadata": {
+    "default_parameters": {},
+    "duration": 2917.516321,
+    "end_time": "2026-11-02T16:45:21.666755+00:00",
+    "environment_variables": {},
+    "exception": null,
+    "input_path": "__notebook__.ipynb",
+    "output_path": "__notebook__.ipynb",
+    "parameters": {},
+    "start_time": "2026-11-02T15:56:44.150434+00:00",
+    "version": "2.7.0"
+  },
+  "sources": [
+    {
+      "filename": "crrn-ctc-water-meter-notebook(2).ipynb",
+      "bytes": 3150222,
+      "sha256": "53e03759219663e8c14743fa54d9bc0b61e39703e7bdb08835777f441f19d084"
+    },
+    {
+      "filename": "results(1).zip",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "extracted_plots": [
+    {
+      "path": "plots/eda_image_stats.png",
+      "sha256": "4c78e91f38665ecf16c32f9754741eed679a90f46e162b7790b0575f6602c6f0",
+      "source_cell": 23
+    },
+    {
+      "path": "plots/eda_label_lengths.png",
+      "sha256": "98892ad783d4322570a5c3a80cfe1ba3c043eea80be548558879c2388148c053",
+      "source_cell": 19
+    },
+    {
+      "path": "plots/final_test_results.png",
+      "sha256": "2f1d9fa0dbc8b5e3298fe56f57165d12fc52294df2e57bde0a9f952d400f216a",
+      "source_cell": 68
+    },
+    {
+      "path": "plots/learning_curves_kigali_experiments.png",
+      "sha256": "5f6cd94eb70774d1185d4435bf70efd09c461ec84dc72fa8aa9b4ca451c971e5",
+      "source_cell": 83
+    },
+    {
+      "path": "plots/learning_curves_resnet_kigali.png",
+      "sha256": "4d26fe1d230aa92252a29bd34e4b7d0a49781e7f3d50d7167d7e7dfc97f23516",
+      "source_cell": 83
+    },
+    {
+      "path": "plots/learning_curves_resnet_yandex.png",
+      "sha256": "77936336e44d45a3d1e21b3fb591072556b8800f02ce1ff95a2b9a6b2646c586",
+      "source_cell": 83
+    },
+    {
+      "path": "plots/quality_gate_results.png",
+      "sha256": "f7e923cb6c9c332e01bcabc6cca3152226bdfe76cfc9e9f0fab48f6a86a09366",
+      "source_cell": 76
+    },
+    {
+      "path": "plots/train_kigali_experiments.png",
+      "sha256": "15607db88ca56fc40aa88971b117f2e1a55a1af04953beec19801fc269838b06",
+      "source_cell": 59
+    },
+    {
+      "path": "plots/train_yandex_round1.png",
+      "sha256": "1ac82450e5e75a86bcb9ac9e3f0898b24bc156afd704b627ac73eaab8694e693",
+      "source_cell": 48
+    },
+    {
+      "path": "plots/train_yandex_round2.png",
+      "sha256": "8de2b97d6b3d0b248f538d601328e4b36854a4a19defb56914fe0241dc350859",
+      "source_cell": 52
+    }
+  ],
+  "omitted_photo_output_cells": [
+    29,
+    37,
+    50,
+    71
+  ],
+  "cell_indexing": "zero-based original notebook cells; unchanged in repository evidence notebook",
+  "limitations": [
+    "Supplied ZIP is empty (0 bytes); no archive result tables, prediction CSVs, split manifests or weights recovered.",
+    "PNG files are decoded embedded notebook displays, not the unavailable savefig files.",
+    "Saved text and rounded tables are evidence of this rerun, not the deployed weights."
+  ]
+}

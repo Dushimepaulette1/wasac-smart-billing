@@ -1,0 +1,1 @@
+Yandex-pretrained CRNN on Kigali validation (no Kigali training): exact % 0.0 | reading % 3.2 | edit dist 4.0 | within-1 % 6.3 | length errs 40 | per-meter % 2.9

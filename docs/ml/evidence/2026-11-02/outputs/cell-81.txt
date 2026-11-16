@@ -1,0 +1,27 @@
+================================================================================
+RESULTS SUMMARY
+================================================================================
+Data: 536 verified Kigali readings (226 meters), 98 unreadable crops, 1244 Yandex crops
+Split by meter: 310 train / 63 val / 79 test photos
+Yandex pretraining (validation): exact 63.2% | edit distance 1.16
+Kigali label zeros: method A (model) reproduced 68.5% of my hand-typed zeros
+
+Selected reader (chosen on validation): E4 ResNet18+BiGRU mixed
+
+Final test (Kigali, unseen meters):
+                                model  reading %  per-meter % 95% CI  within-1 %  edit dist
+                   EasyOCR (baseline)       3.80         8.82   0-10        5.06       6.01
+Yandex-pretrained, no Kigali training       0.00         0.00    0-0        3.80       3.49
+                           E1 scratch       0.00         0.00    0-0        2.53       4.94
+                         E2 fine-tune      39.24        35.97  25-53       65.82       0.89
+                             E3 mixed      41.77        40.15  26-58       68.35       0.91
+ E4 ResNet18+BiGRU mixed  <- selected      54.43        51.67  40-68       68.35       0.75
+
+Quality gate selected on validation: MobileNetV2 v1
+                     method   F1 %   AUC
+  Blur threshold (baseline) 27.451 0.644
+MobileNetV2 v1  <- selected 54.054 0.851
+MobileNetV2 v2 (+synthetic) 51.429 0.827
+          Reader confidence 30.000 0.681
+
+All outputs are in /kaggle/working: models/, plots/, results/, splits/, deploy/

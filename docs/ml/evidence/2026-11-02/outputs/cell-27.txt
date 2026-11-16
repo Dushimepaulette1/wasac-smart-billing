@@ -1,0 +1,3 @@
+Distinct readings: 265 for 536 photos
+Readings that appear more than once: 86, covering 357 photos (67%)
+Most repeated: {'768328': 14, '4720': 13, '845922': 12, '171113': 10, '130437': 10, '86454': 9, '138': 8, '371': 8}

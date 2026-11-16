@@ -1,0 +1,13 @@
+Examples (naive conversion vs label rebuilt from file name):
+              photo_name    value       naive_label    label
+ id_53_value_595_825.jpg  595.825            595825 00595825
+ id_553_value_65_475.jpg   65.475             65475 00065475
+  id_407_value_21_86.jpg   21.860              2186 00021860
+id_252_value_313_322.jpg  313.322            313322 00313322
+id_851_value_305_162.jpg  305.162 30516200000000003 00305162
+  id_398_value_8_898.jpg    8.898              8898 00008898
+id_1204_value_78_677.jpg   78.677  7867699999999999 00078677
+id_83_value_1336_114.jpg 1336.114           1336114 01336114
+
+Labels rebuilt: 1244 / 1244 (dropped 0 that are not 8 digits)
+Naive labels that differ from the true display: 1243

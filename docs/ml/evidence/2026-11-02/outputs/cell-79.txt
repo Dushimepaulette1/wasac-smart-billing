@@ -1,0 +1,8 @@
+water_meter_000019_crop.jpg: {'raw_digits': '00896115', 'reading_digits': '00896115', 'reading_m3': 896.115, 'confidence_mean': 0.8765, 'confidence_min': 0.5966, 'needs_check': False}
+water_meter_000030_crop.jpg: {'raw_digits': '00896118', 'reading_digits': '00896118', 'reading_m3': 896.118, 'confidence_mean': 0.9263, 'confidence_min': 0.5254, 'needs_check': False}
+water_meter_000037_crop.jpg: {'raw_digits': '01023959', 'reading_digits': '01023959', 'reading_m3': 1023.959, 'confidence_mean': 0.9775, 'confidence_min': 0.8342, 'needs_check': False}
+water_meter_000039_crop.jpg: {'raw_digits': '00171113', 'reading_digits': '00171113', 'reading_m3': 171.113, 'confidence_mean': 0.9994, 'confidence_min': 0.9964, 'needs_check': False}
+water_meter_000043_crop.jpg: {'raw_digits': '0021685', 'reading_digits': '00021685', 'reading_m3': 21.685, 'confidence_mean': 0.9949, 'confidence_min': 0.9757, 'needs_check': False}
+
+Exported reader matches the notebook.
+Deploy folder: ['meter_reader.pt', 'model_config.json', 'quality_gate.pt', 'wasac_models.py', 'wasac_preprocessing.py']

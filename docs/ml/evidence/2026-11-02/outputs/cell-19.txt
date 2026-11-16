@@ -1,0 +1,11 @@
+Saved plot: /kaggle/working/plots/eda_label_lengths.png
+
+<Figure size 1600x400 with 3 Axes>
+count    536.00
+mean       6.28
+std        1.66
+min        1.00
+25%        5.00
+50%        6.00
+75%        8.00
+max        9.00

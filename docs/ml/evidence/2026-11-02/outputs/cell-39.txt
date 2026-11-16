@@ -1,0 +1,7 @@
+EasyOCR on Kigali validation: exact % 1.6 | reading % 1.6 | edit dist 6.8 | within-1 % 3.2 | length errs 59 | per-meter % 2.9
+   label   00431468   EasyOCR       0003004163
+   label    0079680   EasyOCR           679680
+   label   00060360   EasyOCR 7545662010006036
+   label   00431460   EasyOCR     860030043446
+   label   00431460   EasyOCR            03004
+   label     431469   EasyOCR       4030043469

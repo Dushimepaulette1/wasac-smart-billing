@@ -60,6 +60,12 @@ household to confirm, and why suspicious readings go to WASAC staff (see `backen
 The notebook removes leading zeros for this reading metric. It is not strict eight-character exact
 match or individual-digit accuracy; the strict metric is calculated separately by the notebook.
 
+The [saved Kaggle rerun evidence](ml/evidence/2026-11-02/README.md) includes learning curves,
+E1–E4 validation comparisons and an executed notebook. Its reading accuracy is **54.43%**, separate
+from the deployed result above. The figures document that rerun; they do not identify the deployed
+weights' exact training history. Split counts, inferred grouping and label-repair limitations are
+recorded alongside the results.
+
 ### Photo guidance
 
 `/submit-photo` returns `guidance`, a list of codes with the most important first. **None of them

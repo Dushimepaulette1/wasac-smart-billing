@@ -1,0 +1,5 @@
+                     % starting with 0  labels
+verification_status                           
+VERIFIED_CORRECT                   0.5     205
+VERIFIED_CORRECTED                83.3     312
+VERIFIED_PARTIAL                  94.7      19

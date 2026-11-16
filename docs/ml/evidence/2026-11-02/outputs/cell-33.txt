@@ -1,0 +1,13 @@
+Leakage checks passed: no meter appears in more than one set.
+Training photos before the cap: 394 -> after: 310
+                photos  meters
+train (capped)     310     158
+validation          63      34
+test                79      34
+
+Verification status per set:
+                     train  val  test
+verification_status                  
+VERIFIED_CORRECTED     187   33    46
+VERIFIED_CORRECT       113   27    27
+VERIFIED_PARTIAL        10    3     6

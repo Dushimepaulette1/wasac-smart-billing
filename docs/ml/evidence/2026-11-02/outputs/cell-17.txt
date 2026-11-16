@@ -1,0 +1,8 @@
+Yandex crops ready: 1244 / 1244
+
+       crop_filename                photo_name     label
+0  yandex_crop_0.jpg   id_53_value_595_825.jpg  00595825
+1  yandex_crop_1.jpg   id_553_value_65_475.jpg  00065475
+2  yandex_crop_2.jpg    id_407_value_21_86.jpg  00021860
+3  yandex_crop_3.jpg  id_252_value_313_322.jpg  00313322
+4  yandex_crop_4.jpg  id_851_value_305_162.jpg  00305162

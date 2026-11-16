@@ -1,0 +1,154 @@
+crnn_kigali_scratch | ep 01 | loss 4.112 | val loss 2.383 | exact   0.0 | reading   0.0 | dist 4.60  *
+crnn_kigali_scratch | ep 02 | loss 2.337 | val loss 2.259 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 03 | loss 2.182 | val loss 2.060 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 04 | loss 2.094 | val loss 2.040 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 05 | loss 2.050 | val loss 2.017 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 06 | loss 2.044 | val loss 2.010 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 07 | loss 2.062 | val loss 2.039 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 08 | loss 2.046 | val loss 2.021 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 09 | loss 2.038 | val loss 2.003 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 10 | loss 2.030 | val loss 2.043 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 11 | loss 2.028 | val loss 2.004 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 12 | loss 2.017 | val loss 2.021 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 13 | loss 2.023 | val loss 2.012 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 14 | loss 2.000 | val loss 2.000 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 15 | loss 2.011 | val loss 2.028 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 16 | loss 2.012 | val loss 1.999 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 17 | loss 2.000 | val loss 1.999 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 18 | loss 2.003 | val loss 2.003 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 19 | loss 1.992 | val loss 2.001 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 20 | loss 1.995 | val loss 2.025 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 21 | loss 2.012 | val loss 2.006 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 22 | loss 1.991 | val loss 1.982 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 23 | loss 1.985 | val loss 2.003 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 24 | loss 1.985 | val loss 2.001 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 25 | loss 1.965 | val loss 2.009 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 26 | loss 1.982 | val loss 1.996 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 27 | loss 1.975 | val loss 2.049 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 28 | loss 1.974 | val loss 1.995 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 29 | loss 1.969 | val loss 2.022 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 30 | loss 1.962 | val loss 2.014 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 31 | loss 1.961 | val loss 2.077 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 32 | loss 1.959 | val loss 1.996 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 33 | loss 1.949 | val loss 2.012 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 34 | loss 1.949 | val loss 1.992 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 35 | loss 1.943 | val loss 1.990 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 36 | loss 1.932 | val loss 2.010 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 37 | loss 1.920 | val loss 2.011 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 38 | loss 1.923 | val loss 2.000 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 39 | loss 1.913 | val loss 2.021 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 40 | loss 1.896 | val loss 2.012 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 41 | loss 1.891 | val loss 2.037 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 42 | loss 1.873 | val loss 2.012 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 43 | loss 1.868 | val loss 2.014 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 44 | loss 1.866 | val loss 2.023 | exact   0.0 | reading   0.0 | dist 4.60
+crnn_kigali_scratch | ep 45 | loss 1.858 | val loss 2.032 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 46 | loss 1.843 | val loss 2.034 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 47 | loss 1.841 | val loss 2.036 | exact   0.0 | reading   0.0 | dist 4.59  *
+crnn_kigali_scratch | ep 48 | loss 1.821 | val loss 2.051 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 49 | loss 1.809 | val loss 2.074 | exact   0.0 | reading   0.0 | dist 4.62
+crnn_kigali_scratch | ep 50 | loss 1.798 | val loss 2.067 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 51 | loss 1.789 | val loss 2.062 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 52 | loss 1.784 | val loss 2.059 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 53 | loss 1.781 | val loss 2.055 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 54 | loss 1.762 | val loss 2.056 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 55 | loss 1.767 | val loss 2.047 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 56 | loss 1.752 | val loss 2.054 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | ep 57 | loss 1.743 | val loss 2.063 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 58 | loss 1.752 | val loss 2.055 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 59 | loss 1.764 | val loss 2.065 | exact   0.0 | reading   0.0 | dist 4.65
+crnn_kigali_scratch | ep 60 | loss 1.751 | val loss 2.063 | exact   0.0 | reading   0.0 | dist 4.63
+crnn_kigali_scratch | best reading % 0.0 | 6.0 min | saved crnn_kigali_scratch.pt
+crnn_kigali_finetuned | ep 01 | loss 1.759 | val loss 1.673 | exact   0.0 | reading   0.0 | dist 3.30 | frozen  *
+crnn_kigali_finetuned | ep 02 | loss 1.391 | val loss 1.461 | exact   7.9 | reading   7.9 | dist 2.83 | frozen  *
+crnn_kigali_finetuned | ep 03 | loss 1.248 | val loss 1.405 | exact   3.2 | reading   3.2 | dist 2.92 | frozen
+crnn_kigali_finetuned | ep 04 | loss 1.134 | val loss 1.283 | exact   4.8 | reading   6.3 | dist 2.49 | frozen
+crnn_kigali_finetuned | ep 05 | loss 1.104 | val loss 1.263 | exact   6.3 | reading   7.9 | dist 2.46 | frozen  *
+crnn_kigali_finetuned | ep 06 | loss 1.019 | val loss 1.132 | exact   6.3 | reading   7.9 | dist 2.05  *
+crnn_kigali_finetuned | ep 07 | loss 0.904 | val loss 1.066 | exact   9.5 | reading  11.1 | dist 1.90  *
+crnn_kigali_finetuned | ep 08 | loss 0.812 | val loss 1.009 | exact  12.7 | reading  14.3 | dist 1.76  *
+crnn_kigali_finetuned | ep 09 | loss 0.789 | val loss 1.004 | exact  11.1 | reading  14.3 | dist 1.76
+crnn_kigali_finetuned | ep 10 | loss 0.755 | val loss 0.968 | exact  12.7 | reading  15.9 | dist 1.75  *
+crnn_kigali_finetuned | ep 11 | loss 0.694 | val loss 0.947 | exact  14.3 | reading  17.5 | dist 1.63  *
+crnn_kigali_finetuned | ep 12 | loss 0.637 | val loss 0.983 | exact  15.9 | reading  20.6 | dist 1.70  *
+crnn_kigali_finetuned | ep 13 | loss 0.603 | val loss 0.940 | exact  14.3 | reading  19.0 | dist 1.63
+crnn_kigali_finetuned | ep 14 | loss 0.600 | val loss 0.913 | exact  14.3 | reading  22.2 | dist 1.51  *
+crnn_kigali_finetuned | ep 15 | loss 0.548 | val loss 0.903 | exact  14.3 | reading  19.0 | dist 1.56
+crnn_kigali_finetuned | ep 16 | loss 0.531 | val loss 0.892 | exact  14.3 | reading  19.0 | dist 1.54
+crnn_kigali_finetuned | ep 17 | loss 0.522 | val loss 0.887 | exact  14.3 | reading  19.0 | dist 1.52
+crnn_kigali_finetuned | ep 18 | loss 0.504 | val loss 0.881 | exact  20.6 | reading  25.4 | dist 1.48  *
+crnn_kigali_finetuned | ep 19 | loss 0.467 | val loss 0.892 | exact  17.5 | reading  22.2 | dist 1.49
+crnn_kigali_finetuned | ep 20 | loss 0.447 | val loss 0.877 | exact  17.5 | reading  23.8 | dist 1.49
+crnn_kigali_finetuned | ep 21 | loss 0.429 | val loss 0.883 | exact  17.5 | reading  22.2 | dist 1.51
+crnn_kigali_finetuned | ep 22 | loss 0.427 | val loss 0.866 | exact  14.3 | reading  22.2 | dist 1.49
+crnn_kigali_finetuned | ep 23 | loss 0.403 | val loss 0.859 | exact  15.9 | reading  20.6 | dist 1.48
+crnn_kigali_finetuned | ep 24 | loss 0.399 | val loss 0.854 | exact  17.5 | reading  22.2 | dist 1.49
+crnn_kigali_finetuned | ep 25 | loss 0.377 | val loss 0.826 | exact  19.0 | reading  28.6 | dist 1.40  *
+crnn_kigali_finetuned | ep 26 | loss 0.386 | val loss 0.856 | exact  17.5 | reading  22.2 | dist 1.52
+crnn_kigali_finetuned | ep 27 | loss 0.352 | val loss 0.852 | exact  20.6 | reading  27.0 | dist 1.37
+crnn_kigali_finetuned | ep 28 | loss 0.354 | val loss 0.822 | exact  17.5 | reading  25.4 | dist 1.37
+crnn_kigali_finetuned | ep 29 | loss 0.331 | val loss 0.814 | exact  19.0 | reading  27.0 | dist 1.33
+crnn_kigali_finetuned | ep 30 | loss 0.320 | val loss 0.839 | exact  17.5 | reading  27.0 | dist 1.43
+crnn_kigali_finetuned | ep 31 | loss 0.318 | val loss 0.817 | exact  19.0 | reading  27.0 | dist 1.35
+crnn_kigali_finetuned | ep 32 | loss 0.316 | val loss 0.855 | exact  20.6 | reading  27.0 | dist 1.46
+crnn_kigali_finetuned | ep 33 | loss 0.301 | val loss 0.829 | exact  17.5 | reading  23.8 | dist 1.41
+crnn_kigali_finetuned | ep 34 | loss 0.294 | val loss 0.826 | exact  19.0 | reading  25.4 | dist 1.38
+crnn_kigali_finetuned | ep 35 | loss 0.292 | val loss 0.843 | exact  19.0 | reading  23.8 | dist 1.41
+crnn_kigali_finetuned | ep 36 | loss 0.275 | val loss 0.815 | exact  19.0 | reading  27.0 | dist 1.35
+crnn_kigali_finetuned | ep 37 | loss 0.285 | val loss 0.823 | exact  20.6 | reading  27.0 | dist 1.38
+crnn_kigali_finetuned | early stop at epoch 37
+crnn_kigali_finetuned | best reading % 28.6 | 3.7 min | saved crnn_kigali_finetuned.pt
+crnn_kigali_mixed | ep 01 | loss 1.239 | val loss 1.583 | exact   6.3 | reading   6.3 | dist 3.22 | frozen  *
+crnn_kigali_mixed | ep 02 | loss 1.062 | val loss 1.398 | exact   7.9 | reading   7.9 | dist 2.73 | frozen  *
+crnn_kigali_mixed | ep 03 | loss 0.972 | val loss 1.322 | exact   7.9 | reading   7.9 | dist 2.38 | frozen  *
+crnn_kigali_mixed | ep 04 | loss 0.921 | val loss 1.273 | exact   7.9 | reading  11.1 | dist 2.38 | frozen  *
+crnn_kigali_mixed | ep 05 | loss 0.869 | val loss 1.282 | exact   9.5 | reading   9.5 | dist 2.41 | frozen
+crnn_kigali_mixed | ep 06 | loss 0.804 | val loss 1.156 | exact   7.9 | reading   7.9 | dist 2.05
+crnn_kigali_mixed | ep 07 | loss 0.717 | val loss 1.051 | exact  12.7 | reading  14.3 | dist 1.83  *
+crnn_kigali_mixed | ep 08 | loss 0.683 | val loss 1.025 | exact  12.7 | reading  15.9 | dist 1.73  *
+crnn_kigali_mixed | ep 09 | loss 0.637 | val loss 0.985 | exact  20.6 | reading  23.8 | dist 1.57  *
+crnn_kigali_mixed | ep 10 | loss 0.603 | val loss 0.982 | exact  15.9 | reading  20.6 | dist 1.65
+crnn_kigali_mixed | ep 11 | loss 0.605 | val loss 0.920 | exact  19.0 | reading  22.2 | dist 1.60
+crnn_kigali_mixed | ep 12 | loss 0.555 | val loss 0.933 | exact  14.3 | reading  19.0 | dist 1.59
+crnn_kigali_mixed | ep 13 | loss 0.497 | val loss 0.942 | exact  17.5 | reading  22.2 | dist 1.49
+crnn_kigali_mixed | ep 14 | loss 0.510 | val loss 0.913 | exact  17.5 | reading  23.8 | dist 1.48  *
+crnn_kigali_mixed | ep 15 | loss 0.487 | val loss 0.908 | exact  17.5 | reading  22.2 | dist 1.49
+crnn_kigali_mixed | ep 16 | loss 0.501 | val loss 0.887 | exact  17.5 | reading  23.8 | dist 1.41  *
+crnn_kigali_mixed | ep 17 | loss 0.452 | val loss 0.880 | exact  15.9 | reading  19.0 | dist 1.49
+crnn_kigali_mixed | ep 18 | loss 0.471 | val loss 0.875 | exact  20.6 | reading  23.8 | dist 1.52
+crnn_kigali_mixed | ep 19 | loss 0.432 | val loss 0.898 | exact  15.9 | reading  20.6 | dist 1.60
+crnn_kigali_mixed | ep 20 | loss 0.451 | val loss 0.881 | exact  15.9 | reading  22.2 | dist 1.46
+crnn_kigali_mixed | ep 21 | loss 0.435 | val loss 0.895 | exact  19.0 | reading  20.6 | dist 1.51
+crnn_kigali_mixed | ep 22 | loss 0.440 | val loss 0.866 | exact  19.0 | reading  25.4 | dist 1.49  *
+crnn_kigali_mixed | ep 23 | loss 0.378 | val loss 0.849 | exact  14.3 | reading  20.6 | dist 1.43
+crnn_kigali_mixed | ep 24 | loss 0.382 | val loss 0.906 | exact  17.5 | reading  25.4 | dist 1.49
+crnn_kigali_mixed | ep 25 | loss 0.355 | val loss 0.887 | exact  17.5 | reading  23.8 | dist 1.51
+crnn_kigali_mixed | ep 26 | loss 0.389 | val loss 0.864 | exact  20.6 | reading  23.8 | dist 1.41
+crnn_kigali_mixed | ep 27 | loss 0.372 | val loss 0.867 | exact  20.6 | reading  25.4 | dist 1.46  *
+crnn_kigali_mixed | ep 28 | loss 0.349 | val loss 0.877 | exact  22.2 | reading  25.4 | dist 1.48
+crnn_kigali_mixed | ep 29 | loss 0.378 | val loss 0.855 | exact  23.8 | reading  25.4 | dist 1.41  *
+crnn_kigali_mixed | ep 30 | loss 0.354 | val loss 0.825 | exact  22.2 | reading  27.0 | dist 1.37  *
+crnn_kigali_mixed | ep 31 | loss 0.355 | val loss 0.861 | exact  19.0 | reading  23.8 | dist 1.43
+crnn_kigali_mixed | ep 32 | loss 0.327 | val loss 0.832 | exact  22.2 | reading  27.0 | dist 1.37
+crnn_kigali_mixed | ep 33 | loss 0.367 | val loss 0.830 | exact  20.6 | reading  27.0 | dist 1.37
+crnn_kigali_mixed | ep 34 | loss 0.318 | val loss 0.824 | exact  22.2 | reading  27.0 | dist 1.35  *
+crnn_kigali_mixed | ep 35 | loss 0.325 | val loss 0.842 | exact  22.2 | reading  27.0 | dist 1.43
+crnn_kigali_mixed | ep 36 | loss 0.308 | val loss 0.871 | exact  22.2 | reading  27.0 | dist 1.41
+crnn_kigali_mixed | ep 37 | loss 0.318 | val loss 0.817 | exact  23.8 | reading  28.6 | dist 1.32  *
+crnn_kigali_mixed | ep 38 | loss 0.298 | val loss 0.844 | exact  22.2 | reading  23.8 | dist 1.44
+crnn_kigali_mixed | ep 39 | loss 0.297 | val loss 0.864 | exact  22.2 | reading  27.0 | dist 1.43
+crnn_kigali_mixed | ep 40 | loss 0.349 | val loss 0.851 | exact  22.2 | reading  25.4 | dist 1.37
+crnn_kigali_mixed | ep 41 | loss 0.308 | val loss 0.859 | exact  22.2 | reading  25.4 | dist 1.43
+crnn_kigali_mixed | ep 42 | loss 0.291 | val loss 0.848 | exact  22.2 | reading  28.6 | dist 1.44
+crnn_kigali_mixed | ep 43 | loss 0.299 | val loss 0.858 | exact  22.2 | reading  27.0 | dist 1.43
+crnn_kigali_mixed | ep 44 | loss 0.293 | val loss 0.895 | exact  22.2 | reading  27.0 | dist 1.44
+crnn_kigali_mixed | ep 45 | loss 0.306 | val loss 0.866 | exact  22.2 | reading  27.0 | dist 1.41
+crnn_kigali_mixed | ep 46 | loss 0.294 | val loss 0.850 | exact  22.2 | reading  27.0 | dist 1.44
+crnn_kigali_mixed | ep 47 | loss 0.324 | val loss 0.858 | exact  22.2 | reading  27.0 | dist 1.41
+crnn_kigali_mixed | ep 48 | loss 0.314 | val loss 0.839 | exact  22.2 | reading  27.0 | dist 1.43
+crnn_kigali_mixed | ep 49 | loss 0.289 | val loss 0.859 | exact  22.2 | reading  27.0 | dist 1.43
+crnn_kigali_mixed | ep 50 | loss 0.277 | val loss 0.848 | exact  22.2 | reading  27.0 | dist 1.44
+crnn_kigali_mixed | ep 51 | loss 0.281 | val loss 0.859 | exact  22.2 | reading  27.0 | dist 1.44
+crnn_kigali_mixed | ep 52 | loss 0.305 | val loss 0.851 | exact  22.2 | reading  27.0 | dist 1.44
+crnn_kigali_mixed | early stop at epoch 52
+crnn_kigali_mixed | best reading % 28.6 | 7.7 min | saved crnn_kigali_mixed.pt

@@ -1,0 +1,4 @@
+Crops turned 180°: 207 / 1244 (17%)
+Saved plot: /kaggle/working/plots/yandex_orientation_fix.png
+
+<Figure size 1400x300 with 8 Axes>

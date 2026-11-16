@@ -1,0 +1,10 @@
+reason
+genuinely unreadable         86
+unreadable due to dirt        3
+digit wheels mid-rotation     2
+bad angle or lighting         2
+last digit not visible        1
+dirty glass                   1
+only 3 digits visible         1
+dirt obscuring digits         1
+water on glass                1

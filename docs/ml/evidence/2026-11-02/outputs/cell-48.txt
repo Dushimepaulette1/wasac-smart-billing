@@ -1,0 +1,49 @@
+crnn_yandex_round1 | ep 01 | loss 3.330 | val loss 2.217 | exact   0.0 | reading   0.0 | dist 5.22  *
+crnn_yandex_round1 | ep 02 | loss 2.082 | val loss 1.953 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 03 | loss 1.974 | val loss 1.933 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 04 | loss 1.959 | val loss 1.929 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 05 | loss 1.951 | val loss 1.924 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 06 | loss 1.948 | val loss 1.927 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 07 | loss 1.941 | val loss 1.913 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 08 | loss 1.933 | val loss 1.907 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 09 | loss 1.925 | val loss 1.912 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 10 | loss 1.923 | val loss 1.900 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 11 | loss 1.925 | val loss 1.905 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 12 | loss 1.922 | val loss 1.901 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 13 | loss 1.918 | val loss 1.914 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 14 | loss 1.917 | val loss 1.897 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_round1 | ep 15 | loss 1.915 | val loss 1.898 | exact   0.0 | reading   0.0 | dist 5.13  *
+crnn_yandex_round1 | ep 16 | loss 1.910 | val loss 1.879 | exact   0.0 | reading   0.0 | dist 4.97  *
+crnn_yandex_round1 | ep 17 | loss 1.901 | val loss 1.871 | exact   0.0 | reading   0.0 | dist 5.20
+crnn_yandex_round1 | ep 18 | loss 1.893 | val loss 1.872 | exact   0.0 | reading   0.0 | dist 4.97
+crnn_yandex_round1 | ep 19 | loss 1.889 | val loss 1.863 | exact   0.0 | reading   0.0 | dist 5.18
+crnn_yandex_round1 | ep 20 | loss 1.878 | val loss 1.841 | exact   0.0 | reading   0.0 | dist 4.97
+crnn_yandex_round1 | ep 21 | loss 1.870 | val loss 1.835 | exact   0.0 | reading   0.0 | dist 4.97
+crnn_yandex_round1 | ep 22 | loss 1.863 | val loss 1.847 | exact   0.0 | reading   0.0 | dist 4.97
+crnn_yandex_round1 | ep 23 | loss 1.853 | val loss 1.815 | exact   0.0 | reading   0.0 | dist 5.01
+crnn_yandex_round1 | ep 24 | loss 1.838 | val loss 1.786 | exact   0.0 | reading   0.0 | dist 4.97
+crnn_yandex_round1 | ep 25 | loss 1.807 | val loss 1.722 | exact   0.0 | reading   0.0 | dist 5.01
+crnn_yandex_round1 | ep 26 | loss 1.751 | val loss 1.629 | exact   0.0 | reading   0.0 | dist 4.85  *
+crnn_yandex_round1 | ep 27 | loss 1.648 | val loss 1.479 | exact   0.8 | reading   0.8 | dist 4.19  *
+crnn_yandex_round1 | ep 28 | loss 1.498 | val loss 1.370 | exact   0.8 | reading   0.8 | dist 3.77  *
+crnn_yandex_round1 | ep 29 | loss 1.376 | val loss 1.259 | exact   1.6 | reading   1.6 | dist 3.37  *
+crnn_yandex_round1 | ep 30 | loss 1.256 | val loss 1.140 | exact   7.2 | reading   7.2 | dist 2.84  *
+crnn_yandex_round1 | ep 31 | loss 1.193 | val loss 1.078 | exact   7.2 | reading   7.2 | dist 2.84
+crnn_yandex_round1 | ep 32 | loss 1.122 | val loss 0.989 | exact  10.4 | reading  10.4 | dist 2.62  *
+crnn_yandex_round1 | ep 33 | loss 1.069 | val loss 0.960 | exact  14.4 | reading  14.4 | dist 2.57  *
+crnn_yandex_round1 | ep 34 | loss 1.009 | val loss 0.877 | exact  22.4 | reading  22.4 | dist 2.18  *
+crnn_yandex_round1 | ep 35 | loss 0.973 | val loss 0.890 | exact  24.8 | reading  24.8 | dist 2.27  *
+crnn_yandex_round1 | ep 36 | loss 0.928 | val loss 0.839 | exact  32.8 | reading  32.8 | dist 2.07  *
+crnn_yandex_round1 | ep 37 | loss 0.907 | val loss 0.803 | exact  34.4 | reading  34.4 | dist 1.99  *
+crnn_yandex_round1 | ep 38 | loss 0.885 | val loss 0.789 | exact  36.0 | reading  36.0 | dist 1.94  *
+crnn_yandex_round1 | ep 39 | loss 0.870 | val loss 0.783 | exact  37.6 | reading  37.6 | dist 1.94  *
+crnn_yandex_round1 | ep 40 | loss 0.858 | val loss 0.778 | exact  37.6 | reading  37.6 | dist 1.97
+crnn_yandex_round1 | ep 41 | loss 0.847 | val loss 0.774 | exact  37.6 | reading  37.6 | dist 1.92  *
+crnn_yandex_round1 | ep 42 | loss 0.840 | val loss 0.762 | exact  39.2 | reading  39.2 | dist 1.90  *
+crnn_yandex_round1 | ep 43 | loss 0.834 | val loss 0.765 | exact  36.0 | reading  36.0 | dist 1.93
+crnn_yandex_round1 | ep 44 | loss 0.827 | val loss 0.761 | exact  38.4 | reading  38.4 | dist 1.91
+crnn_yandex_round1 | ep 45 | loss 0.826 | val loss 0.756 | exact  40.8 | reading  40.8 | dist 1.91  *
+crnn_yandex_round1 | best exact % 40.8 | 2.7 min | saved crnn_yandex_round1.pt
+Saved plot: /kaggle/working/plots/train_yandex_round1.png
+
+<Figure size 1200x360 with 2 Axes>

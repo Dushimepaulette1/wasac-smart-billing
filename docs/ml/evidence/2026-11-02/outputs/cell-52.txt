@@ -1,0 +1,51 @@
+crnn_yandex_pretrained | ep 01 | loss 3.333 | val loss 2.222 | exact   0.0 | reading   0.0 | dist 5.22  *
+crnn_yandex_pretrained | ep 02 | loss 2.082 | val loss 1.953 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 03 | loss 1.971 | val loss 1.933 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 04 | loss 1.958 | val loss 1.931 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 05 | loss 1.950 | val loss 1.924 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 06 | loss 1.948 | val loss 1.925 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 07 | loss 1.941 | val loss 1.911 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 08 | loss 1.932 | val loss 1.908 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 09 | loss 1.924 | val loss 1.906 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 10 | loss 1.920 | val loss 1.910 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 11 | loss 1.921 | val loss 1.893 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 12 | loss 1.915 | val loss 1.894 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 13 | loss 1.909 | val loss 1.892 | exact   0.0 | reading   0.0 | dist 5.22
+crnn_yandex_pretrained | ep 14 | loss 1.898 | val loss 1.862 | exact   0.0 | reading   0.0 | dist 5.25
+crnn_yandex_pretrained | ep 15 | loss 1.888 | val loss 1.862 | exact   0.0 | reading   0.0 | dist 5.12  *
+crnn_yandex_pretrained | ep 16 | loss 1.860 | val loss 1.844 | exact   0.0 | reading   0.0 | dist 4.97  *
+crnn_yandex_pretrained | ep 17 | loss 1.824 | val loss 1.761 | exact   0.0 | reading   0.0 | dist 5.14
+crnn_yandex_pretrained | ep 18 | loss 1.782 | val loss 1.713 | exact   0.0 | reading   0.0 | dist 5.08
+crnn_yandex_pretrained | ep 19 | loss 1.657 | val loss 1.605 | exact   0.0 | reading   0.0 | dist 4.42  *
+crnn_yandex_pretrained | ep 20 | loss 1.464 | val loss 1.286 | exact   0.0 | reading   0.0 | dist 3.47  *
+crnn_yandex_pretrained | ep 21 | loss 1.268 | val loss 1.217 | exact   2.4 | reading   2.4 | dist 3.39  *
+crnn_yandex_pretrained | ep 22 | loss 1.115 | val loss 0.925 | exact   7.2 | reading   7.2 | dist 2.46  *
+crnn_yandex_pretrained | ep 23 | loss 0.981 | val loss 0.840 | exact  20.0 | reading  20.0 | dist 2.13  *
+crnn_yandex_pretrained | ep 24 | loss 0.906 | val loss 0.744 | exact  28.0 | reading  28.0 | dist 1.90  *
+crnn_yandex_pretrained | ep 25 | loss 0.793 | val loss 0.666 | exact  33.6 | reading  33.6 | dist 1.82  *
+crnn_yandex_pretrained | ep 26 | loss 0.724 | val loss 0.620 | exact  43.2 | reading  43.2 | dist 1.58  *
+crnn_yandex_pretrained | ep 27 | loss 0.672 | val loss 0.574 | exact  46.4 | reading  46.4 | dist 1.53  *
+crnn_yandex_pretrained | ep 28 | loss 0.641 | val loss 0.547 | exact  52.8 | reading  52.8 | dist 1.38  *
+crnn_yandex_pretrained | ep 29 | loss 0.604 | val loss 0.546 | exact  52.0 | reading  52.0 | dist 1.39
+crnn_yandex_pretrained | ep 30 | loss 0.587 | val loss 0.543 | exact  52.0 | reading  52.0 | dist 1.40
+crnn_yandex_pretrained | ep 31 | loss 0.575 | val loss 0.524 | exact  50.4 | reading  50.4 | dist 1.38
+crnn_yandex_pretrained | ep 32 | loss 0.550 | val loss 0.507 | exact  56.8 | reading  56.8 | dist 1.33  *
+crnn_yandex_pretrained | ep 33 | loss 0.540 | val loss 0.502 | exact  58.4 | reading  58.4 | dist 1.30  *
+crnn_yandex_pretrained | ep 34 | loss 0.532 | val loss 0.489 | exact  59.2 | reading  59.2 | dist 1.27  *
+crnn_yandex_pretrained | ep 35 | loss 0.515 | val loss 0.491 | exact  60.0 | reading  60.0 | dist 1.24  *
+crnn_yandex_pretrained | ep 36 | loss 0.501 | val loss 0.490 | exact  57.6 | reading  57.6 | dist 1.25
+crnn_yandex_pretrained | ep 37 | loss 0.493 | val loss 0.487 | exact  59.2 | reading  59.2 | dist 1.25
+crnn_yandex_pretrained | ep 38 | loss 0.483 | val loss 0.487 | exact  60.0 | reading  60.0 | dist 1.26
+crnn_yandex_pretrained | ep 39 | loss 0.488 | val loss 0.482 | exact  57.6 | reading  57.6 | dist 1.26
+crnn_yandex_pretrained | ep 40 | loss 0.477 | val loss 0.480 | exact  58.4 | reading  58.4 | dist 1.26
+crnn_yandex_pretrained | ep 41 | loss 0.477 | val loss 0.480 | exact  61.6 | reading  61.6 | dist 1.20  *
+crnn_yandex_pretrained | ep 42 | loss 0.475 | val loss 0.478 | exact  63.2 | reading  63.2 | dist 1.16  *
+crnn_yandex_pretrained | ep 43 | loss 0.471 | val loss 0.479 | exact  60.8 | reading  60.8 | dist 1.18
+crnn_yandex_pretrained | ep 44 | loss 0.466 | val loss 0.481 | exact  63.2 | reading  63.2 | dist 1.18
+crnn_yandex_pretrained | ep 45 | loss 0.465 | val loss 0.482 | exact  60.8 | reading  60.8 | dist 1.20
+crnn_yandex_pretrained | best exact % 63.2 | 2.7 min | saved crnn_yandex_pretrained.pt
+Saved plot: /kaggle/working/plots/train_yandex_round2.png
+
+<Figure size 1200x360 with 2 Axes>
+
+Yandex validation (pretraining result): exact % 63.2 | reading % 63.2 | edit dist 1.2 | within-1 % 76.8 | length errs 21

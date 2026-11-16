@@ -1,0 +1,20 @@
+====================================================================================================
+FINAL TEST RESULTS: 79 photos of 34 meters never seen before
+====================================================================================================
+                                model  exact %  reading %  edit dist  within-1 %  length errs  per-meter % 95% CI
+                   EasyOCR (baseline)     0.00       3.80       6.01        5.06           71         8.82   0-10
+Yandex-pretrained, no Kigali training     0.00       0.00       3.49        3.80           60         0.00    0-0
+                           E1 scratch     0.00       0.00       4.94        2.53           77         0.00    0-0
+                         E2 fine-tune    29.11      39.24       0.89       65.82           20        35.97  25-53
+                             E3 mixed    30.38      41.77       0.91       68.35           22        40.15  26-58
+ E4 ResNet18+BiGRU mixed  <- selected    39.24      54.43       0.75       68.35           21        51.67  40-68
+
+Reading accuracy % by verification status:
+                     EasyOCR (baseline)  Yandex-pretrained, no Kigali training  E1 scratch  E2 fine-tune  E3 mixed  E4 ResNet18+BiGRU mixed  photos
+verification_status                                                                                                                                
+VERIFIED_CORRECT                    7.4                                    0.0         0.0          63.0      55.6                     66.7      27
+VERIFIED_CORRECTED                  2.2                                    0.0         0.0          23.9      32.6                     47.8      46
+VERIFIED_PARTIAL                    0.0                                    0.0         0.0          50.0      50.0                     50.0       6
+Saved plot: /kaggle/working/plots/final_test_results.png
+
+<Figure size 1100x400 with 1 Axes>

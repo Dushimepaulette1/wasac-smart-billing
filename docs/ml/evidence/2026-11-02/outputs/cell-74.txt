@@ -1,0 +1,6 @@
+                     method  val AUC  val best F1 %
+             MobileNetV2 v1    0.746         58.824
+MobileNetV2 v2 (+synthetic)    0.677         52.632
+          Reader confidence    0.410         32.967
+
+Selected on validation: MobileNetV2 v1 (threshold 0.428)

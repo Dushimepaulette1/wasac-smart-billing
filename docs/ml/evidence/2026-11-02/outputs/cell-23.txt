@@ -1,0 +1,5 @@
+Saved plot: /kaggle/working/plots/eda_image_stats.png
+
+<Figure size 1600x400 with 3 Axes>
+Median crop size: 396 x 148 px
+Median sharpness  readable: 119 | unreadable: 120

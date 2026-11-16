@@ -1,0 +1,2 @@
+crnn        parameters:  4,186,059 | output shape: (2, 32, 11) (batch, columns, symbols)
+resnet_gru  parameters:  4,760,651 | output shape: (2, 32, 11) (batch, columns, symbols)

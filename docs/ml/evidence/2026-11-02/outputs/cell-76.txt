@@ -1,0 +1,25 @@
+QUALITY GATE - TEST (79 readable, 15 unreadable real photos)
+                     method  accuracy %  precision %  recall %   F1 %   AUC
+  Blur threshold (baseline)      21.277       16.092    93.333 27.451 0.644
+MobileNetV2 v1  <- selected      81.915       45.455    66.667 54.054 0.851
+MobileNetV2 v2 (+synthetic)      81.915       45.000    60.000 51.429 0.827
+          Reader confidence      25.532       17.647   100.000 30.000 0.681
+
+Selected gate: readable kept 67, readable flagged 12, unreadable missed 5, unreadable caught 10
+
+Pipeline check (readable test photos):
+  reader accuracy on all photos:      54.4%
+  reader accuracy on accepted photos: 58.2% (67 photos)
+  reader accuracy on flagged photos:  33.3% (12 photos)
+
+Automate only the most confident readings, send the rest to manual review:
+ automated %  photos  reading accuracy %
+         100      79                54.4
+          90      71                59.2
+          80      63                63.5
+          70      55                61.8
+          60      47                70.2
+          50      40                70.0
+Saved plot: /kaggle/working/plots/quality_gate_results.png
+
+<Figure size 1200x400 with 2 Axes>

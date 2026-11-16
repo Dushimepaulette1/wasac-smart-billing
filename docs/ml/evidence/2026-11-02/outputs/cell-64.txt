@@ -1,0 +1,82 @@
+Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to /root/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth
+
+100%|██████████| 44.7M/44.7M [00:00<00:00, 157MB/s]
+
+ResNet18: ImageNet weights loaded
+resnet_gru_yandex_pretrained | ep 01 | loss 4.180 | val loss 2.192 | exact   0.0 | reading   0.0 | dist 5.22  *
+resnet_gru_yandex_pretrained | ep 02 | loss 2.049 | val loss 1.903 | exact   0.0 | reading   0.0 | dist 5.22
+resnet_gru_yandex_pretrained | ep 03 | loss 1.902 | val loss 1.809 | exact   0.0 | reading   0.0 | dist 5.22
+resnet_gru_yandex_pretrained | ep 04 | loss 1.764 | val loss 1.562 | exact   0.0 | reading   0.0 | dist 5.22
+resnet_gru_yandex_pretrained | ep 05 | loss 1.497 | val loss 1.278 | exact   0.0 | reading   0.0 | dist 4.34  *
+resnet_gru_yandex_pretrained | ep 06 | loss 1.198 | val loss 1.040 | exact   5.6 | reading   5.6 | dist 3.33  *
+resnet_gru_yandex_pretrained | ep 07 | loss 0.928 | val loss 0.688 | exact  48.0 | reading  48.0 | dist 1.59  *
+resnet_gru_yandex_pretrained | ep 08 | loss 0.662 | val loss 0.555 | exact  53.6 | reading  53.6 | dist 1.41  *
+resnet_gru_yandex_pretrained | ep 09 | loss 0.573 | val loss 0.528 | exact  59.2 | reading  59.2 | dist 1.32  *
+resnet_gru_yandex_pretrained | ep 10 | loss 0.536 | val loss 0.526 | exact  56.8 | reading  56.8 | dist 1.39
+resnet_gru_yandex_pretrained | ep 11 | loss 0.503 | val loss 0.526 | exact  57.6 | reading  57.6 | dist 1.36
+resnet_gru_yandex_pretrained | ep 12 | loss 0.492 | val loss 0.536 | exact  57.6 | reading  57.6 | dist 1.34
+resnet_gru_yandex_pretrained | ep 13 | loss 0.464 | val loss 0.548 | exact  60.0 | reading  60.0 | dist 1.26  *
+resnet_gru_yandex_pretrained | ep 14 | loss 0.425 | val loss 0.544 | exact  59.2 | reading  60.0 | dist 1.27
+resnet_gru_yandex_pretrained | ep 15 | loss 0.395 | val loss 0.592 | exact  60.0 | reading  60.0 | dist 1.24  *
+resnet_gru_yandex_pretrained | ep 16 | loss 0.375 | val loss 0.582 | exact  63.2 | reading  63.2 | dist 1.12  *
+resnet_gru_yandex_pretrained | ep 17 | loss 0.357 | val loss 0.584 | exact  62.4 | reading  63.2 | dist 1.17
+resnet_gru_yandex_pretrained | ep 18 | loss 0.327 | val loss 0.598 | exact  63.2 | reading  64.0 | dist 1.19
+resnet_gru_yandex_pretrained | ep 19 | loss 0.306 | val loss 0.612 | exact  64.0 | reading  64.8 | dist 1.14  *
+resnet_gru_yandex_pretrained | ep 20 | loss 0.293 | val loss 0.617 | exact  64.8 | reading  65.6 | dist 1.13  *
+resnet_gru_yandex_pretrained | ep 21 | loss 0.283 | val loss 0.625 | exact  63.2 | reading  64.0 | dist 1.14
+resnet_gru_yandex_pretrained | ep 22 | loss 0.264 | val loss 0.623 | exact  64.0 | reading  64.8 | dist 1.15
+resnet_gru_yandex_pretrained | ep 23 | loss 0.266 | val loss 0.629 | exact  62.4 | reading  63.2 | dist 1.18
+resnet_gru_yandex_pretrained | ep 24 | loss 0.262 | val loss 0.625 | exact  64.0 | reading  64.8 | dist 1.15
+resnet_gru_yandex_pretrained | ep 25 | loss 0.256 | val loss 0.624 | exact  62.4 | reading  63.2 | dist 1.16
+resnet_gru_yandex_pretrained | best exact % 64.8 | 1.5 min | saved resnet_gru_yandex_pretrained.pt
+resnet_gru_kigali_mixed | ep 01 | loss 1.269 | val loss 1.693 | exact   3.2 | reading   3.2 | dist 2.73 | frozen  *
+resnet_gru_kigali_mixed | ep 02 | loss 1.081 | val loss 1.472 | exact   4.8 | reading   4.8 | dist 2.59 | frozen  *
+resnet_gru_kigali_mixed | ep 03 | loss 1.003 | val loss 1.372 | exact   6.3 | reading   7.9 | dist 2.48 | frozen  *
+resnet_gru_kigali_mixed | ep 04 | loss 0.922 | val loss 1.292 | exact   9.5 | reading  11.1 | dist 2.33 | frozen  *
+resnet_gru_kigali_mixed | ep 05 | loss 0.873 | val loss 1.302 | exact   9.5 | reading  11.1 | dist 2.44 | frozen
+resnet_gru_kigali_mixed | ep 06 | loss 0.716 | val loss 1.019 | exact  15.9 | reading  19.0 | dist 1.71  *
+resnet_gru_kigali_mixed | ep 07 | loss 0.560 | val loss 0.911 | exact  19.0 | reading  20.6 | dist 1.51  *
+resnet_gru_kigali_mixed | ep 08 | loss 0.529 | val loss 0.881 | exact  19.0 | reading  28.6 | dist 1.38  *
+resnet_gru_kigali_mixed | ep 09 | loss 0.468 | val loss 0.812 | exact  22.2 | reading  34.9 | dist 1.19  *
+resnet_gru_kigali_mixed | ep 10 | loss 0.457 | val loss 0.839 | exact  27.0 | reading  36.5 | dist 1.22  *
+resnet_gru_kigali_mixed | ep 11 | loss 0.417 | val loss 0.761 | exact  27.0 | reading  34.9 | dist 1.11
+resnet_gru_kigali_mixed | ep 12 | loss 0.379 | val loss 0.773 | exact  25.4 | reading  38.1 | dist 1.02  *
+resnet_gru_kigali_mixed | ep 13 | loss 0.328 | val loss 0.821 | exact  31.7 | reading  41.3 | dist 1.06  *
+resnet_gru_kigali_mixed | ep 14 | loss 0.329 | val loss 0.753 | exact  25.4 | reading  36.5 | dist 1.03
+resnet_gru_kigali_mixed | ep 15 | loss 0.307 | val loss 0.786 | exact  28.6 | reading  38.1 | dist 0.98
+resnet_gru_kigali_mixed | ep 16 | loss 0.324 | val loss 0.684 | exact  34.9 | reading  44.4 | dist 0.90  *
+resnet_gru_kigali_mixed | ep 17 | loss 0.279 | val loss 0.712 | exact  38.1 | reading  47.6 | dist 0.90  *
+resnet_gru_kigali_mixed | ep 18 | loss 0.287 | val loss 0.726 | exact  39.7 | reading  49.2 | dist 0.86  *
+resnet_gru_kigali_mixed | ep 19 | loss 0.267 | val loss 0.766 | exact  30.2 | reading  39.7 | dist 0.98
+resnet_gru_kigali_mixed | ep 20 | loss 0.271 | val loss 0.751 | exact  30.2 | reading  34.9 | dist 0.95
+resnet_gru_kigali_mixed | ep 21 | loss 0.272 | val loss 0.704 | exact  36.5 | reading  41.3 | dist 0.94
+resnet_gru_kigali_mixed | ep 22 | loss 0.260 | val loss 0.726 | exact  36.5 | reading  44.4 | dist 0.83
+resnet_gru_kigali_mixed | ep 23 | loss 0.214 | val loss 0.734 | exact  33.3 | reading  42.9 | dist 0.94
+resnet_gru_kigali_mixed | ep 24 | loss 0.212 | val loss 0.738 | exact  34.9 | reading  39.7 | dist 0.92
+resnet_gru_kigali_mixed | ep 25 | loss 0.202 | val loss 0.734 | exact  36.5 | reading  49.2 | dist 0.83  *
+resnet_gru_kigali_mixed | ep 26 | loss 0.230 | val loss 0.713 | exact  36.5 | reading  47.6 | dist 0.84
+resnet_gru_kigali_mixed | ep 27 | loss 0.188 | val loss 0.734 | exact  31.7 | reading  41.3 | dist 0.89
+resnet_gru_kigali_mixed | ep 28 | loss 0.181 | val loss 0.731 | exact  36.5 | reading  46.0 | dist 0.90
+resnet_gru_kigali_mixed | ep 29 | loss 0.212 | val loss 0.758 | exact  33.3 | reading  39.7 | dist 0.98
+resnet_gru_kigali_mixed | ep 30 | loss 0.187 | val loss 0.765 | exact  33.3 | reading  41.3 | dist 0.95
+resnet_gru_kigali_mixed | ep 31 | loss 0.194 | val loss 0.754 | exact  31.7 | reading  38.1 | dist 1.00
+resnet_gru_kigali_mixed | ep 32 | loss 0.172 | val loss 0.739 | exact  36.5 | reading  46.0 | dist 0.89
+resnet_gru_kigali_mixed | ep 33 | loss 0.193 | val loss 0.773 | exact  34.9 | reading  49.2 | dist 0.83
+resnet_gru_kigali_mixed | ep 34 | loss 0.168 | val loss 0.746 | exact  39.7 | reading  50.8 | dist 0.84  *
+resnet_gru_kigali_mixed | ep 35 | loss 0.170 | val loss 0.756 | exact  31.7 | reading  42.9 | dist 0.90
+resnet_gru_kigali_mixed | ep 36 | loss 0.155 | val loss 0.765 | exact  33.3 | reading  39.7 | dist 0.94
+resnet_gru_kigali_mixed | ep 37 | loss 0.171 | val loss 0.750 | exact  42.9 | reading  47.6 | dist 0.86
+resnet_gru_kigali_mixed | ep 38 | loss 0.141 | val loss 0.750 | exact  33.3 | reading  46.0 | dist 0.89
+resnet_gru_kigali_mixed | ep 39 | loss 0.147 | val loss 0.776 | exact  34.9 | reading  46.0 | dist 0.89
+resnet_gru_kigali_mixed | ep 40 | loss 0.189 | val loss 0.785 | exact  33.3 | reading  44.4 | dist 0.89
+resnet_gru_kigali_mixed | ep 41 | loss 0.175 | val loss 0.772 | exact  33.3 | reading  41.3 | dist 0.95
+resnet_gru_kigali_mixed | ep 42 | loss 0.161 | val loss 0.736 | exact  34.9 | reading  46.0 | dist 0.87
+resnet_gru_kigali_mixed | ep 43 | loss 0.145 | val loss 0.753 | exact  38.1 | reading  47.6 | dist 0.84
+resnet_gru_kigali_mixed | ep 44 | loss 0.139 | val loss 0.772 | exact  38.1 | reading  47.6 | dist 0.86
+resnet_gru_kigali_mixed | ep 45 | loss 0.143 | val loss 0.770 | exact  38.1 | reading  47.6 | dist 0.87
+resnet_gru_kigali_mixed | ep 46 | loss 0.152 | val loss 0.756 | exact  34.9 | reading  44.4 | dist 0.90
+resnet_gru_kigali_mixed | ep 47 | loss 0.155 | val loss 0.757 | exact  34.9 | reading  42.9 | dist 0.95
+resnet_gru_kigali_mixed | ep 48 | loss 0.169 | val loss 0.774 | exact  34.9 | reading  39.7 | dist 0.95
+resnet_gru_kigali_mixed | ep 49 | loss 0.137 | val loss 0.791 | exact  31.7 | reading  34.9 | dist 1.06
+resnet_gru_kigali_mixed | early stop at epoch 49
+resnet_gru_kigali_mixed | best reading % 50.8 | 6.9 min | saved resnet_gru_kigali_mixed.pt

@@ -1,0 +1,2 @@
+Blur threshold chosen on train: 1293.9
+Validation: precision 18.8% | recall 80.0% | F1 30.4% | AUC 0.386

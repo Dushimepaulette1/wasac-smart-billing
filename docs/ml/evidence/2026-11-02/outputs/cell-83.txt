@@ -1,0 +1,13 @@
+Saved plot: /kaggle/working/plots/learning_curves_resnet_yandex.png
+
+<Figure size 1200x380 with 2 Axes>
+ResNet18+BiGRU - Yandex pretraining: kept epoch 20 of 25 | val loss 0.617 | val reading 65.6%
+
+Saved plot: /kaggle/working/plots/learning_curves_resnet_kigali.png
+
+<Figure size 1200x380 with 2 Axes>
+ResNet18+BiGRU - Kigali fine-tuning: kept epoch 34 of 49 | val loss 0.746 | val reading 50.8%
+
+Saved plot: /kaggle/working/plots/learning_curves_kigali_experiments.png
+
+<Figure size 1300x400 with 2 Axes>

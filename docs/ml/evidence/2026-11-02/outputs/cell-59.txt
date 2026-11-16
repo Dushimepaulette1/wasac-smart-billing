@@ -1,0 +1,10 @@
+KIGALI VALIDATION (unseen meters)
+                                model  exact %  reading %  edit dist  within-1 %  length errs  per-meter %
+                   EasyOCR (baseline)     0.00       1.59       6.76        3.17           59         2.94
+Yandex-pretrained, no Kigali training     0.00       3.17       4.00        6.35           40         2.94
+                           E1 scratch     0.00       0.00       4.59        0.00           63         0.00
+                         E2 fine-tune    19.05      28.57       1.40       50.79           20        29.53
+                             E3 mixed    23.81      28.57       1.32       46.03           19        30.27
+Saved plot: /kaggle/working/plots/train_kigali_experiments.png
+
+<Figure size 800x400 with 1 Axes>
