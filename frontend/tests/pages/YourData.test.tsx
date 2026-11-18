@@ -1,21 +1,45 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import YourData from '../../src/pages/YourData/YourData';
+import HouseholdRoutes from '../../src/router/HouseholdRoutes';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
 
-describe('YourData', () => {
-  it('when opened, should say what is kept, who sees it and how long photos stay', () => {
-    render(
-      <I18nProvider locale="en">
-        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <YourData />
-        </MemoryRouter>
-      </I18nProvider>,
-    );
-    expect(screen.getByRole('heading', { level: 1, name: 'Your data' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Who can see it' })).toBeInTheDocument();
-    expect(screen.getByText(/deleted after 90 days/)).toBeInTheDocument();
+const renderPolicy = (path: string, locale: 'en' | 'rw' = 'en') =>
+  render(
+    <I18nProvider locale={locale}>
+      <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <HouseholdRoutes />
+      </MemoryRouter>
+    </I18nProvider>,
+  );
+
+describe('Privacy policy', () => {
+  it.each(['/privacy-policy', '/your-data'])('is public at %s, including the previous data-page URL', (path) => {
+    renderPolicy(path);
+    expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('explains data, purposes, access, corrections and AI limitations', () => {
+    renderPolicy('/privacy-policy');
+    expect(screen.getByText(/Your name, phone number/)).toBeInTheDocument();
+    expect(screen.getByText(/Meter photos you send/)).toBeInTheDocument();
+    expect(screen.getByText(/Phone numbers identify linked accounts/)).toBeInTheDocument();
+    expect(screen.getByText(/Project operators with server or database access/)).toBeInTheDocument();
+    expect(screen.getByText(/default photo retention period is 90 days/)).toBeInTheDocument();
     expect(screen.getByText(/never refused because of this alone/)).toBeInTheDocument();
+    expect(screen.getByText(/Confidence scores do not guarantee accuracy/)).toBeInTheDocument();
+    expect(screen.getByText(/Check the digits against your meter/)).toBeInTheDocument();
+    expect(screen.getByText(/Do not post phone numbers/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Contact the Mubazi project maintainer' })).toHaveAttribute(
+      'href', 'https://github.com/Dushimepaulette1/wasac-smart-billing/issues/new',
+    );
     expect(screen.getByText(/not an official WASAC service/)).toBeInTheDocument();
+  });
+
+  it('shows readable English fallback for untranslated Kinyarwanda policy text', () => {
+    renderPolicy('/privacy-policy', 'rw');
+    expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument();
+    expect(screen.getByText(/Confidence scores do not guarantee accuracy/)).toBeInTheDocument();
+    expect(screen.queryByText(/TODO: translate/)).not.toBeInTheDocument();
   });
 });

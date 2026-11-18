@@ -171,7 +171,7 @@ function SignIn() {
           <Link to="/staff/sign-in">{t('landing.staffLink')}</Link>
         </p>
         <p className="text-small text-secondary">
-          {t('app.notOfficial')} <Link to="/your-data">{t('data.link')}</Link>
+          {t('app.notOfficial')} <Link to="/privacy-policy">{t('data.link')}</Link>
         </p>
       </Screen>
     );

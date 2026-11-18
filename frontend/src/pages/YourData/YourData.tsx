@@ -1,10 +1,7 @@
 /**
  * @file YourData.tsx
- * @description What the household app keeps, who sees it and for how long, in
- * plain words. Public, so a household can read it before signing in. The facts
- * come from the backend: photos are kept PHOTO_RETENTION_DAYS (default 90) and
- * unsent ones a day (app/services/photo_evidence.py); location only decides
- * whether an officer looks (app/anomaly/location.py).
+ * @description Public privacy policy, using the household layout and translations.
+ * Retention details reflect app/services/photo_evidence.py.
  */
 
 import Screen from '../../components/Screen/Screen';
@@ -12,9 +9,12 @@ import { useI18n } from '../../i18n/I18nProvider';
 
 const SECTIONS = [
   { title: 'data.keptTitle', items: ['data.kept1', 'data.kept2', 'data.kept3'] },
+  { title: 'data.useTitle', items: ['data.use'] },
   { title: 'data.whoTitle', items: ['data.who'] },
+  { title: 'data.hostingTitle', items: ['data.hosting'] },
   { title: 'data.photosTitle', items: ['data.photos'] },
   { title: 'data.locationTitle', items: ['data.location'] },
+  { title: 'data.aiTitle', items: ['data.ai'] },
   { title: 'data.contactTitle', items: ['data.contact'] },
 ];
 
@@ -36,6 +36,13 @@ export default function YourData() {
               </ul>
             ) : (
               <p>{t(items[0] ?? '')}</p>
+            )}
+            {title === 'data.contactTitle' && (
+              <p>
+                <a href="https://github.com/Dushimepaulette1/wasac-smart-billing/issues/new">
+                  {t('data.contactLink')}
+                </a>
+              </p>
             )}
           </section>
         ))}

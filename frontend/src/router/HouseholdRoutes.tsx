@@ -1,6 +1,6 @@
 /**
  * @file HouseholdRoutes.tsx
- * @description The household pages. The start page and sign-in are public;
+ * @description The household pages. The start page, sign-in and privacy policy are public;
  * every other page needs the household signed in (RequireHousehold). The
  * staff area is StaffRoutes, under /staff.
  */
@@ -27,7 +27,8 @@ function HouseholdRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/sign-in" element={<SignIn />} />
-      <Route path="/your-data" element={<YourData />} />
+      <Route path="/privacy-policy" element={<YourData />} />
+      <Route path="/your-data" element={<Navigate to="/privacy-policy" replace />} />
       <Route path="/home" element={<RequireHousehold><CustomerHome /></RequireHousehold>} />
       <Route path="/submit/camera" element={<RequireHousehold><ReadingGate><CameraCapture /></ReadingGate></RequireHousehold>} />
       <Route path="/submit/confirm" element={<RequireHousehold><ReadingGate><ConfirmReading /></ReadingGate></RequireHousehold>} />

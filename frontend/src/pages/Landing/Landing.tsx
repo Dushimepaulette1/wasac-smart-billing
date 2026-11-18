@@ -205,7 +205,7 @@ function Landing() {
           <div className={styles.footerCol}>
             <h4>{t('landing.footerHelp')}</h4>
             <p>{t('landing.footerCall')}</p>
-            <Link to="/your-data">{t('data.link')}</Link>
+            <Link to="/privacy-policy">{t('data.link')}</Link>
           </div>
         </div>
         <div className={styles.footerBottom}>
