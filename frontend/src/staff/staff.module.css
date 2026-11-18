@@ -227,6 +227,7 @@ a.stat:hover .statNote,
 /* ---- Forms and filters ------------------------------------------------- */
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
 }
 
@@ -248,7 +249,8 @@ a.stat:hover .statNote,
 .filter {
   display: grid;
   gap: var(--space-1);
-  min-width: 200px;
+  min-width: min(200px, 100%);
+  max-width: 100%;
   font-weight: var(--weight-bold);
 }
 
@@ -261,6 +263,8 @@ a.stat:hover .statNote,
 }
 
 .select {
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--tap-min);
   padding: 0 var(--space-3);
   border: 1px solid var(--field-border);

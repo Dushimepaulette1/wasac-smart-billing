@@ -46,8 +46,11 @@ Once WASAC data arrives, measure the share of readings held and how often office
 
 ## Needs a person
 
-- **Kinyarwanda.** 56 placeholders are collected in `docs/i18n/kinyarwanda_review_final_review.csv`.
-  A human reviewer must fill the correction column. Other translations also need human review.
+- **Kinyarwanda.** All app translation keys now have Kinyarwanda text, with no translation placeholders.
+  The 65 completed or added strings are collected in `docs/i18n/kinyarwanda_review_completion.csv`.
+  Native-speaker review remains outstanding, especially privacy, billing and staff decision wording.
+  Reviewers can enter changes in the correction column and apply them with `npm run i18n:review -- apply`
+  from `frontend/`. Translation coverage checks do not establish linguistic or usability validation.
 - **Double-payment refunds.** A second success becomes credit automatically and is listed for staff, who
   mark it reviewed. Whether a household gets its money back another way is WASAC's decision.
 - **Second-person check on payment reconciliation.** One supervisor can reconcile, with evidence in the

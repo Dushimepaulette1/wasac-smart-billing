@@ -12,10 +12,18 @@ describe('locale files', () => {
 
   it.each([
     ['rw', rw],
-  ])('when checking %s, should have a translation or the TODO mark, never an empty value', (_, messages) => {
+  ])('when checking %s, should have a completed translation, never an empty value or TODO mark', (_, messages) => {
     for (const value of Object.values(messages)) {
       expect(typeof value).toBe('string');
       expect(value.trim()).not.toBe('');
+      expect(value).not.toContain(TODO_MARK);
+    }
+  });
+
+  it('preserves all interpolation placeholders in every Kinyarwanda translation', () => {
+    const placeholders = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort();
+    for (const [key, english] of Object.entries(en)) {
+      expect(placeholders((rw as Record<string, string>)[key] ?? ''), key).toEqual(placeholders(english));
     }
   });
 

@@ -11,11 +11,11 @@ vi.mock('../../../src/api/client', async (importOriginal) => {
   return { ...actual, api: { ...actual.api, listSectors: vi.fn() } };
 });
 
-function renderPage() {
+function renderPage(locale: 'en' | 'rw' = 'en') {
   const user = { username: 'officer1', full_name: 'Officer One', role: 'officer' };
   window.sessionStorage.setItem('wasac.staff', JSON.stringify({ token: 't', expiresAt: Date.now() / 1000 + 3600, user }));
   return render(
-    <I18nProvider locale="en">
+    <I18nProvider locale={locale}>
       <AuthProvider>
         <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Sectors />
@@ -67,6 +67,21 @@ describe('Sectors', () => {
     renderPage();
     expect(await screen.findByText('No sector')).toBeInTheDocument();
     expect(screen.getByText('Not enough readings')).toBeInTheDocument();
+  });
+
+  it('shows translated sector summaries and reading alerts in Kinyarwanda', async () => {
+    vi.mocked(api.listSectors).mockResolvedValue([makeSector({
+      sector: '', usual_monthly_m3: null, held_readings: 1,
+      attention: [{ customer_id: 'C1', name: 'Uwase', meter_id: 'KGL-20001', held: true, possible_leak: true, owed: 0 }],
+    })]);
+    renderPage('rw');
+    expect(await screen.findByText('Nta murenge wanditswe')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Imirenge' })).toBeInTheDocument();
+    expect(screen.getByText('Nta bipimo bihagije biraboneka')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Erekana ingo zikeneye gukurikiranwa (1)'));
+    expect(screen.getByText('Igipimo cyo kugenzura')).toBeInTheDocument();
+    expect(screen.getByText('Hashobora kuba hari amazi ameneka')).toBeInTheDocument();
+    expect(screen.queryByText('Reading to check')).not.toBeInTheDocument();
   });
 
   it('when the sectors fail to load, should offer to try again', async () => {

@@ -5,8 +5,9 @@
  * confirmed if its transaction ID is on it with the same amount (backend payment_statement.py).
  */
 
-import { useId, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import Notice from '../../components/Notice/Notice';
+import Button from '../../components/Button/Button';
 import { errorMessage } from '../../components/RequestState/RequestState';
 import { api, ApiError } from '../../api/client';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -19,7 +20,7 @@ function PaymentStatement({ onUploaded }: { onUploaded: () => void }) {
   const { t } = useI18n();
   const [result, setResult] = useState<{ tone: 'error' | 'done'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const inputId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const choose = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,8 +53,10 @@ function PaymentStatement({ onUploaded }: { onUploaded: () => void }) {
       <p className="text-small text-secondary">{t('staff.statement.lede')}</p>
       {result && <Notice tone={result.tone} live>{result.text}</Notice>}
       <div className={styles.filter}>
-        <label htmlFor={inputId}>{t('staff.statement.choose')}</label>
-        <input id={inputId} type="file" accept=".csv,text/csv" onChange={choose} disabled={busy} />
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={busy}>
+          {t('staff.statement.choose')}
+        </Button>
+        <input ref={fileRef} aria-label={t('staff.statement.choose')} hidden type="file" accept=".csv,text/csv" onChange={choose} disabled={busy} />
         <a className="text-small" href={`data:text/csv;charset=utf-8,${encodeURIComponent(SAMPLE)}`} download="mubazi_payments_test_sample.csv">
           {t('staff.import.sample')}
         </a>
