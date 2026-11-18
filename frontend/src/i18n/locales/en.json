@@ -325,6 +325,8 @@
   "staff.sms.to": "To",
   "staff.sms.message": "Message",
   "staff.sms.sent": "Sent",
+  "staff.sms.notSent": "Not sent",
+  "staff.sms.providerStatus": "Original delivery service response",
   "staff.role.officer": "Officer",
   "staff.role.supervisor": "Supervisor",
   "staff.role.admin": "Admin",

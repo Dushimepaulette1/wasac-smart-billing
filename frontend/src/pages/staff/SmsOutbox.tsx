@@ -52,8 +52,14 @@ function SmsOutbox() {
                       <td data-label={t('staff.sms.message')}>{m.message}</td>
                       <td data-label={t('staff.col.status')}>
                         <span className={m.status === 'sent' ? undefined : styles.flagged}>
-                          {m.status === 'sent' ? t('staff.sms.sent') : m.status}
+                          {t(m.status === 'sent' ? 'staff.sms.sent' : 'staff.sms.notSent')}
                         </span>
+                        {m.status !== 'sent' && (
+                          <details>
+                            <summary>{t('staff.sms.providerStatus')}</summary>
+                            <p>{m.status}</p>
+                          </details>
+                        )}
                       </td>
                     </tr>
                   ))}

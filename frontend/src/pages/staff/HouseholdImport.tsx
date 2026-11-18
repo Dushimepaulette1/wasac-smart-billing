@@ -7,7 +7,7 @@
  * and Confirm only works when no row has a mistake.
  */
 
-import { useId, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import Button from '../../components/Button/Button';
 import Notice from '../../components/Notice/Notice';
 import { errorMessage } from '../../components/RequestState/RequestState';
@@ -37,7 +37,7 @@ function HouseholdImport({ onImported, onCancel }: HouseholdImportProps) {
   const [done, setDone] = useState<HouseholdImportResult | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const inputId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const send = async (text: string, apply: boolean) => {
     setBusy(true);
@@ -98,10 +98,10 @@ function HouseholdImport({ onImported, onCancel }: HouseholdImportProps) {
       )}
 
       <div className={styles.drop}>
-        <label htmlFor={inputId} className={styles.field}>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={busy}>
           {t('staff.import.choose')}
-        </label>
-        <input id={inputId} type="file" accept=".csv,text/csv" onChange={choose} disabled={busy} />
+        </Button>
+        <input ref={fileRef} aria-label={t('staff.import.choose')} hidden type="file" accept=".csv,text/csv" onChange={choose} disabled={busy} />
         <span className={styles.hint}>
           {t('staff.import.columns')}{' '}
           <a href={sampleHref} download="mubazi_households_sample.csv">
