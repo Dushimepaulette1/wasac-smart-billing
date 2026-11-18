@@ -72,10 +72,10 @@ describe('Household sign-in', () => {
     expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument();
   });
 
-  it('when signing in, should say this is not an official WASAC service and link to the data page', () => {
+  it('when signing in, should say this is not an official WASAC service and link to the privacy policy', () => {
     renderSignIn();
     expect(screen.getByText(/not an official WASAC service/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Your data' })).toHaveAttribute('href', '/your-data');
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy-policy');
   });
 
   it('when the code is wrong, should say so', async () => {
