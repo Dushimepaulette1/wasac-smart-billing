@@ -12,6 +12,8 @@ const SECTIONS = [
   { title: 'data.useTitle', items: ['data.use'] },
   { title: 'data.whoTitle', items: ['data.who'] },
   { title: 'data.hostingTitle', items: ['data.hosting'] },
+  { title: 'data.draftsTitle', items: ['data.draftsStored', 'data.draftsClear'] },
+  { title: 'data.providersTitle', items: ['data.providerSms', 'data.providerUssd', 'data.providerPayments', 'data.providerPush'] },
   { title: 'data.photosTitle', items: ['data.photos'] },
   { title: 'data.locationTitle', items: ['data.location'] },
   { title: 'data.aiTitle', items: ['data.ai'] },
