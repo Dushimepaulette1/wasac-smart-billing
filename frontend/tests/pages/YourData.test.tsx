@@ -38,6 +38,23 @@ describe('Privacy policy', () => {
     expect(screen.getByText(/not an official WASAC service/)).toBeInTheDocument();
   });
 
+  it.each([
+    ['en', 'Temporary drafts on your device', "browser tab's session storage", 'encrypted notification payloads'],
+    ['rw', "Amakuru y'agateganyo abikwa ku gikoresho cyanyu", 'session storage', "ubutumwa buhishe mu buryo bw'ikoranabuhanga"],
+  ] as const)('discloses browser drafts and external sharing in %s', (locale, heading, storage, push) => {
+    renderPolicy('/privacy-policy', locale);
+    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
+    const draft = screen.getByText((text) => text.includes(storage));
+    expect(draft).toHaveTextContent(locale === 'en' ? 'meter photo' : 'ifoto ya mubazi');
+    expect(draft).toHaveTextContent(locale === 'en' ? 'AI-suggested or edited digits' : "imibare yatanzwe n'ubwenge buhangano cyangwa mwakosoye");
+    expect(draft).toHaveTextContent(locale === 'en' ? 'your location if available' : 'aho muri niba habonetse');
+    expect(screen.getByText((text) => text.startsWith(locale === 'en' ? 'SMS:' : 'Ubutumwa bugufi (SMS):'))).toHaveTextContent("Africa's Talking");
+    expect(screen.getByText((text) => text.startsWith(locale === 'en' ? 'Payments:' : 'Ubwishyu:'))).toHaveTextContent('MTN');
+    expect(screen.getByText((text) => text.startsWith('USSD:'))).toBeInTheDocument();
+    expect(screen.getByText((text) => text.includes(push))).toBeInTheDocument();
+    expect(screen.getByText((text) => text.includes(locale === 'en' ? 'does not delete photos already uploaded' : 'ntibisiba amafoto yamaze koherezwa'))).toBeInTheDocument();
+  });
+
   it('shows the policy in Kinyarwanda and switches the full page to English', () => {
     renderPolicy('/privacy-policy', 'rw');
     expect(screen.getByRole('heading', { level: 1, name: 'Politiki yo kurinda amakuru bwite' })).toBeInTheDocument();
